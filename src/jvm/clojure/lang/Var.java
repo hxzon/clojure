@@ -14,10 +14,10 @@ package clojure.lang;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
+//继承了AReference，所以可携带元数据
 public final class Var extends ARef implements IFn, IRef, Settable{
 
-static class TBox{
+static class TBox{//线程盒，存储线程值
 
 volatile Object val;
 final Thread thread;
@@ -28,7 +28,7 @@ public TBox(Thread t, Object val){
 }
 }
 
-static public class Unbound extends AFn{
+static public class Unbound extends AFn{//未绑定的Var
 	final public Var v;
 
 	public Unbound(Var v){
@@ -44,7 +44,7 @@ static public class Unbound extends AFn{
 	}
 }
 
-static class Frame{
+static class Frame{//帧
 	final static Frame TOP = new Frame(PersistentHashMap.EMPTY, null);
 	//Var->TBox
 	Associative bindings;
@@ -64,14 +64,14 @@ static class Frame{
 
 }
 
-static final ThreadLocal<Frame> dvals = new ThreadLocal<Frame>(){
+static final ThreadLocal<Frame> dvals = new ThreadLocal<Frame>(){//线程本地帧
 
 	protected Frame initialValue(){
 		return Frame.TOP;
 	}
 };
 
-static public volatile int rev = 0;
+static public volatile int rev = 0;//根值版本号，每次修改根值，会递增版本号
 
 static Keyword privateKey = Keyword.intern(null, "private");
 static IPersistentMap privateMeta = new PersistentArrayMap(new Object[]{privateKey, Boolean.TRUE});
@@ -80,12 +80,12 @@ static Keyword nameKey = Keyword.intern(null, "name");
 static Keyword nsKey = Keyword.intern(null, "ns");
 //static Keyword tagKey = Keyword.intern(null, "tag");
 
-volatile Object root;
+volatile Object root;//根值
 
-volatile boolean dynamic = false;
-transient final AtomicBoolean threadBound;
-public final Symbol sym;
-public final Namespace ns;
+volatile boolean dynamic = false;//是否是动态Var
+transient final AtomicBoolean threadBound;//是否线程绑定
+public final Symbol sym;//本Var的符号（名字）
+public final Namespace ns;//本Var所在的命名空间
 
 //IPersistentMap _meta;
 
@@ -114,7 +114,7 @@ public Var setDynamic(boolean b){
 public final boolean isDynamic(){
 	return dynamic;
 }
-
+//查找或创建Var
 public static Var intern(Namespace ns, Symbol sym, Object root){
 	return intern(ns, sym, root, true);
 }
@@ -132,7 +132,7 @@ public String toString(){
 		return "#'" + ns.name + "/" + sym;
 	return "#<Var: " + (sym != null ? sym.toString() : "--unnamed--") + ">";
 }
-
+//查找Var
 public static Var find(Symbol nsQualifiedSym){
 	if(nsQualifiedSym.ns == null)
 		throw new IllegalArgumentException("Symbol must be namespace-qualified");
@@ -146,7 +146,7 @@ public static Var intern(Symbol nsName, Symbol sym){
 	Namespace ns = Namespace.findOrCreate(nsName);
 	return intern(ns, sym);
 }
-
+//查找或创建Var，并设为私有
 public static Var internPrivate(String nsName, String sym){
 	Namespace ns = Namespace.findOrCreate(Symbol.intern(nsName));
 	Var ret = intern(ns, Symbol.intern(sym));
@@ -171,7 +171,7 @@ Var(Namespace ns, Symbol sym){
 	this.ns = ns;
 	this.sym = sym;
 	this.threadBound = new AtomicBoolean(false);
-	this.root = new Unbound(this);
+	this.root = new Unbound(this);//未绑定，所以根值是一个不可调用的函数
 	setMeta(PersistentHashMap.EMPTY);
 }
 
@@ -180,11 +180,11 @@ Var(Namespace ns, Symbol sym, Object root){
 	this.root = root;
 	++rev;
 }
-
+//是否已绑定：有根值，或者本线程绑定了值
 public boolean isBound(){
 	return hasRoot() || (threadBound.get() && dvals.get().bindings.containsKey(this));
 }
-
+//优先线程绑定值，再根值
 final public Object get(){
 	if(!threadBound.get())
 		return root;
@@ -208,7 +208,7 @@ public Object alter(IFn fn, ISeq args) {
 	set(fn.applyTo(RT.cons(deref(), args)));
 	return this;
 }
-
+//设置线程绑定值
 public Object set(Object val){
 	validate(getValidator(), val);
 	TBox b = getThreadBinding();
@@ -254,7 +254,7 @@ public boolean isPublic(){
 final public Object getRawRoot(){
 		return root;
 }
-
+//类型提示
 public Object getTag(){
 	return meta().valAt(RT.TAG_KEY);
 }
@@ -262,11 +262,11 @@ public Object getTag(){
 public void setTag(Symbol tag) {
     alterMeta(assoc, RT.list(RT.TAG_KEY, tag));
 }
-
+//是否有根值
 final public boolean hasRoot(){
 	return !(root instanceof Unbound);
 }
-
+//设置新根值，移除宏标记
 //binding root always clears macro flag
 synchronized public void bindRoot(Object root){
 	validate(getValidator(), root);
@@ -276,7 +276,7 @@ synchronized public void bindRoot(Object root){
         alterMeta(dissoc, RT.list(macroKey));
     notifyWatches(oldroot,this.root);
 }
-
+//设置新根值
 synchronized void swapRoot(Object root){
 	validate(getValidator(), root);
 	Object oldroot = this.root;
@@ -284,7 +284,7 @@ synchronized void swapRoot(Object root){
 	++rev;
     notifyWatches(oldroot,root);
 }
-
+//设置为未绑定
 synchronized public void unbindRoot(){
 	this.root = new Unbound(this);
 	++rev;
@@ -298,7 +298,7 @@ synchronized public void commuteRoot(IFn fn) {
 	++rev;
     notifyWatches(oldroot,newRoot);
 }
-
+//设置新根值，通过指定的函数
 synchronized public Object alterRoot(IFn fn, ISeq args) {
 	Object newRoot = fn.applyTo(RT.cons(root, args));
 	validate(getValidator(), newRoot);
@@ -362,7 +362,7 @@ public final TBox getThreadBinding(){
 final public IFn fn(){
 	return (IFn) deref();
 }
-
+//调用本Var，当本Var是函数时
 public Object call() {
 	return invoke();
 }
