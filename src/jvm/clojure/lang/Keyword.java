@@ -22,12 +22,12 @@ import java.lang.ref.SoftReference;
 
 
 public class Keyword implements IFn, Comparable, Named, Serializable, IHashEq {
-
+//table：名字到关键字实例的映射（全局）
 private static ConcurrentHashMap<Symbol, Reference<Keyword>> table = new ConcurrentHashMap();
 static final ReferenceQueue rq = new ReferenceQueue();
 public final Symbol sym;
 final int hasheq;
-transient String _str;
+transient String _str;//缓存本关键字的名字，即:xxx
 
 public static Keyword intern(Symbol sym){
 	Keyword k = null;

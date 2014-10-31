@@ -15,7 +15,7 @@ package clojure.lang;
 import java.io.Serializable;
 import java.io.ObjectStreamException;
 
-
+//Symbol可携带元数据
 public class Symbol extends AFn implements IObj, Comparable, Named, Serializable, IHashEq{
 final String ns;
 final String name;
@@ -40,7 +40,7 @@ public String getNamespace(){
 public String getName(){
 	return name;
 }
-
+//创建符号
 // the create thunks preserve binary compatibility with code compiled
 // against earlier version of Clojure and can be removed (at some point).
 static public Symbol create(String ns, String name) {
@@ -121,7 +121,7 @@ public int compareTo(Object o){
 private Object readResolve() throws ObjectStreamException{
 	return intern(ns, name);
 }
-
+//在obj（一个集合）中查找自己
 public Object invoke(Object obj) {
 	return RT.get(obj, this);
 }

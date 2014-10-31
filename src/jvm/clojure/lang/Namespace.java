@@ -19,9 +19,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Namespace extends AReference implements Serializable {
 final public Symbol name;
+//符号到Var的映射
 transient final AtomicReference<IPersistentMap> mappings = new AtomicReference<IPersistentMap>();
+//别名
 transient final AtomicReference<IPersistentMap> aliases = new AtomicReference<IPersistentMap>();
-
+//所有的命名空间
 final static ConcurrentHashMap<Symbol, Namespace> namespaces = new ConcurrentHashMap<Symbol, Namespace>();
 
 public String toString(){
@@ -46,7 +48,7 @@ public Symbol getName(){
 public IPersistentMap getMappings(){
 	return mappings.get();
 }
-
+//创建Var
 public Var intern(Symbol sym){
 	if(sym.ns != null)
 		{
@@ -55,7 +57,7 @@ public Var intern(Symbol sym){
 	IPersistentMap map = getMappings();
 	Object o;
 	Var v = null;
-	while((o = map.valAt(sym)) == null)
+	while((o = map.valAt(sym)) == null)//循环，因为有并发竞争
 		{
 		if(v == null)
 			v = new Var(this, sym);
@@ -90,7 +92,7 @@ private void warnOrFailOnReplace(Symbol sym, Object o, Object v){
 	RT.errPrintWriter().println("WARNING: " + sym + " already refers to: " + o + " in namespace: " + name
 		+ ", being replaced by: " + v);
 }
-
+//添加符号到Var的映射
 Object reference(Symbol sym, Object val){
 	if(sym.ns != null)
 		{

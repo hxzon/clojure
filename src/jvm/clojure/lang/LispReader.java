@@ -203,7 +203,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 				unread(r, ch2);
 				}
 
-			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，Symbol（Var，关键字）
+			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，Symbol（Var，关键字，命名空间）
 			if(RT.suppressRead())
 				return null;
 			return interpretToken(token);

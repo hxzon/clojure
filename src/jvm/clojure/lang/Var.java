@@ -141,7 +141,7 @@ public static Var find(Symbol nsQualifiedSym){
 		throw new IllegalArgumentException("No such namespace: " + nsQualifiedSym.ns);
 	return ns.findInternedVar(Symbol.intern(nsQualifiedSym.name));
 }
-
+//创建Var
 public static Var intern(Symbol nsName, Symbol sym){
 	Namespace ns = Namespace.findOrCreate(nsName);
 	return intern(ns, sym);
@@ -153,7 +153,7 @@ public static Var internPrivate(String nsName, String sym){
 	ret.setMeta(privateMeta);
 	return ret;
 }
-
+//创建Var
 public static Var intern(Namespace ns, Symbol sym){
 	return ns.intern(sym);
 }
