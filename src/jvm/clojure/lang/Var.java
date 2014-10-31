@@ -47,10 +47,10 @@ static public class Unbound extends AFn{//未绑定的Var
 static class Frame{//帧
 	final static Frame TOP = new Frame(PersistentHashMap.EMPTY, null);
 	//Var->TBox
-	Associative bindings;
+	Associative bindings;//本帧的绑定值
 	//Var->val
 //	Associative frameBindings;
-	Frame prev;
+	Frame prev;//前一帧
 
 	public Frame(Associative bindings, Frame prev){
 //		this.frameBindings = frameBindings;
@@ -308,7 +308,7 @@ synchronized public Object alterRoot(IFn fn, ISeq args) {
     notifyWatches(oldroot,newRoot);
 	return newRoot;
 }
-
+//压入新的一帧（会检查是否是“动态Var”，并标记为“已线程绑定”）
 public static void pushThreadBindings(Associative bindings){
 	Frame f = dvals.get();
 	Associative bmap = f.bindings;
@@ -324,7 +324,7 @@ public static void pushThreadBindings(Associative bindings){
 		}
 	dvals.set(new Frame(bmap, f));
 }
-
+//弹出当前帧
 public static void popThreadBindings(){
     Frame f = dvals.get().prev;
     if (f == null) {
@@ -335,7 +335,7 @@ public static void popThreadBindings(){
         dvals.set(f);
     }
 }
-
+//获取线程绑定值（最后一帧）
 public static Associative getThreadBindings(){
 	Frame f = dvals.get();
 	IPersistentMap ret = PersistentHashMap.EMPTY;
@@ -348,7 +348,7 @@ public static Associative getThreadBindings(){
 		}
 	return ret;
 }
-
+//获取本Var的线程绑定值（最后一帧）
 public final TBox getThreadBinding(){
 	if(threadBound.get())
 		{

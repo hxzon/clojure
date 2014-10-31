@@ -178,6 +178,7 @@ static Object readTrueFalseUnknown(String s){
 
 static public final Namespace CLOJURE_NS = Namespace.findOrCreate(Symbol.intern("clojure.core"));
 //static final Namespace USER_NS = Namespace.findOrCreate(Symbol.intern("user"));
+//预定义的动态Var
 final static public Var OUT =
 		Var.intern(CLOJURE_NS, Symbol.intern("*out*"), new OutputStreamWriter(System.out)).setDynamic();
 final static public Var IN =
@@ -390,7 +391,7 @@ static public long lastModified(URL url, String libfile) throws IOException{
 		return url.openConnection().getLastModified();
 	}
 }
-
+//编译clj源文件
 static void compile(String cljfile) throws IOException{
         InputStream ins = resourceAsStream(baseLoader(), cljfile);
 	if(ins != null) {
@@ -563,7 +564,7 @@ static public ISeq keys(Object coll){
 static public ISeq vals(Object coll){
 	return APersistentMap.ValSeq.create(seq(coll));
 }
-
+//获取元数据
 static public IPersistentMap meta(Object x){
 	if(x instanceof IMeta)
 		return ((IMeta) x).meta();
@@ -926,6 +927,7 @@ static boolean hasTag(Object o, Object tag){
 /**
  * ********************* Boxing/casts ******************************
  */
+//装箱和类型转换
 static public Object box(Object x){
 	return x;
 }
@@ -1704,7 +1706,8 @@ static public int boundedLength(ISeq list, int limit) {
 }
 
 ///////////////////////////////// reader support ////////////////////////////////
-
+//读取器操作
+//将int转为字符
 static Character readRet(int ret){
 	if(ret == -1)
 		return null;
@@ -1715,7 +1718,7 @@ static public Character readChar(Reader r) throws IOException{
 	int ret = r.read();
 	return readRet(ret);
 }
-
+//读取下一个字符，但是不前进
 static public Character peekChar(Reader r) throws IOException{
 	int ret;
 	if(r instanceof PushbackReader) {
@@ -2138,7 +2141,7 @@ static public Class loadClassForName(String name) throws ClassNotFoundException{
 		}
 	return Class.forName(name, true, baseLoader());
 }
-
+//数组操作
 static public float aget(float[] xs, int i){
 	return xs[i];
 }

@@ -2604,7 +2604,7 @@ public static class MetaExpr implements Expr{
 		this.expr = expr;
 		this.meta = meta;
 	}
-
+	//meta求值成一个map，expr求值成一个对象，然后带上此元数据
 	public Object eval() {
 		return ((IObj) expr.eval()).withMeta((IPersistentMap) meta.eval());
 	}
@@ -3947,7 +3947,7 @@ static public class FnExpr extends ObjExpr{
 			Var.popThreadBindings();
 			}
 		fn.hasPrimSigs = prims.size() > 0;
-		IPersistentMap fmeta = RT.meta(origForm);
+		IPersistentMap fmeta = RT.meta(origForm);//获取origForm这个对象的元数据
 		if(fmeta != null)
 			fmeta = fmeta.without(RT.LINE_KEY).without(RT.COLUMN_KEY).without(RT.FILE_KEY);
 
@@ -6459,7 +6459,7 @@ private static int getAndIncLocalNum(){
 public static Expr analyze(C context, Object form) {
 	return analyze(context, form, null);
 }
-
+//将form解析成表达式
 private static Expr analyze(C context, Object form, String name) {
 	//todo symbol macro expansion?
 	try
@@ -6679,7 +6679,7 @@ static Object macroexpand(Object form) {
 		return macroexpand(exf);
 	return form;
 }
-
+//对“序列形式”进行解析
 private static Expr analyzeSeq(C context, ISeq form, String name) {
 	Object line = lineDeref();
 	Object column = columnDeref();
@@ -6691,7 +6691,7 @@ private static Expr analyzeSeq(C context, ISeq form, String name) {
 			RT.map(LINE, line, COLUMN, column));
 	try
 		{
-		Object me = macroexpand1(form);
+		Object me = macroexpand1(form);//对form进行“宏展开”
 		if(me != form)
 			return analyze(context, me, name);
 

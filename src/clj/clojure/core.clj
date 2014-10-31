@@ -13,12 +13,14 @@
 (def unquote)
 (def unquote-splicing)
 
+;list items 创建一个列表，包含指定元素
 (def
  ^{:arglists '([& items])
    :doc "Creates a new list containing the items."
    :added "1.0"}
   list (. clojure.lang.PersistentList creator))
 
+;fn* 等特殊形式的定义见 clojure.lang.Compiler 
 (def
  ^{:arglists '([x seq])
     :doc "Returns a new seq where x is the first element and seq is
@@ -28,6 +30,8 @@
 
  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))
 
+;let，loop，fn，启动之初，还不支持解构，稍后会重定义它们
+; let* ，loop*，fn* 见 clojure.lang.Compiler 
 ;during bootstrap we don't have destructuring let, loop or fn, will redefine later
 (def
   ^{:macro true

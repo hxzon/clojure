@@ -77,17 +77,17 @@ static Var GENSYM_ENV = Var.create(null).setDynamic();
 //sorted-map num->gensymbol
 static Var ARG_ENV = Var.create(null).setDynamic();
 static IFn ctorReader = new CtorReader();
-
+//读取器宏
 static
 	{
 	macros['"'] = new StringReader();
 	macros[';'] = new CommentReader();
 	macros['\''] = new WrappingReader(QUOTE);
 	macros['@'] = new WrappingReader(DEREF);//new DerefReader();
-	macros['^'] = new MetaReader();
+	macros['^'] = new MetaReader();//元数据读取器
 	macros['`'] = new SyntaxQuoteReader();
 	macros['~'] = new UnquoteReader();
-	macros['('] = new ListReader();
+	macros['('] = new ListReader();//列表读取器
 	macros[')'] = new UnmatchedDelimiterReader();
 	macros['['] = new VectorReader();
 	macros[']'] = new UnmatchedDelimiterReader();
@@ -98,11 +98,11 @@ static
 	macros['%'] = new ArgReader();
 	macros['#'] = new DispatchReader();
 
-
-	dispatchMacros['^'] = new MetaReader();
+	//跟在井号之后的读取器宏
+	dispatchMacros['^'] = new MetaReader();//元数据读取器
 	dispatchMacros['\''] = new VarReader();
 	dispatchMacros['"'] = new RegexReader();
-	dispatchMacros['('] = new FnReader();
+	dispatchMacros['('] = new FnReader();//函数字面量读取器
 	dispatchMacros['{'] = new SetReader();
 	dispatchMacros['='] = new EvalReader();
 	dispatchMacros['!'] = new CommentReader();
@@ -159,17 +159,17 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 			{
 			int ch = read1(r);
 
-			while(isWhitespace(ch))
+			while(isWhitespace(ch))//忽略空白符，包括逗号
 				ch = read1(r);
 
-			if(ch == -1)
+			if(ch == -1)//文件末尾
 				{
 				if(eofIsError)
 					throw Util.runtimeException("EOF while reading");
 				return eofValue;
 				}
 
-			if(Character.isDigit(ch))
+			if(Character.isDigit(ch))//不带正负号的数值
 				{
 				Object n = readNumber(r, (char) ch);
 				if(RT.suppressRead())
@@ -178,7 +178,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 				}
 
 			IFn macroFn = getMacro(ch);
-			if(macroFn != null)
+			if(macroFn != null)//读取器宏
 				{
 				Object ret = macroFn.invoke(r, (char) ch);
 				if(RT.suppressRead())
@@ -192,7 +192,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 			if(ch == '+' || ch == '-')
 				{
 				int ch2 = read1(r);
-				if(Character.isDigit(ch2))
+				if(Character.isDigit(ch2))//带正负号的数值
 					{
 					unread(r, ch2);
 					Object n = readNumber(r, (char) ch);
@@ -203,7 +203,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 				unread(r, ch2);
 				}
 
-			String token = readToken(r, (char) ch);
+			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，Symbol（Var，关键字）
 			if(RT.suppressRead())
 				return null;
 			return interpretToken(token);
@@ -342,7 +342,7 @@ private static Object matchSymbol(String s){
 			else
 				return null;
 			}
-		boolean isKeyword = s.charAt(0) == ':';
+		boolean isKeyword = s.charAt(0) == ':';//以冒号开头的为关键字
 		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));
 		if(isKeyword)
 			return Keyword.intern(sym);
@@ -412,7 +412,7 @@ static private IFn getMacro(int ch){
 static private boolean isMacro(int ch){
 	return (ch < macros.length && macros[ch] != null);
 }
-
+//除了井号，单引号，百分号之外的读取器宏字符
 static private boolean isTerminatingMacro(int ch){
 	return (ch != '#' && ch != '\'' && ch != '%' && isMacro(ch));
 }
@@ -620,7 +620,7 @@ public static class DispatchReader extends AFn{
 static Symbol garg(int n){
 	return Symbol.intern(null, (n == -1 ? "rest" : ("p" + n)) + "__" + RT.nextID() + "#");
 }
-
+//函数字面量读取器，例如 #(assoc % %2 (* %2 %2))
 public static class FnReader extends AFn{
 	public Object invoke(Object reader, Object lparen) {
 		PushbackReader r = (PushbackReader) reader;
@@ -702,7 +702,7 @@ static class ArgReader extends AFn{
 		return registerArg(((Number) n).intValue());
 	}
 }
-
+//元数据字面量读取器，例如 ^{:x 1 :y 2} zz
 public static class MetaReader extends AFn{
 	public Object invoke(Object reader, Object caret) {
 		PushbackReader r = (PushbackReader) reader;
@@ -713,7 +713,7 @@ public static class MetaReader extends AFn{
 			line = ((LineNumberingPushbackReader) r).getLineNumber();
 			column = ((LineNumberingPushbackReader) r).getColumnNumber()-1;
 			}
-		Object meta = read(r, true, null, true);
+		Object meta = read(r, true, null, true);//读取元数据
 		if(meta instanceof Symbol || meta instanceof String)
 			meta = RT.map(RT.TAG_KEY, meta);
 		else if (meta instanceof Keyword)
@@ -721,7 +721,7 @@ public static class MetaReader extends AFn{
 		else if(!(meta instanceof IPersistentMap))
 			throw new IllegalArgumentException("Metadata must be Symbol,Keyword,String or Map");
 
-		Object o = read(r, true, null, true);
+		Object o = read(r, true, null, true);//读取对象，该对象必须能携带元数据，即实现了IMeta接口
 		if(o instanceof IMeta)
 			{
 			if(line != -1 && o instanceof ISeq)
@@ -733,8 +733,8 @@ public static class MetaReader extends AFn{
 				((IReference)o).resetMeta((IPersistentMap) meta);
 				return o;
 				}
-			Object ometa = RT.meta(o);
-			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {
+			Object ometa = RT.meta(o);//对象已携带的元数据
+			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//合并meta到ometa
 			IMapEntry kv = (IMapEntry) s.first();
 			ometa = RT.assoc(ometa, kv.getKey(), kv.getValue());
 			}
@@ -958,7 +958,7 @@ public static class CharacterReader extends AFn{
 	}
 
 }
-
+//列表读取器
 public static class ListReader extends AFn{
 	public Object invoke(Object reader, Object leftparen) {
 		PushbackReader r = (PushbackReader) reader;
@@ -969,7 +969,7 @@ public static class ListReader extends AFn{
 			line = ((LineNumberingPushbackReader) r).getLineNumber();
 			column = ((LineNumberingPushbackReader) r).getColumnNumber()-1;
 			}
-		List list = readDelimitedList(')', r, true);
+		List list = readDelimitedList(')', r, true);//向前读取，直到遇到右括号
 		if(list.isEmpty())
 			return PersistentList.EMPTY;
 		IObj s = (IObj) PersistentList.create(list);
@@ -1106,7 +1106,7 @@ public static class UnreadableReader extends AFn{
 		throw Util.runtimeException("Unreadable form");
 	}
 }
-
+//向前读取，直到遇到指定的delim字符
 public static List readDelimitedList(char delim, PushbackReader r, boolean isRecursive) {
 	final int firstline =
 			(r instanceof LineNumberingPushbackReader) ?
@@ -1118,7 +1118,7 @@ public static List readDelimitedList(char delim, PushbackReader r, boolean isRec
 		{
 		int ch = read1(r);
 
-		while(isWhitespace(ch))
+		while(isWhitespace(ch))//忽略空白符
 			ch = read1(r);
 
 		if(ch == -1)
@@ -1129,11 +1129,11 @@ public static List readDelimitedList(char delim, PushbackReader r, boolean isRec
 				throw Util.runtimeException("EOF while reading, starting at line " + firstline);
 			}
 
-		if(ch == delim)
+		if(ch == delim)//遇到指定的结束符，停止
 			break;
 
 		IFn macroFn = getMacro(ch);
-		if(macroFn != null)
+		if(macroFn != null)//读取器宏
 			{
 			Object mret = macroFn.invoke(r, (char) ch);
 			//no op macros return the reader
