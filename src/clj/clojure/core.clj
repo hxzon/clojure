@@ -49,6 +49,7 @@
  fn (fn* fn [&form &env & decl] 
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
+;将 &form 上的元数据加到 (fn* decl) 上。
 
 (def
  ^{:arglists '([coll])

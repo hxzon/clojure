@@ -6590,7 +6590,7 @@ public static Object preserveTag(ISeq src, Object dst) {
 	}
 	return dst;
 }
-
+//宏展开
 public static Object macroexpand1(Object x) {
 	if(x instanceof ISeq)
 		{
@@ -6622,7 +6622,7 @@ public static Object macroexpand1(Object x) {
 							throw (CompilerException) e;
 					}
 			}
-		else
+		else//java方法（实例方法或静态方法）
 			{
 			if(op instanceof Symbol)
 				{
