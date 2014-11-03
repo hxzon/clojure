@@ -50,6 +50,7 @@
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
 ;将 &form 上的元数据加到 (fn* decl) 上。
+;注意，这个版本的 fn 带有 &form 和 &env 。
 
 (def
  ^{:arglists '([coll])
@@ -426,6 +427,9 @@
    :inline (fn [x] (list 'clojure.lang.Util/identical x nil))}
   [x] (clojure.lang.Util/identical x nil))
 
+;;;;;;;;;;;;;;;;;;;;;
+;定义宏（defmacro）
+
 (def
 
  ^{:doc "Like defn, but the resulting function name is declared as a
@@ -434,7 +438,8 @@
    :arglists '([name doc-string? attr-map? [params*] body]
                  [name doc-string? attr-map? ([params*] body)+ attr-map?])
    :added "1.0"}
- defmacro (fn [&form &env 
+
+defmacro (fn [&form &env 
                 name & args]
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
@@ -452,7 +457,7 @@
                    fdecl (if (vector? (first fdecl))
                            (list fdecl)
                            fdecl)
-                   add-implicit-args (fn [fd]
+                   add-implicit-args (fn [fd]    ;添加隐式参数
                              (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
                    add-args (fn [acc ds]
@@ -467,7 +472,7 @@
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-               (list 'do
+               (list 'do    ;生成 (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
                      (list 'var name)))))
@@ -4209,6 +4214,8 @@
   ([& keyvals]
      (clojure.lang.PersistentArrayMap/createAsIfByAssoc (to-array keyvals))))
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;重定义let，fn，loop
 ;redefine let and loop  with destructuring
 (defn destructure [bindings]
   (let [bents (partition 2 bindings)
@@ -4307,6 +4314,7 @@
           (let ~lets
             ~@body))))))
 
+;重定义fn，带上解构和前置后置条件
 ;redefine fn with destructuring and pre/post conditions
 (defmacro fn
   "params => positional-params* , or positional-params* & next-param
@@ -4317,6 +4325,7 @@
   Defines a function"
   {:added "1.0", :special-form true,
    :forms '[(fn name? [params* ] exprs*) (fn name? ([params* ] exprs*)+)]}
+
   [& sigs]
     (let [name (if (symbol? (first sigs)) (first sigs) nil)
           sigs (if name (next sigs) sigs)
@@ -4370,6 +4379,7 @@
           (cons 'fn* new-sigs))
         (meta &form))))
 
+;重定义loop
 (defmacro loop
   "Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts

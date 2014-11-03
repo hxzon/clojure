@@ -38,11 +38,11 @@ import java.util.regex.Pattern;
 
 public class LispReader{
 
-static final Symbol QUOTE = Symbol.intern("quote");
+static final Symbol QUOTE = Symbol.intern("quote");//引述
 static final Symbol THE_VAR = Symbol.intern("var");
-//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");
-static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");
-static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");
+//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");//语法引述
+static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");//取消语法引述
+static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");//取消语法引述并拼接
 static Symbol CONCAT = Symbol.intern("clojure.core", "concat");
 static Symbol SEQ = Symbol.intern("clojure.core", "seq");
 static Symbol LIST = Symbol.intern("clojure.core", "list");
@@ -82,11 +82,11 @@ static
 	{
 	macros['"'] = new StringReader();
 	macros[';'] = new CommentReader();
-	macros['\''] = new WrappingReader(QUOTE);
+	macros['\''] = new WrappingReader(QUOTE);//将下一个形式，包裹到quote中
 	macros['@'] = new WrappingReader(DEREF);//new DerefReader();
 	macros['^'] = new MetaReader();//元数据读取器
-	macros['`'] = new SyntaxQuoteReader();
-	macros['~'] = new UnquoteReader();
+	macros['`'] = new SyntaxQuoteReader();//语法引述
+	macros['~'] = new UnquoteReader();//取消语法引述（包括取消语法引述并拼接）
 	macros['('] = new ListReader();//列表读取器
 	macros[')'] = new UnmatchedDelimiterReader();
 	macros['['] = new VectorReader();
@@ -745,7 +745,7 @@ public static class MetaReader extends AFn{
 	}
 
 }
-
+//语法引述，反引号
 public static class SyntaxQuoteReader extends AFn{
 	public Object invoke(Object reader, Object backquote) {
 		PushbackReader r = (PushbackReader) reader;
@@ -770,25 +770,25 @@ public static class SyntaxQuoteReader extends AFn{
 		else if(form instanceof Symbol)
 			{
 			Symbol sym = (Symbol) form;
-			if(sym.ns == null && sym.name.endsWith("#"))
+			if(sym.ns == null && sym.name.endsWith("#"))//自动转成全局唯一符号
 				{
 				IPersistentMap gmap = (IPersistentMap) GENSYM_ENV.deref();
 				if(gmap == null)
 					throw new IllegalStateException("Gensym literal not in syntax-quote");
 				Symbol gs = (Symbol) gmap.valAt(sym);
-				if(gs == null)
+				if(gs == null)//该符号如果还未转成全局唯一符号
 					GENSYM_ENV.set(gmap.assoc(sym, gs = Symbol.intern(null,
 					                                                  sym.name.substring(0, sym.name.length() - 1)
 					                                                  + "__" + RT.nextID() + "__auto__")));
 				sym = gs;
 				}
-			else if(sym.ns == null && sym.name.endsWith("."))
+			else if(sym.ns == null && sym.name.endsWith("."))//java构造函数
 				{
 				Symbol csym = Symbol.intern(null, sym.name.substring(0, sym.name.length() - 1));
 				csym = Compiler.resolveSymbol(csym);
 				sym = Symbol.intern(null, csym.name.concat("."));
 				}
-			else if(sym.ns == null && sym.name.startsWith("."))
+			else if(sym.ns == null && sym.name.startsWith("."))//java实例方法
 				{
 				// Simply quote method names.
 				}
@@ -809,7 +809,7 @@ public static class SyntaxQuoteReader extends AFn{
 				}
 			ret = RT.list(Compiler.QUOTE, sym);
 			}
-		else if(isUnquote(form))
+		else if(isUnquote(form))//如果是取消引述
 			return RT.second(form);
 		else if(isUnquoteSplicing(form))
 			throw new IllegalStateException("splice not in list");
@@ -818,7 +818,7 @@ public static class SyntaxQuoteReader extends AFn{
 			if(form instanceof IRecord)
 				ret = form;
 			else if(form instanceof IPersistentMap)
-				{
+				{//生成 (apply hashmap (seq (concat k1 v1 k2 v2)))
 				IPersistentVector keyvals = flattenMap(form);
 				ret = RT.list(APPLY, HASHMAP, RT.list(SEQ, RT.cons(CONCAT, sqExpandList(keyvals.seq()))));
 				}
@@ -849,12 +849,12 @@ public static class SyntaxQuoteReader extends AFn{
 		else
 			ret = RT.list(Compiler.QUOTE, form);
 
-		if(form instanceof IObj && RT.meta(form) != null)
+		if(form instanceof IObj && RT.meta(form) != null)//如果含有元数据（除掉行列号）
 			{
 			//filter line and column numbers
 			IPersistentMap newMeta = ((IObj) form).meta().without(RT.LINE_KEY).without(RT.COLUMN_KEY);
 			if(newMeta.count() > 0)
-				return RT.list(WITH_META, ret, syntaxQuote(((IObj) form).meta()));
+				return RT.list(WITH_META, ret, syntaxQuote(((IObj) form).meta()));//hxzon注意：对元数据进行语法引述
 			}
 		return ret;
 	}
@@ -864,11 +864,11 @@ public static class SyntaxQuoteReader extends AFn{
 		for(; seq != null; seq = seq.next())
 			{
 			Object item = seq.first();
-			if(isUnquote(item))
+			if(isUnquote(item))//取消语法引述
 				ret = ret.cons(RT.list(LIST, RT.second(item)));
-			else if(isUnquoteSplicing(item))
+			else if(isUnquoteSplicing(item))//取消语法引述并拼接
 				ret = ret.cons(RT.second(item));
-			else
+			else//语法引述
 				ret = ret.cons(RT.list(LIST, syntaxQuote(item)));
 			}
 		return ret.seq();
@@ -894,7 +894,7 @@ static boolean isUnquoteSplicing(Object form){
 static boolean isUnquote(Object form){
 	return form instanceof ISeq && Util.equals(RT.first(form),UNQUOTE);
 }
-
+//取消语法引述，波浪号
 static class UnquoteReader extends AFn{
 	public Object invoke(Object reader, Object comma) {
 		PushbackReader r = (PushbackReader) reader;
@@ -904,13 +904,13 @@ static class UnquoteReader extends AFn{
 		if(ch == '@')
 			{
 			Object o = read(r, true, null, true);
-			return RT.list(UNQUOTE_SPLICING, o);
+			return RT.list(UNQUOTE_SPLICING, o);//取消语法引述并拼接
 			}
 		else
 			{
 			unread(r, ch);
 			Object o = read(r, true, null, true);
-			return RT.list(UNQUOTE, o);
+			return RT.list(UNQUOTE, o);//取消语法引述
 			}
 	}
 

@@ -374,13 +374,13 @@ static Symbol resolveSymbol(Symbol sym){
 		}
 	Object o = currentNS().getMapping(sym);
 	if(o == null)
-		return Symbol.intern(currentNS().name.name, sym.name);
+		return Symbol.intern(currentNS().name.name, sym.name);//如果没有命名空间，视为当前命名空间
 	else if(o instanceof Class)
 		return Symbol.intern(null, ((Class) o).getName());
 	else if(o instanceof Var)
 			{
 			Var v = (Var) o;
-			return Symbol.intern(v.ns.name.name, v.sym.name);
+			return Symbol.intern(v.ns.name.name, v.sym.name);//hxzon：？
 			}
 	return null;
 
