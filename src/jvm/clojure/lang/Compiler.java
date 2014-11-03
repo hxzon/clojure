@@ -3780,13 +3780,13 @@ static class SourceDebugExtensionAttribute extends Attribute{
 		bv.putUTF8(smap);
 	}
 }
-
+//函数表达式
 static public class FnExpr extends ObjExpr{
 	final static Type aFnType = Type.getType(AFunction.class);
 	final static Type restFnType = Type.getType(RestFn.class);
 	//if there is a variadic overload (there can only be one) it is stored here
-	FnMethod variadicMethod = null;
-	IPersistentCollection methods;
+	FnMethod variadicMethod = null;//不定参数
+	IPersistentCollection methods;//重载函数
 	private boolean hasPrimSigs;
 	private boolean hasMeta;
 	//	String superName = null;
@@ -5112,10 +5112,10 @@ enum PSTATE{
 public static class FnMethod extends ObjMethod{
 	//localbinding->localbinding
 	PersistentVector reqParms = PersistentVector.EMPTY;
-	LocalBinding restParm = null;
+	LocalBinding restParm = null;//剩余参数
 	Type[] argtypes;
-	Class[] argclasses;
-	Class retClass;
+	Class[] argclasses;//参数类型
+	Class retClass;//返回值类型
 	String prim ;
 
 	public FnMethod(ObjExpr objx, ObjMethod parent){
@@ -5179,7 +5179,7 @@ public static class FnMethod extends ObjMethod{
 			if(method.prim != null)
 				method.prim = method.prim.replace('.', '/');
 
-			method.retClass = tagClass(tagOf(parms));
+			method.retClass = tagClass(tagOf(parms));//函数返回值的类型提示，附在参数向量上
 			if(method.retClass.isPrimitive() && !(method.retClass == double.class || method.retClass == long.class))
 				throw new IllegalArgumentException("Only long and double primitives are supported");
 
@@ -5203,7 +5203,7 @@ public static class FnMethod extends ObjMethod{
 				Symbol p = (Symbol) parms.nth(i);
 				if(p.getNamespace() != null)
 					throw Util.runtimeException("Can't use qualified name as parameter: " + p);
-				if(p.equals(_AMP_))
+				if(p.equals(_AMP_))// 如果p为&
 					{
 //					if(isStatic)
 //						throw Util.runtimeException("Variadic fns cannot be static");
@@ -5215,7 +5215,7 @@ public static class FnMethod extends ObjMethod{
 
 				else
 					{
-					Class pc = primClass(tagClass(tagOf(p)));
+					Class pc = primClass(tagClass(tagOf(p)));//参数的类型提示
 //					if(pc.isPrimitive() && !isStatic)
 //						{
 //						pc = Object.class;
@@ -5454,7 +5454,7 @@ public static class FnMethod extends ObjMethod{
 	public final LocalBinding restParm(){
 		return restParm;
 	}
-
+	//是否是不定参数个数
 	boolean isVariadic(){
 		return restParm != null;
 	}
@@ -5515,6 +5515,7 @@ public static class FnMethod extends ObjMethod{
 abstract public static class ObjMethod{
 	//when closures are defined inside other closures,
 	//the closed over locals need to be propagated to the enclosing objx
+    //当闭包在另一个闭包内部定义，
 	public final ObjMethod parent;
 	//localbinding->localbinding
 	IPersistentMap locals = null;
@@ -5682,14 +5683,14 @@ abstract public static class ObjMethod{
 			}
 	}
 }
-
+//本地绑定
 public static class LocalBinding{
 	public final Symbol sym;
-	public final Symbol tag;
-	public Expr init;
+	public final Symbol tag;//本地绑定的类型提示
+	public Expr init;//本地绑定的值（表达式）
 	public final int idx;
 	public final String name;
-	public final boolean isArg;
+	public final boolean isArg;//是否是参数（定义函数时）
     public final PathNode clearPathRoot;
 	public boolean canBeCleared = !RT.booleanCast(getCompilerOption(disableLocalsClearingKey));
 	public boolean recurMistmatch = false;
@@ -5829,7 +5830,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
 		public Expr parse(C context, Object frms) {
 			ISeq forms = (ISeq) frms;
 			if(Util.equals(RT.first(forms), DO))
-				forms = RT.next(forms);
+				forms = RT.next(forms);//如果开头是do，去掉do
 			PersistentVector exprs = PersistentVector.EMPTY;
 			for(; forms != null; forms = forms.next())
 				{
@@ -5845,7 +5846,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
 			return new BodyExpr(exprs);
 		}
 	}
-
+	//求值body中的所有表达式，返回最后一个表达式的值
 	public Object eval() {
 		Object ret = null;
 		for(Object o : exprs)
@@ -5892,7 +5893,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
 		return (Expr) exprs.nth(exprs.count() - 1);
 	}
 }
-
+//本地绑定和它的初始值
 public static class BindingInit{
 	LocalBinding binding;
 	Expr init;
@@ -6052,14 +6053,14 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 			ISeq form = (ISeq) frm;
 			//(let [var val var2 val2 ...] body...)
 			boolean isLoop = RT.first(form).equals(LOOP);
-			if(!(RT.second(form) instanceof IPersistentVector))
+			if(!(RT.second(form) instanceof IPersistentVector))//第二个元素必须是向量（绑定列表）
 				throw new IllegalArgumentException("Bad binding form, expected vector");
 
 			IPersistentVector bindings = (IPersistentVector) RT.second(form);
 			if((bindings.count() % 2) != 0)
 				throw new IllegalArgumentException("Bad binding form, expected matched symbol expression pairs");
 
-			ISeq body = RT.next(RT.next(form));
+			ISeq body = RT.next(RT.next(form));//绑定列表之后的部分
 
 			if(context == C.EVAL
 			   || (context == C.EXPRESSION && isLoop))
@@ -6071,7 +6072,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 			IPersistentVector recurMismatches = PersistentVector.EMPTY;
 			for (int i = 0; i < bindings.count()/2; i++)
 				{
-				recurMismatches = recurMismatches.cons(RT.F);
+				recurMismatches = recurMismatches.cons(RT.F);//false向量
 				}
 
 			//may repeat once for each binding with a mismatch, return breaks
@@ -6095,13 +6096,13 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 					PersistentVector loopLocals = PersistentVector.EMPTY;
 					for(int i = 0; i < bindings.count(); i += 2)
 						{
-						if(!(bindings.nth(i) instanceof Symbol))
+						if(!(bindings.nth(i) instanceof Symbol))//绑定向量的奇位置必须是符号
 							throw new IllegalArgumentException(
 									"Bad binding form, expected symbol, got: " + bindings.nth(i));
 						Symbol sym = (Symbol) bindings.nth(i);
-						if(sym.getNamespace() != null)
+						if(sym.getNamespace() != null)//符号必须是无限定的
 							throw Util.runtimeException("Can't let qualified name: " + sym);
-						Expr init = analyze(C.EXPRESSION, bindings.nth(i + 1), sym.name);
+						Expr init = analyze(C.EXPRESSION, bindings.nth(i + 1), sym.name);//解析绑定向量的偶位置（表达式）
 						if(isLoop)
 							{
 							if(recurMismatches != null && RT.booleanCast(recurMismatches.nth(i/2)))
@@ -6137,7 +6138,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 							if(isLoop)
 							    Var.popThreadBindings();
 							}
-						}
+						}//end for (bindings)
 					if(isLoop)
 						LOOP_LOCALS.set(loopLocals);
 					Expr bodyExpr;
@@ -6589,7 +6590,7 @@ public static Object preserveTag(ISeq src, Object dst) {
 	}
 	return dst;
 }
-
+//宏展开
 public static Object macroexpand1(Object x) {
 	if(x instanceof ISeq)
 		{
@@ -6621,7 +6622,7 @@ public static Object macroexpand1(Object x) {
 							throw (CompilerException) e;
 					}
 			}
-		else
+		else//java方法（实例方法或静态方法）
 			{
 			if(op instanceof Symbol)
 				{
