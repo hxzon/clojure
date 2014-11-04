@@ -100,11 +100,11 @@ static
 
 	//跟在井号之后的读取器宏
 	dispatchMacros['^'] = new MetaReader();//元数据读取器
-	dispatchMacros['\''] = new VarReader();
+	dispatchMacros['\''] = new VarReader();//#'a，即(var a)
 	dispatchMacros['"'] = new RegexReader();
 	dispatchMacros['('] = new FnReader();//函数字面量读取器
 	dispatchMacros['{'] = new SetReader();
-	dispatchMacros['='] = new EvalReader();
+	dispatchMacros['='] = new EvalReader();//#=
 	dispatchMacros['!'] = new CommentReader();
 	dispatchMacros['<'] = new UnreadableReader();
 	dispatchMacros['_'] = new DiscardReader();
@@ -316,7 +316,7 @@ static private Object interpretToken(String s) {
 	throw Util.runtimeException("Invalid token: " + s);
 }
 
-
+//返回null，关键字，或符号
 private static Object matchSymbol(String s){
 	Matcher m = symbolPat.matcher(s);
 	if(m.matches())
@@ -329,7 +329,7 @@ private static Object matchSymbol(String s){
 		   || s.indexOf("::", 1) != -1)
 			return null;
 		if(s.startsWith("::"))
-			{
+			{//以两个冒号开头，不含斜杠，表示是当前命名空间的关键字，含斜杠，表示特定命名空间的关键字
 			Symbol ks = Symbol.intern(s.substring(2));
 			Namespace kns;
 			if(ks.ns != null)
@@ -342,11 +342,11 @@ private static Object matchSymbol(String s){
 			else
 				return null;
 			}
-		boolean isKeyword = s.charAt(0) == ':';//以冒号开头的为关键字
+		boolean isKeyword = s.charAt(0) == ':';//以单个冒号开头的为关键字
 		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));
 		if(isKeyword)
 			return Keyword.intern(sym);
-		return sym;
+		return sym;//返回符号
 		}
 	return null;
 }
@@ -416,7 +416,7 @@ static private boolean isMacro(int ch){
 static private boolean isTerminatingMacro(int ch){
 	return (ch != '#' && ch != '\'' && ch != '%' && isMacro(ch));
 }
-
+//=====================================
 public static class RegexReader extends AFn{
 	static StringReader stringrdr = new StringReader();
 
@@ -557,7 +557,7 @@ public static class DeprecatedWrappingReader extends AFn{
 	}
 
 }
-
+// #'a 转成 (var a)
 public static class VarReader extends AFn{
 	public Object invoke(Object reader, Object quote) {
 		PushbackReader r = (PushbackReader) reader;
@@ -1015,7 +1015,7 @@ static class CtorReader extends AFn{
 	}
 }
 */
-
+// #= 读取期求值？
 public static class EvalReader extends AFn{
 	public Object invoke(Object reader, Object eq) {
 		if (!RT.booleanCast(RT.READEVAL.deref()))
@@ -1032,17 +1032,17 @@ public static class EvalReader extends AFn{
 		else if(o instanceof IPersistentList)
 			{
 			Symbol fs = (Symbol) RT.first(o);
-			if(fs.equals(THE_VAR))
+			if(fs.equals(THE_VAR))//(var a) 取得Var本身
 				{
 				Symbol vs = (Symbol) RT.second(o);
 				return RT.var(vs.ns, vs.name);  //Compiler.resolve((Symbol) RT.second(o),true);
 				}
-			if(fs.name.endsWith("."))
+			if(fs.name.endsWith("."))//java构造函数
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeConstructor(RT.classForName(fs.name.substring(0, fs.name.length() - 1)), args);
 				}
-			if(Compiler.namesStaticMember(fs))
+			if(Compiler.namesStaticMember(fs))//java静态方法
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeStaticMethod(fs.ns, fs.name, args);

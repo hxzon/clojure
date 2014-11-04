@@ -190,7 +190,7 @@ final public Object get(){
 		return root;
 	return deref();
 }
-
+//优先线程绑定值，再根值
 final public Object deref(){
 	TBox b = getThreadBinding();
 	if(b != null)

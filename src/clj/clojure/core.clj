@@ -4152,7 +4152,7 @@ defmacro (fn [&form &env
       (let [ss (map seq (conj colls c2 c1))]
         (when (every? identity ss)
           (concat (map first ss) (apply interleave (map rest ss))))))))
-
+; 优先线程绑定值，再根值
 (defn var-get
   "Gets the value in the var object"
   {:added "1.0"

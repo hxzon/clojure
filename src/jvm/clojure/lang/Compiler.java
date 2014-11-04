@@ -101,7 +101,7 @@ static final Symbol IN_NS = Symbol.intern("in-ns");
 //static final Symbol IFN = Symbol.intern("clojure.lang", "IFn");
 
 static final public IPersistentMap specials = PersistentHashMap.create(
-		DEF, new DefExpr.Parser(),
+		DEF, new DefExpr.Parser(),//(def x y)
 		LOOP, new LetExpr.Parser(),
 		RECUR, new RecurExpr.Parser(),
 		IF, new IfExpr.Parser(),
@@ -111,7 +111,7 @@ static final public IPersistentMap specials = PersistentHashMap.create(
 		DO, new BodyExpr.Parser(),
 		FN, null,
 		QUOTE, new ConstantExpr.Parser(),
-		THE_VAR, new TheVarExpr.Parser(),
+		THE_VAR, new TheVarExpr.Parser(),//(var a)
 		IMPORT, new ImportExpr.Parser(),
 		DOT, new HostExpr.Parser(),
 		ASSIGN, new AssignExpr.Parser(),
@@ -385,7 +385,8 @@ static Symbol resolveSymbol(Symbol sym){
 	return null;
 
 }
-
+//=========================
+// (def sym "doc string" initExpr)
 static class DefExpr implements Expr{
 	public final Var var;
 	public final Expr init;
@@ -498,7 +499,7 @@ static class DefExpr implements Expr{
 			//(def x) or (def x initexpr) or (def x "docstring" initexpr)
 			String docstring = null;
 			if(RT.count(form) == 4 && (RT.third(form) instanceof String)) {
-				docstring = (String) RT.third(form);
+				docstring = (String) RT.third(form);//文档字符串
 				form = RT.list(RT.first(form), RT.second(form), RT.fourth(form));
 			}
 			if(RT.count(form) > 3)
@@ -507,7 +508,7 @@ static class DefExpr implements Expr{
 				throw Util.runtimeException("Too few arguments to def");
 			else if(!(RT.second(form) instanceof Symbol))
 					throw Util.runtimeException("First argument to def must be a Symbol");
-			Symbol sym = (Symbol) RT.second(form);
+			Symbol sym = (Symbol) RT.second(form);//(def sym initExpr)
 			Var v = lookupVar(sym, true);
 			if(v == null)
 				throw Util.runtimeException("Can't refer to qualified var that doesn't exist");
@@ -528,7 +529,7 @@ static class DefExpr implements Expr{
 			if(isDynamic)
 			   v.setDynamic();
             if(!isDynamic && sym.name.startsWith("*") && sym.name.endsWith("*") && sym.name.length() > 2)
-                {
+                {//不是动态Var，却使用“护耳命名”，发出警告。
                 RT.errPrintWriter().format("Warning: %1$s not declared dynamic and thus is not dynamically rebindable, "
                                           +"but its name suggests otherwise. Please either indicate ^:dynamic %1$s or change the name. (%2$s:%3$d)\n",
                                            sym, SOURCE_PATH.get(), LINE.get());
@@ -539,7 +540,7 @@ static class DefExpr implements Expr{
 				//vm = (IPersistentMap) RT.assoc(vm,staticKey,RT.T);
 				//drop quote
 				vm = (IPersistentMap) RT.assoc(vm,arglistsKey,RT.second(mm.valAt(arglistsKey)));
-				v.setMeta(vm);
+				v.setMeta(vm);//hxzon注意：sym的arglists元数据，加入到Var
 				}
             Object source_path = SOURCE_PATH.get();
             source_path = source_path == null ? "NO_SOURCE_FILE" : source_path;
@@ -558,7 +559,8 @@ static class DefExpr implements Expr{
             mm = (IPersistentMap) elideMeta(mm);
 			Expr meta = mm.count()==0 ? null:analyze(context == C.EVAL ? context : C.EXPRESSION, mm);
 			return new DefExpr((String) SOURCE.deref(), lineDeref(), columnDeref(),
-			                   v, analyze(context == C.EVAL ? context : C.EXPRESSION, RT.third(form), v.sym.name),
+			                   v, //解析 initExpr（即Var的根值）
+			                   analyze(context == C.EVAL ? context : C.EXPRESSION, RT.third(form), v.sym.name),
 			                   meta, RT.count(form) == 3, isDynamic);
 		}
 	}
@@ -614,7 +616,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 	}
 
 	public Object eval() {
-		return var.deref();
+		return var.deref();//优先线程绑定值，再根值
 	}
 
 	public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -646,7 +648,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 			gen.pop();
 	}
 }
-
+//(var a) 获得符号所对应的Var
 public static class TheVarExpr implements Expr{
 	public final Var var;
 
@@ -674,7 +676,7 @@ public static class TheVarExpr implements Expr{
 
 	static class Parser implements IParser{
 		public Expr parse(C context, Object form) {
-			Symbol sym = (Symbol) RT.second(form);
+			Symbol sym = (Symbol) RT.second(form);//(var sym)
 			Var v = lookupVar(sym, false);
 			if(v != null)
 				return new TheVarExpr(v);
@@ -3574,7 +3576,7 @@ static class InvokeExpr implements Expr{
 		    Object sigTag = null;
 		    for(ISeq s = RT.seq(arglists); s != null; s = s.next()) {
                 APersistentVector sig = (APersistentVector) s.first();
-                int restOffset = sig.indexOf(_AMP_);
+                int restOffset = sig.indexOf(_AMP_);//“剩余参数”
                 if (args.count() == sig.count() || (restOffset > -1 && args.count() >= restOffset)) {
                     sigTag = tagOf(sig);
                     break;
@@ -3586,7 +3588,7 @@ static class InvokeExpr implements Expr{
 		    this.tag = null;
 		}
 	}
-
+	// fexpr 求值成函数，并调用该函数
 	public Object eval() {
 		try
 			{
@@ -6036,9 +6038,9 @@ public static class LetFnExpr implements Expr{
 		return body.getJavaClass();
 	}
 }
-
+// let 或 loop
 public static class LetExpr implements Expr, MaybePrimitiveExpr{
-	public final PersistentVector bindingInits;
+	public final PersistentVector bindingInits;//本地绑定向量
 	public final Expr body;
 	public final boolean isLoop;
 
@@ -6127,7 +6129,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 	                                       NO_RECUR, null));
 
 								}
-							LocalBinding lb = registerLocal(sym, tagOf(sym), init,false);
+							LocalBinding lb = registerLocal(sym, tagOf(sym), init,false);//hxzon：类型提示
 							BindingInit bi = new BindingInit(lb, init);
 							bindingInits = bindingInits.cons(bi);
 							if(isLoop)
@@ -6882,8 +6884,8 @@ static void addParameterAnnotation(Object visitor, IPersistentMap meta, int i){
 private static Expr analyzeSymbol(Symbol sym) {
 	Symbol tag = tagOf(sym);
 	if(sym.ns == null) //ns-qualified syms are always Vars
-		{
-		LocalBinding b = referenceLocal(sym);
+		{//无限定的符号，总是Var
+		LocalBinding b = referenceLocal(sym);//检查是否是本地绑定
 		if(b != null)
             {
             return new LocalBindingExpr(b, tag);
@@ -6913,14 +6915,14 @@ private static Expr analyzeSymbol(Symbol sym) {
 		Var v = (Var) o;
 		if(isMacro(v) != null)
 			throw Util.runtimeException("Can't take value of a macro: " + v);
-		if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))
+		if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))//如果是常量
 			return analyze(C.EXPRESSION, RT.list(QUOTE, v.get()));
 		registerVar(v);
 		return new VarExpr(v, tag);
 		}
 	else if(o instanceof Class)
 		return new ConstantExpr(o);
-	else if(o instanceof Symbol)
+	else if(o instanceof Symbol)//不是Var，也不是类名，抛出异常
 			return new UnresolvedVarExpr((Symbol) o);
 
 	throw Util.runtimeException("Unable to resolve symbol: " + sym + " in this context");
