@@ -6543,7 +6543,7 @@ static public class CompilerException extends RuntimeException{
 static public Var isMacro(Object op) {
 	//no local macros for now
 	if(op instanceof Symbol && referenceLocal((Symbol) op) != null)
-		return null;
+		return null;//如果是本地绑定
 	if(op instanceof Symbol || op instanceof Var)
 		{
                 Var v = (op instanceof Var) ? (Var) op : lookupVar((Symbol) op, false, false);
@@ -6594,18 +6594,18 @@ public static Object preserveTag(ISeq src, Object dst) {
 }
 //宏展开
 public static Object macroexpand1(Object x) {
-	if(x instanceof ISeq)
+	if(x instanceof ISeq)//必须是序列
 		{
 		ISeq form = (ISeq) x;
 		Object op = RT.first(form);
 		if(isSpecial(op))
 			return x;
 		//macro expansion
-		Var v = isMacro(op);
+		Var v = isMacro(op);//查找所对应的Var
 		if(v != null)
 			{
 				try
-					{
+					{//两个隐式参数 &form &env //hxzon注意：宏的执行
 						return v.applyTo(RT.cons(form,RT.cons(LOCAL_ENV.get(),form.next())));
 					}
 				catch(ArityException e)
@@ -6694,7 +6694,7 @@ private static Expr analyzeSeq(C context, ISeq form, String name) {
 			RT.map(LINE, line, COLUMN, column));
 	try
 		{
-		Object me = macroexpand1(form);//对form进行“宏展开”
+		Object me = macroexpand1(form);//hxzon注意：对form进行“宏展开”
 		if(me != form)
 			return analyze(context, me, name);
 
@@ -6751,8 +6751,8 @@ public static Object eval(Object form, boolean freshLoader) {
 		Var.pushThreadBindings(RT.map(LINE, line, COLUMN, column));
 		try
 			{
-			form = macroexpand(form);
-			if(form instanceof ISeq && Util.equals(RT.first(form), DO))
+			form = macroexpand(form);//hxzon注意：“宏展开”
+			if(form instanceof ISeq && Util.equals(RT.first(form), DO))//特殊形式“do”
 				{
 				ISeq s = RT.next(form);
 				for(; RT.next(s) != null; s = RT.next(s))
@@ -6913,7 +6913,7 @@ private static Expr analyzeSymbol(Symbol sym) {
 	if(o instanceof Var)
 		{
 		Var v = (Var) o;
-		if(isMacro(v) != null)
+		if(isMacro(v) != null)//不能是宏
 			throw Util.runtimeException("Can't take value of a macro: " + v);
 		if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))//如果是常量
 			return analyze(C.EXPRESSION, RT.list(QUOTE, v.get()));

@@ -271,6 +271,7 @@
                (recur (conj ret (first s)) (next s))
                (seq ret)))))
 
+; defn 的定义
 (def 
 
  ^{:doc "Same as (def name (fn [params* ] exprs*)) or (def
@@ -280,51 +281,58 @@
    :arglists '([name doc-string? attr-map? [params*] prepost-map? body]
                 [name doc-string? attr-map? ([params*] prepost-map? body)+ attr-map?])
    :added "1.0"}
- defn (fn defn [&form &env name & fdecl]
+
+defn (fn defn [&form &env name & fdecl]
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
-        (if (instance? clojure.lang.Symbol name)
-          nil
+       (if (instance? clojure.lang.Symbol name)        ;函数名name必须是一个符号
+         nil
           (throw (IllegalArgumentException. "First argument to defn must be a symbol")))
-        (let [m (if (string? (first fdecl))
-                  {:doc (first fdecl)}
+        (let [m (if (string? (first fdecl))     ;如果fdecl第一个元素是字符串，视为文档参数，放入m（元数据），并设为:doc元数据。
+                 {:doc (first fdecl)}
                   {})
-              fdecl (if (string? (first fdecl))
-                      (next fdecl)
+              fdecl (if (string? (first fdecl))     ;除掉fdecl开头的文档参数，如果有。
+                     (next fdecl)
                       fdecl)
-              m (if (map? (first fdecl))
-                  (conj m (first fdecl))
+              m (if (map? (first fdecl))    ;如果fdecl第一个元素是map（元数据），加入到m。
+                 (conj m (first fdecl))
                   m)
-              fdecl (if (map? (first fdecl))
-                      (next fdecl)
+              fdecl (if (map? (first fdecl))    ;除掉fdecl开头的map（元数据），如果有。
+                     (next fdecl)
                       fdecl)
-              fdecl (if (vector? (first fdecl))
-                      (list fdecl)
+              fdecl (if (vector? (first fdecl)) ;如果fdecl第一个元素是向量（参数列表），将fdecl转成列表。
+                     (list fdecl)
                       fdecl)
-              m (if (map? (last fdecl))
-                  (conj m (last fdecl))
+              m (if (map? (last fdecl))     ;如果fdecl最后一个元素是map（元数据），加入到m。
+                 (conj m (last fdecl))
                   m)
-              fdecl (if (map? (last fdecl))
-                      (butlast fdecl)
+              fdecl (if (map? (last fdecl)) ;除掉fdecl最后一个元素，如果最后一个元素是map（元数据）。
+                     (butlast fdecl)
                       fdecl)
-              m (conj {:arglists (list 'quote (sigs fdecl))} m)
-              m (let [inline (:inline m)
-                      ifn (first inline)
-                      iname (second inline)]
-                  ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
-                  (if (if (clojure.lang.Util/equiv 'fn ifn)
+              m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;添加arglists到m中。
+             m (let [inline (:inline m)    ;更新m的inline信息。
+                     ifn (first inline)    ;即“fn”这个关键字。
+                     iname (second inline)]    ;内联函数名。
+                 ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
+                 (if (if (clojure.lang.Util/equiv 'fn ifn)
                         (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
-                    (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
+                   (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
-              m (conj (if (meta name) (meta name) {}) m)]
-          (list 'def (with-meta name m)
+              m (conj (if (meta name) (meta name) {}) m)]   ;将m加入到name（函数名）的元数据中。
+;hxzon深入理解：这个宏的返回值：
+          (list 'def (with-meta name m)     ;定义Var（指向函数），带有元数据。
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
                 (cons `fn fdecl) ))))
 
-(. (var defn) (setMacro))
+(. (var defn) (setMacro))   ;将defn标记为宏。（宏的底层实现其实也是函数。）
 
+;inline信息示例：
+;{  :inline (fn [x] `(. clojure.lang.Numbers (incP ~x)))
+;   :added "1.0"}
+
+;========
 (defn to-array
   "Returns an array of Objects containing the contents of coll, which
   can be any Collection.  Maps to java.util.Collection.toArray()."
@@ -443,23 +451,25 @@ defmacro (fn [&form &env
                 name & args]
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
-                              (if (string? f)
-                                (recur (cons f p) (next args))
-                                (if (map? f)
+                              (if (string? f)    ;如果args第一个元素是字符串，视为“文档字符串”
+                                (recur (cons f p) (next args));将文档字符串加入到p，并从args中移除
+                                (if (map? f)    ;如果args第一个元素是map
                                   (recur (cons f p) (next args))
                                   p))))
-                   fdecl (loop [fd args]
+                   fdecl (loop [fd args]    ;从args移除开头的“文档字符串”和map
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
-                   fdecl (if (vector? (first fdecl))
+                   fdecl (if (vector? (first fdecl))    ;如果开头是向量（参数向量），将fdecl转成列表
                            (list fdecl)
-                           fdecl)
+                           fdecl)    ;如果开头不是向量，即有重载
+
                    add-implicit-args (fn [fd]    ;添加隐式参数
-                             (let [args (first fd)]
+                             (let [args (first fd)]    ;参数向量，取出放到 &env 中
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
+
                    add-args (fn [acc ds]
                               (if (nil? ds)
                                 acc
@@ -467,12 +477,15 @@ defmacro (fn [&form &env
                                   (if (map? d)
                                     (conj acc d)
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
+
                    fdecl (seq (add-args [] fdecl))
                    decl (loop [p prefix d fdecl]
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-               (list 'do    ;生成 (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;hxzon深入理解：
+;返回代码： (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+               (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
                      (list 'var name)))))
@@ -480,6 +493,7 @@ defmacro (fn [&form &env
 
 (. (var defmacro) (setMacro))
 
+;========
 (defmacro when
   "Evaluates test. If logical true, evaluates body in an implicit do."
   {:added "1.0"}
