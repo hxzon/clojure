@@ -135,7 +135,7 @@ NEW, new NewExpr.Parser(),
 _AMP_, null
 );
 
-private static final int MAX_POSITIONAL_ARITY = 20;
+private static final int MAX_POSITIONAL_ARITY = 20;//“必须参数”的最大数量（arity，数量）
 private static final Type OBJECT_TYPE;
 private static final Type KEYWORD_TYPE = Type.getType(Keyword.class);
 private static final Type VAR_TYPE = Type.getType(Var.class);
@@ -242,10 +242,10 @@ static final public Var ADD_ANNOTATIONS = Var.intern(Namespace.findOrCreate(Symb
                                             Symbol.intern("add-annotations"));
 
 static final public Keyword disableLocalsClearingKey = Keyword.intern("disable-locals-clearing");
-static final public Keyword elideMetaKey = Keyword.intern("elide-meta");
+static final public Keyword elideMetaKey = Keyword.intern("elide-meta");//要忽略的元数据（elide，省略）
 
 static final public Var COMPILER_OPTIONS;
-
+//获取编译器参数
 static public Object getCompilerOption(Keyword k){
 	return RT.get(COMPILER_OPTIONS.deref(),k);
 }
@@ -272,7 +272,7 @@ static public Object getCompilerOption(Keyword k){
 
     static Object elideMeta(Object m){
         Collection<Object> elides = (Collection<Object>) getCompilerOption(elideMetaKey);
-        if(elides != null)
+        if(elides != null)//要忽略的元数据的键名
             {
             for(Object k : elides)
                 {
@@ -302,7 +302,7 @@ static final public Var COLUMN_BEFORE = Var.create(0).setDynamic();
 static final public Var LINE_AFTER = Var.create(0).setDynamic();
 static final public Var COLUMN_AFTER = Var.create(0).setDynamic();
 
-//Integer
+//Integer 下一个本地绑定位置号
 static final public Var NEXT_LOCAL_NUM = Var.create(0).setDynamic();
 
 //Integer
@@ -322,16 +322,17 @@ static final public Var CLEAR_ROOT = Var.create(null).setDynamic();
 //LocalBinding -> Set<LocalBindingExpr>
 static final public Var CLEAR_SITES = Var.create(null).setDynamic();
 
-    public enum C{
-	STATEMENT,  //value ignored
-	EXPRESSION, //value required
+    public enum C{//form的上下文
+	STATEMENT,  //value ignored 无返回值
+	EXPRESSION, //value required 有返回值
 	RETURN,      //tail position relative to enclosing recur frame
 	EVAL
 }
 
 private class Recur {};
 static final public Class RECUR_CLASS = Recur.class;
-    
+//LispReader把文本解析成form，IParser再把form解析成Expr。
+//如果求值，调用它的eval方法，如果编译成class文件，调用它的emit方法。
 interface Expr{
 	Object eval() ;
 
@@ -341,7 +342,7 @@ interface Expr{
 
 	Class getJavaClass() ;
 }
-
+//不对应java类型的Expr
 public static abstract class UntypedExpr implements Expr{
 
 	public Class getJavaClass(){
@@ -352,7 +353,7 @@ public static abstract class UntypedExpr implements Expr{
 		return false;
 	}
 }
-
+//将form解析成Expr。
 interface IParser{
 	Expr parse(C context, Object form) ;
 }
@@ -434,13 +435,13 @@ static class DefExpr implements Expr{
 //			if(init instanceof FnExpr && ((FnExpr) init).closes.count()==0)
 //				var.bindRoot(new FnLoaderThunk((FnExpr) init,var));
 //			else
-				var.bindRoot(init.eval());
+				var.bindRoot(init.eval());//求值初始值，作为Var的根值
 				}
 			if(meta != null)
 				{
                 IPersistentMap metaMap = (IPersistentMap) meta.eval();
                 if (initProvided || true)//includesExplicitMetadata((MapExpr) meta))
-				    var.setMeta((IPersistentMap) meta.eval());
+				    var.setMeta((IPersistentMap) meta.eval());//hxzon注意：求值元数据，添加到Var上
 				}
 			return var.setDynamic(isDynamic);
 			}
@@ -524,7 +525,7 @@ static class DefExpr implements Expr{
 				else
 					throw Util.runtimeException("Can't create defs outside of current ns");
 				}
-			IPersistentMap mm = sym.meta();
+			IPersistentMap mm = sym.meta();//元数据在解析成form时，是附着在sym上的，
 			boolean isDynamic = RT.booleanCast(RT.get(mm,dynamicKey));
 			if(isDynamic)
 			   v.setDynamic();
@@ -556,8 +557,8 @@ static class DefExpr implements Expr{
 //					.without(Keyword.intern(null, "name"))
 //					.without(Keyword.intern(null, "added"))
 //					.without(Keyword.intern(null, "static"));
-            mm = (IPersistentMap) elideMeta(mm);
-			Expr meta = mm.count()==0 ? null:analyze(context == C.EVAL ? context : C.EXPRESSION, mm);
+            mm = (IPersistentMap) elideMeta(mm);//去除要忽略的元数据
+			Expr meta = mm.count()==0 ? null:analyze(context == C.EVAL ? context : C.EXPRESSION, mm);//最终调用MapExpr.parse
 			return new DefExpr((String) SOURCE.deref(), lineDeref(), columnDeref(),
 			                   v, //解析 initExpr（即Var的根值）
 			                   analyze(context == C.EVAL ? context : C.EXPRESSION, RT.third(form), v.sym.name),
@@ -565,7 +566,8 @@ static class DefExpr implements Expr{
 		}
 	}
 }
-
+//=============
+//(set! target val)
 public static class AssignExpr implements Expr{
 	public final AssignableExpr target;
 	public final Expr val;
@@ -603,7 +605,7 @@ public static class AssignExpr implements Expr{
 		}
 	}
 }
-
+//=============
 public static class VarExpr implements Expr, AssignableExpr{
 	public final Var var;
 	public final Object tag;
@@ -648,6 +650,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 			gen.pop();
 	}
 }
+//===========
 //(var a) 获得符号所对应的Var
 public static class TheVarExpr implements Expr{
 	public final Var var;
@@ -765,18 +768,18 @@ public static abstract class LiteralExpr implements Expr{
 		return val();
 	}
 }
-
+//可被赋值的Expr
 static interface AssignableExpr{
 	Object evalAssign(Expr val) ;
 
 	void emitAssign(C context, ObjExpr objx, GeneratorAdapter gen, Expr val);
 }
-
+//可能是原始类型的Expr
 static public interface MaybePrimitiveExpr extends Expr{
 	public boolean canEmitPrimitive();
 	public void emitUnboxed(C context, ObjExpr objx, GeneratorAdapter gen);
 }
-
+//宿主类型的Expr，即“点”特殊形式
 static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
 	final static Type BOOLEAN_TYPE = Type.getType(Boolean.class);
 	final static Type CHAR_TYPE = Type.getType(Character.class);
@@ -1793,7 +1796,8 @@ static class StaticMethodExpr extends MethodExpr{
 		return tag != null ? HostExpr.tagToClass(tag) : method.getReturnType();
 	}
 }
-
+//===============
+//未能识别的符号
 static class UnresolvedVarExpr implements Expr{
 	public final Symbol symbol;
 
@@ -1818,7 +1822,7 @@ static class UnresolvedVarExpr implements Expr{
 				"UnresolvedVarExpr cannot be evalled");
 	}
 }
-
+//=============
 static class NumberExpr extends LiteralExpr implements MaybePrimitiveExpr{
 	final Number n;
 	public final int id;
@@ -1894,7 +1898,7 @@ static class ConstantExpr extends LiteralExpr{
 	}
 
 	Object val(){
-		return v;
+		return v;//eval() 求值成v
 	}
 
 	public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -2772,7 +2776,7 @@ public static class IfExpr implements Expr, MaybePrimitiveExpr{
 		}
 	}
 }
-
+//clojure符号中的某些字符，在jvm字节码中是不允许的。通过此映射进行转换。
 static final public IPersistentMap CHAR_MAP =
 		PersistentHashMap.create('-', "_",
 //		                         '.', "_DOT_",
@@ -2875,7 +2879,7 @@ static public String demunge(String mungedName){
 	sb.append(mungedName.substring(lastMatchEnd));
 	return sb.toString();
 }
-
+//============
 public static class EmptyExpr implements Expr{
 	public final Object coll;
 	final static Type HASHMAP_TYPE = Type.getType(PersistentArrayMap.class);
@@ -2927,7 +2931,7 @@ public static class EmptyExpr implements Expr{
 					throw new UnsupportedOperationException("Unknown Collection type");
 	}
 }
-
+//===========
 public static class ListExpr implements Expr{
 	public final IPersistentVector args;
 	final static Method arrayToListMethod = Method.getMethod("clojure.lang.ISeq arrayToList(Object[])");
@@ -2962,7 +2966,7 @@ public static class ListExpr implements Expr{
 }
 
 public static class MapExpr implements Expr{
-	public final IPersistentVector keyvals;
+	public final IPersistentVector keyvals;//元素都是Expr
 	final static Method mapMethod = Method.getMethod("clojure.lang.IPersistentMap map(Object[])");
 	final static Method mapUniqueKeysMethod = Method.getMethod("clojure.lang.IPersistentMap mapUniqueKeys(Object[])");
 
@@ -3787,7 +3791,7 @@ static public class FnExpr extends ObjExpr{
 	final static Type aFnType = Type.getType(AFunction.class);
 	final static Type restFnType = Type.getType(RestFn.class);
 	//if there is a variadic overload (there can only be one) it is stored here
-	FnMethod variadicMethod = null;//不定参数
+	FnMethod variadicMethod = null;//不定参数函数
 	IPersistentCollection methods;//重载函数
 	private boolean hasPrimSigs;
 	private boolean hasMeta;
@@ -4010,9 +4014,9 @@ static public class FnExpr extends ObjExpr{
 
 static public class ObjExpr implements Expr{
 	static final String CONST_PREFIX = "const__";
-	String name;
+	String name;//全限定类名
 	//String simpleName;
-	String internalName;
+	String internalName;//全限定类名的内部表示（即点号换成斜杠）
 	String thisName;
 	Type objtype;
 	public final Object tag;
@@ -4146,7 +4150,8 @@ static public class ObjExpr implements Expr{
 			ret[i] = (Type) tv.nth(i);
 		return ret;
 	}
-
+	//superName，如果有剩余参数，为clojure/lang/RestFn， 否则为clojure/lang/AFunction
+	//interfaceNames，实现的接口名字，由类型提示（long，double）决定
 	void compile(String superName, String[] interfaceNames, boolean oneTimeUse) throws IOException{
 		//create bytecode for a class
 		//with name current_ns.defname[$letname]+
@@ -5106,19 +5111,19 @@ static class PathNode{
 static PathNode clearPathRoot(){
     return (PathNode) CLEAR_ROOT.get();
 }
-    
+//参数解析状态，必须参数，剩余参数
 enum PSTATE{
 	REQ, REST, DONE
 }
 
 public static class FnMethod extends ObjMethod{
 	//localbinding->localbinding
-	PersistentVector reqParms = PersistentVector.EMPTY;
+	PersistentVector reqParms = PersistentVector.EMPTY;//必须参数
 	LocalBinding restParm = null;//剩余参数
 	Type[] argtypes;
 	Class[] argclasses;//参数类型
 	Class retClass;//返回值类型
-	String prim ;
+	String prim ;//函数的primitive interface(如果有的话)
 
 	public FnMethod(ObjExpr objx, ObjMethod parent){
 		super(objx, parent);
@@ -5146,7 +5151,7 @@ public static class FnMethod extends ObjMethod{
 		sb.append(classChar(tagOf(arglist)));
 		String ret = sb.toString();
 		boolean prim = ret.contains("L") || ret.contains("D");
-		if(prim && arglist.count() > 4)
+		if(prim && arglist.count() > 4)//如果参数有类型提示，那么参数个数必须在4个以内
 			throw new IllegalArgumentException("fns taking primitives support only 4 or fewer args");
 		if(prim)
 			return "clojure.lang.IFn$" + ret;
@@ -5229,7 +5234,7 @@ public static class FnMethod extends ObjMethod{
 
 					if(state == PSTATE.REST && tagOf(p) != null)
 						throw Util.runtimeException("& arg cannot have type hint");
-					if(state == PSTATE.REST && method.prim != null)
+					if(state == PSTATE.REST && method.prim != null)//如果参数有类型提示，则不支持不定参数
 						throw Util.runtimeException("fns taking primitives cannot be variadic");
 					                        
 					if(state == PSTATE.REST)
@@ -5255,7 +5260,7 @@ public static class FnMethod extends ObjMethod{
 						}
 					}
 				}
-			if(method.reqParms.count() > MAX_POSITIONAL_ARITY)
+			if(method.reqParms.count() > MAX_POSITIONAL_ARITY)//“必须参数”的个数不能超过20
 				throw Util.runtimeException("Can't specify more than " + MAX_POSITIONAL_ARITY + " params");
 			LOOP_LOCALS.set(argLocals);
 			method.argLocals = argLocals;
@@ -6583,7 +6588,7 @@ static public IFn isInline(Object op, int arity) {
 public static boolean namesStaticMember(Symbol sym){
 	return sym.ns != null && namespaceFor(sym) == null;
 }
-
+//hxzon注意：复制类型提示
 public static Object preserveTag(ISeq src, Object dst) {
 	Symbol tag = tagOf(src);
 	if (tag != null && dst instanceof IObj) {
@@ -6682,7 +6687,7 @@ static Object macroexpand(Object form) {
 		return macroexpand(exf);
 	return form;
 }
-//对“序列形式”进行解析
+//对“序列形式”（即“调用”）进行解析
 private static Expr analyzeSeq(C context, ISeq form, String name) {
 	Object line = lineDeref();
 	Object column = columnDeref();

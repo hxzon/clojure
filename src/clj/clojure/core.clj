@@ -299,9 +299,9 @@ defn (fn defn [&form &env name & fdecl]
               fdecl (if (map? (first fdecl))    ;除掉fdecl开头的map（元数据），如果有。
                      (next fdecl)
                       fdecl)
-              fdecl (if (vector? (first fdecl)) ;如果fdecl第一个元素是向量（参数列表），将fdecl转成列表。
+              fdecl (if (vector? (first fdecl)) ;如果fdecl第一个元素是向量（参数列表，即没有重载），将fdecl转成列表。
                      (list fdecl)
-                      fdecl)
+                      fdecl)  ;有重载
               m (if (map? (last fdecl))     ;如果fdecl最后一个元素是map（元数据），加入到m。
                  (conj m (last fdecl))
                   m)
@@ -462,7 +462,7 @@ defmacro (fn [&form &env
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
-                   fdecl (if (vector? (first fdecl))    ;如果开头是向量（参数向量），将fdecl转成列表
+                   fdecl (if (vector? (first fdecl))    ;如果开头是向量（参数向量，即没有重载），将fdecl转成列表
                            (list fdecl)
                            fdecl)    ;如果开头不是向量，即有重载
 
@@ -485,6 +485,7 @@ defmacro (fn [&form &env
                             d))]
 ;hxzon深入理解：
 ;返回代码： (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;等同于定义一个函数，但是将函数标记为宏，且添加两个隐式参数。
                (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
