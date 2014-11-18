@@ -2243,7 +2243,7 @@ public static class TryExpr implements Expr{
                                                     Var.popThreadBindings();
                                                 }
 					if(Util.equals(op, CATCH))
-						{
+						{// (catch class sym expr*)
 						Class c = HostExpr.maybeClass(RT.second(f), false);
 						if(c == null)
 							throw new IllegalArgumentException("Unable to resolve classname: " + RT.second(f));
@@ -3835,6 +3835,26 @@ static public class FnExpr extends ObjExpr{
 			}
 	}
 
+//  (def
+//  ^{:arglists '([x seq])
+//     :doc "Returns a new seq where x is the first element and seq is
+//     the rest."
+//    :added "1.0"
+//    :static true}
+//
+//  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))  
+
+//(def
+//  ^{:macro true
+//    :added "1.0"}
+//  let (fn* let [&form &env & decl] (cons 'let* decl)))
+
+//(def
+//  ^{:macro true
+//    :added "1.0"}
+//  fn (fn* fn [&form &env & decl] 
+//          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
+//                     (.meta ^clojure.lang.IMeta &form))))
 	static Expr parse(C context, ISeq form, String name) {
 		ISeq origForm = form;
 		FnExpr fn = new FnExpr(tagOf(form));
@@ -3853,7 +3873,7 @@ static public class FnExpr extends ObjExpr{
 
 		Symbol nm = null;
 
-		if(RT.second(form) instanceof Symbol) {
+		if(RT.second(form) instanceof Symbol) {//第二个元素如果是符号，即函数内部名称
 			nm = (Symbol) RT.second(form);
 			if (name == null)
 				name = nm.name + "__" + RT.nextID();
@@ -3890,16 +3910,16 @@ static public class FnExpr extends ObjExpr{
 				{
 				fn.thisName = nm.name;
 				fn.isStatic = false; //RT.booleanCast(RT.get(nm.meta(), staticKey));
-				form = RT.cons(FN, RT.next(RT.next(form)));
+				form = RT.cons(FN, RT.next(RT.next(form)));//移掉了函数内部名称
 				}
 
 			//now (fn [args] body...) or (fn ([args] body...) ([args2] body2...) ...)
 			//turn former into latter
-			if(RT.second(form) instanceof IPersistentVector)
-				form = RT.list(FN, RT.next(form));
+			if(RT.second(form) instanceof IPersistentVector)//如果第二个元素是向量（参数向量），即没有重载
+				form = RT.list(FN, RT.next(form));//转成重载形式
 			fn.line = lineDeref();
 			fn.column = columnDeref();
-			FnMethod[] methodArray = new FnMethod[MAX_POSITIONAL_ARITY + 1];
+			FnMethod[] methodArray = new FnMethod[MAX_POSITIONAL_ARITY + 1];//重载函数映射：参数个数->函数
 			FnMethod variadicMethod = null;
 			for(ISeq s = RT.next(form); s != null; s = RT.next(s))
 				{
@@ -3926,7 +3946,7 @@ static public class FnExpr extends ObjExpr{
 								"Can't have fixed arity function with more params than variadic function");
 				}
 
-			if(fn.isStatic && fn.closes.count() > 0)
+			if(fn.isStatic && fn.closes.count() > 0)//静态函数不能捕捉变量
 				throw new IllegalArgumentException("static fns can't be closures");
 			IPersistentCollection methods = null;
 			for(int i = 0; i < methodArray.length; i++)
@@ -3935,7 +3955,7 @@ static public class FnExpr extends ObjExpr{
 			if(variadicMethod != null)
 				methods = RT.conj(methods, variadicMethod);
 
-			fn.methods = methods;
+			fn.methods = methods;//所有重载函数，不定参数在最后
 			fn.variadicMethod = variadicMethod;
 			fn.keywords = (IPersistentMap) KEYWORDS.deref();
 			fn.vars = (IPersistentMap) VARS.deref();
