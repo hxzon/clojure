@@ -328,24 +328,26 @@ private static Object matchSymbol(String s){
 		   || name.endsWith(":")
 		   || s.indexOf("::", 1) != -1)
 			return null;
+		//hxzon：(= :x ::x) false，一个无命名空间，一个当前命名空间
+		// (= :clojure.core/y ::clojure.core/y) true
 		if(s.startsWith("::"))
 			{//以两个冒号开头，不含斜杠，表示是当前命名空间的关键字，含斜杠，表示特定命名空间的关键字
 			Symbol ks = Symbol.intern(s.substring(2));
 			Namespace kns;
-			if(ks.ns != null)
+			if(ks.ns != null)//::x/y时，ks.ns=x
 				kns = Compiler.namespaceFor(ks);
 			else
 				kns = Compiler.currentNS();
 			//auto-resolving keyword
 			if (kns != null)
-				return Keyword.intern(kns.name.name,ks.name);
+				return Keyword.intern(kns.name.name,ks.name);//当命名空间存在时，例如::clojure.core/y
 			else
-				return null;
+				return null;//当命名空间x不存在时，返回null
 			}
 		boolean isKeyword = s.charAt(0) == ':';//以单个冒号开头的为关键字
-		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));
+		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));//一个新的Symbol对象,new Symbol(xxx)
 		if(isKeyword)
-			return Keyword.intern(sym);
+			return Keyword.intern(sym);//查找或创建关键字
 		return sym;//返回符号
 		}
 	return null;

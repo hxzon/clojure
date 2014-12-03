@@ -6984,7 +6984,7 @@ static Namespace namespaceFor(Namespace inns, Symbol sym){
 	//note, presumes non-nil sym.ns
 	// first check against currentNS' aliases...
 	Symbol nsSym = Symbol.intern(sym.ns);
-	Namespace ns = inns.lookupAlias(nsSym);
+	Namespace ns = inns.lookupAlias(nsSym);//先在别名中找
 	if(ns == null)
 		{
 		// ...otherwise check the Namespaces map.

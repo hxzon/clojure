@@ -36,7 +36,7 @@ public static Keyword intern(Symbol sym){
 		{
 		Util.clearCache(rq, table);
 		if(sym.meta() != null)
-			sym = (Symbol) sym.withMeta(null);
+			sym = (Symbol) sym.withMeta(null);//清除元数据
 		k = new Keyword(sym);
 		existingRef = table.putIfAbsent(sym, new WeakReference<Keyword>(k, rq));
 		}
@@ -47,7 +47,7 @@ public static Keyword intern(Symbol sym){
 		return existingk;
 	//entry died in the interim, do over
 	table.remove(sym, existingRef);
-	return intern(sym);
+	return intern(sym);//递归调用
 }
 
 public static Keyword intern(String ns, String name){
