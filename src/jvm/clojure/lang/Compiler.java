@@ -577,8 +577,8 @@ public static class AssignExpr implements Expr{
 		this.val = val;
 	}
 
-	public Object eval() {
-		return target.evalAssign(val);
+	public Object eval() {//InstanceFieldExpr,StaticFieldExpr,
+		return target.evalAssign(val);//VarExpr（设置本线程绑定值）,LocalBindingExpr（不支持）
 	}
 
 	public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -638,7 +638,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 	}
 
 	public Object evalAssign(Expr val) {
-		return var.set(val.eval());
+		return var.set(val.eval());//设置本线程的绑定值
 	}
 
 	public void emitAssign(C context, ObjExpr objx, GeneratorAdapter gen,

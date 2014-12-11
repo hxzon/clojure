@@ -208,7 +208,7 @@ public Object alter(IFn fn, ISeq args) {
 	set(fn.applyTo(RT.cons(deref(), args)));
 	return this;
 }
-//设置线程绑定值
+//设置本线程绑定值
 public Object set(Object val){
 	validate(getValidator(), val);
 	TBox b = getThreadBinding();
