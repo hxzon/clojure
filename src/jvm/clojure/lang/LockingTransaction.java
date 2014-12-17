@@ -22,15 +22,15 @@ import java.util.concurrent.CountDownLatch;
 @SuppressWarnings({"SynchronizeOnNonFinalField"})
 public class LockingTransaction{
 
-public static final int RETRY_LIMIT = 10000;
+public static final int RETRY_LIMIT = 10000;//最大重试次数
 public static final int LOCK_WAIT_MSECS = 100;
 public static final long BARGE_WAIT_NANOS = 10 * 1000000;
 //public static int COMMUTE_RETRY_LIMIT = 10;
-
+//事务状态
 static final int RUNNING = 0;
 static final int COMMITTING = 1;
 static final int RETRY = 2;
-static final int KILLED = 3;
+static final int KILLED = 3;//被别的事务杀死
 static final int COMMITTED = 4;
 
 final static ThreadLocal<LockingTransaction> transaction = new ThreadLocal<LockingTransaction>();
@@ -41,9 +41,9 @@ static class RetryEx extends Error{
 
 static class AbortException extends Exception{
 }
-
+//事务信息
 public static class Info{
-	final AtomicInteger status;
+	final AtomicInteger status;//事务状态
 	final long startPoint;
 	final CountDownLatch latch;
 
@@ -71,12 +71,14 @@ static class CFn{
 }
 //total order on transactions
 //transactions will consume a point for init, for each retry, and on commit if writing
+//在事务中的序号
+//事务每次初始化，每次重试，每次写提交，都会消耗一个“检查点”
 final private static AtomicLong lastPoint = new AtomicLong();
-
+//设置“读取点”
 void getReadPoint(){
 	readPoint = lastPoint.incrementAndGet();
 }
-
+//每次提交，都会递增“检查点”
 long getCommitPoint(){
 	return lastPoint.incrementAndGet();
 }
@@ -99,15 +101,20 @@ void stop(int status){
 
 
 Info info;
-long readPoint;
-long startPoint;
-long startTime;
+long readPoint;//读取点
+long startPoint;//事务开始点
+long startTime;//事务开始时间
 final RetryEx retryex = new RetryEx();
+//存储所有 agent 动作，在事务提交时，才执行。
 final ArrayList<Agent.Action> actions = new ArrayList<Agent.Action>();
+//记录所有被更新的 ref，以及要提交的值
 final HashMap<Ref, Object> vals = new HashMap<Ref, Object>();
+//记录所有用到的 ref
 final HashSet<Ref> sets = new HashSet<Ref>();
+//存储所有 commute ，在事务提交时，会重新执行一遍
+//在 commute 之后，不能再更新该 ref
 final TreeMap<Ref, ArrayList<CFn>> commutes = new TreeMap<Ref, ArrayList<CFn>>();
-
+//记录所有被 ensure 的 ref
 final HashSet<Ref> ensures = new HashSet<Ref>();   //all hold readLock
 
 
@@ -126,6 +133,7 @@ void tryWriteLock(Ref ref){
 //returns the most recent val
 Object lock(Ref ref){
 	//can't upgrade readLock, so release it
+    //不能直接升级读锁成写锁，所以先释放它
 	releaseIfEnsured(ref);
 
 	boolean unlocked = true;
@@ -133,22 +141,22 @@ Object lock(Ref ref){
 		{
 		tryWriteLock(ref);
 		unlocked = false;
-
+		//ref已经被别的事务更新，重试
 		if(ref.tvals != null && ref.tvals.point > readPoint)
 			throw retryex;
 		Info refinfo = ref.tinfo;
 
 		//write lock conflict
 		if(refinfo != null && refinfo != info && refinfo.running())
-			{
-			if(!barge(refinfo))
+			{//已经有别的事务在运行
+			if(!barge(refinfo))//没有抢占成功
 				{
 				ref.lock.writeLock().unlock();
 				unlocked = true;
 				return blockAndBail(refinfo);
 				}
 			}
-		ref.tinfo = info;
+		ref.tinfo = info;//设置ref，本事务在运行
 		return ref.tvals == null ? null : ref.tvals.val;
 		}
 	finally
@@ -157,7 +165,8 @@ Object lock(Ref ref){
 			ref.lock.writeLock().unlock();
 		}
 }
-
+//bail,vt.保释，帮助脱离困境；将（财物）委托给…；往外舀水
+//暂停，稍后重试
 private Object blockAndBail(Info refinfo){
 //stop prior to blocking
 	stop(RETRY);
@@ -188,11 +197,12 @@ void abort() throws AbortException{
 private boolean bargeTimeElapsed(){
 	return System.nanoTime() - startTime > BARGE_WAIT_NANOS;
 }
-
+//barge，闯入，这里是抢占执行权
 private boolean barge(Info refinfo){
 	boolean barged = false;
 	//if this transaction is older
 	//  try to abort the other
+	//如果本事务比较老，杀死其它事务
 	if(bargeTimeElapsed() && startPoint < refinfo.startPoint)
 		{
         barged = refinfo.status.compareAndSet(RUNNING, KILLED);
@@ -201,7 +211,7 @@ private boolean barge(Info refinfo){
 		}
 	return barged;
 }
-
+//获取所在事务（没有事务则抛出异常）
 static LockingTransaction getEx(){
 	LockingTransaction t = transaction.get();
 	if(t == null || t.info == null)
@@ -212,14 +222,14 @@ static LockingTransaction getEx(){
 static public boolean isRunning(){
 	return getRunning() != null;
 }
-
+//获取所在事务（可能不在事务中）
 static LockingTransaction getRunning(){
 	LockingTransaction t = transaction.get();
 	if(t == null || t.info == null)
 		return null;
 	return t;
 }
-
+//在事务中执行操作
 static public Object runInTransaction(Callable fn) throws Exception{
 	LockingTransaction t = transaction.get();
 	Object ret;
@@ -252,26 +262,27 @@ static class Notify{
 		this.newval = newval;
 	}
 }
-
+//dosync里的代码，被封装成一个匿名函数，即这里的参数fn
 Object run(Callable fn) throws Exception{
 	boolean done = false;
 	Object ret = null;
-	ArrayList<Ref> locked = new ArrayList<Ref>();
-	ArrayList<Notify> notify = new ArrayList<Notify>();
+	ArrayList<Ref> locked = new ArrayList<Ref>();//记录所有被锁住的ref
+	ArrayList<Notify> notify = new ArrayList<Notify>();//记录所有的修改通知
 
-	for(int i = 0; !done && i < RETRY_LIMIT; i++)
+	for(int i = 0; !done && i < RETRY_LIMIT; i++)//重试，直到超过最大重试次数
 		{
 		try
 			{
-			getReadPoint();
+			getReadPoint();//设置读取点
 			if(i == 0)
 				{
-				startPoint = readPoint;
+				startPoint = readPoint;//设置开始点
 				startTime = System.nanoTime();
 				}
 			info = new Info(RUNNING, startPoint);
 			ret = fn.call();
 			//make sure no one has killed us before this point, and can't from now on
+			//检查事务状态，确保本事务没被别人杀死，一旦设为“提交中”，就不会再被别人杀死
 			if(info.status.compareAndSet(RUNNING, COMMITTING))
 				{
 				for(Map.Entry<Ref, ArrayList<CFn>> e : commutes.entrySet())
@@ -296,7 +307,7 @@ Object run(Callable fn) throws Exception{
 					Object val = ref.tvals == null ? null : ref.tvals.val;
 					vals.put(ref, val);
 					for(CFn f : e.getValue())
-						{
+						{//重新执行所有的 commute
 						vals.put(ref, f.fn.applyTo(RT.cons(vals.get(ref), f.args)));
 						}
 					}
@@ -315,7 +326,7 @@ Object run(Callable fn) throws Exception{
 
 				//at this point, all values calced, all refs to be written locked
 				//no more client code to be called
-				long commitPoint = getCommitPoint();
+				long commitPoint = getCommitPoint();//提交点
 				for(Map.Entry<Ref, Object> e : vals.entrySet())
 					{
 					Ref ref = e.getKey();
@@ -370,11 +381,11 @@ Object run(Callable fn) throws Exception{
 					{
 					for(Notify n : notify)
 						{
-						n.ref.notifyWatches(n.oldval, n.newval);
+						n.ref.notifyWatches(n.oldval, n.newval);//运行监视器
 						}
 					for(Agent.Action action : actions)
 						{
-						Agent.dispatchAction(action);
+						Agent.dispatchAction(action);//执行agent动作
 						}
 					}
 				}
@@ -416,22 +427,22 @@ Object doGet(Ref ref){
 		ref.lock.readLock().unlock();
 		}
 	//no version of val precedes the read point
-	ref.faults.incrementAndGet();
+	ref.faults.incrementAndGet();//读失败，递增“读失败”次数
 	throw retryex;
 
 }
 
 Object doSet(Ref ref, Object val){
-	if(!info.running())
+	if(!info.running())//本事务不在运行状态（可能被别的事务杀死），重试
 		throw retryex;
-	if(commutes.containsKey(ref))
+	if(commutes.containsKey(ref))//不能在 commute 之后设置 ref 的值
 		throw new IllegalStateException("Can't set after commute");
 	if(!sets.contains(ref))
 		{
-		sets.add(ref);
+		sets.add(ref);//记录所有用到的 ref
 		lock(ref);
 		}
-	vals.put(ref, val);
+	vals.put(ref, val);//记录所有被更新的 ref ，val 是要提交的值
 	return val;
 }
 
@@ -443,6 +454,7 @@ void doEnsure(Ref ref){
 	ref.lock.readLock().lock();
 
 	//someone completed a write after our snapshot
+	//有别的事务已经更新 ref，所以本事务得重试
 	if(ref.tvals != null && ref.tvals.point > readPoint) {
         ref.lock.readLock().unlock();
         throw retryex;
@@ -451,6 +463,8 @@ void doEnsure(Ref ref){
 	Info refinfo = ref.tinfo;
 
 	//writer exists
+	//检查是否有事务在修改ref，如果有，释放读锁
+	//如果修改不是来自本事务，重试
 	if(refinfo != null && refinfo.running())
 		{
 		ref.lock.readLock().unlock();
@@ -461,14 +475,14 @@ void doEnsure(Ref ref){
 			}
 		}
 	else
-		ensures.add(ref);
+		ensures.add(ref);//记录被 ensure 的 ref
 }
 
 Object doCommute(Ref ref, IFn fn, ISeq args) {
 	if(!info.running())
 		throw retryex;
 	if(!vals.containsKey(ref))
-		{
+		{//如果本事务还未用到该ref，获取读锁，读取值，释放读锁
 		Object val = null;
 		try
 			{
@@ -484,7 +498,7 @@ Object doCommute(Ref ref, IFn fn, ISeq args) {
 	ArrayList<CFn> fns = commutes.get(ref);
 	if(fns == null)
 		commutes.put(ref, fns = new ArrayList<CFn>());
-	fns.add(new CFn(fn, args));
+	fns.add(new CFn(fn, args));//记录被 commute 的 ref
 	Object ret = fn.applyTo(RT.cons(vals.get(ref), args));
 	vals.put(ref, ret);
 	return ret;
