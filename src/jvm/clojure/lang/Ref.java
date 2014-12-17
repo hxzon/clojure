@@ -46,7 +46,7 @@ public Ref setMaxHistory(int maxHistory){
 
 public static class TVal{
 	Object val;
-	long point;
+	long point;//检查点，见LockingTransaction.lastPoint
 	TVal prior;
 	TVal next;
 
@@ -68,17 +68,17 @@ public static class TVal{
 
 }
 
-TVal tvals;
-final AtomicInteger faults;
+TVal tvals;//历史值
+final AtomicInteger faults;//“读失败”的次数
 final ReentrantReadWriteLock lock;
 LockingTransaction.Info tinfo;
 //IFn validator;
-final long id;
+final long id;//版本号
 
 volatile int minHistory = 0;
 volatile int maxHistory = 10;
 
-static final AtomicLong ids = new AtomicLong();
+static final AtomicLong ids = new AtomicLong();//版本号生成器
 
 public Ref(Object initVal) {
 	this(initVal, null);

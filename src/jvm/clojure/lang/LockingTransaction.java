@@ -26,7 +26,7 @@ public static final int RETRY_LIMIT = 10000;
 public static final int LOCK_WAIT_MSECS = 100;
 public static final long BARGE_WAIT_NANOS = 10 * 1000000;
 //public static int COMMUTE_RETRY_LIMIT = 10;
-
+//事务状态
 static final int RUNNING = 0;
 static final int COMMITTING = 1;
 static final int RETRY = 2;
@@ -43,7 +43,7 @@ static class AbortException extends Exception{
 }
 
 public static class Info{
-	final AtomicInteger status;
+	final AtomicInteger status;//事务状态
 	final long startPoint;
 	final CountDownLatch latch;
 
@@ -71,8 +71,10 @@ static class CFn{
 }
 //total order on transactions
 //transactions will consume a point for init, for each retry, and on commit if writing
+//在事务中的序号
+//事务每次初始化，每次重试，每次写提交，都会消耗一个“检查点”
 final private static AtomicLong lastPoint = new AtomicLong();
-
+//设置“读取点”
 void getReadPoint(){
 	readPoint = lastPoint.incrementAndGet();
 }
@@ -99,15 +101,20 @@ void stop(int status){
 
 
 Info info;
-long readPoint;
-long startPoint;
-long startTime;
+long readPoint;//读取点
+long startPoint;//事务开始点
+long startTime;//事务开始时间
 final RetryEx retryex = new RetryEx();
+//存储所有 agent 动作，在事务提交时，才执行。
 final ArrayList<Agent.Action> actions = new ArrayList<Agent.Action>();
+//记录所有被更新的 ref
 final HashMap<Ref, Object> vals = new HashMap<Ref, Object>();
+//记录所有用到的 ref
 final HashSet<Ref> sets = new HashSet<Ref>();
+//存储所有 commute ，在事务提交时，会重新执行一遍
+//在 commute 之后，不能再更新该 ref
 final TreeMap<Ref, ArrayList<CFn>> commutes = new TreeMap<Ref, ArrayList<CFn>>();
-
+//记录所有被 ensure 的 ref
 final HashSet<Ref> ensures = new HashSet<Ref>();   //all hold readLock
 
 
@@ -201,7 +208,7 @@ private boolean barge(Info refinfo){
 		}
 	return barged;
 }
-
+//获取所在事务（没有事务则抛出异常）
 static LockingTransaction getEx(){
 	LockingTransaction t = transaction.get();
 	if(t == null || t.info == null)
@@ -212,14 +219,14 @@ static LockingTransaction getEx(){
 static public boolean isRunning(){
 	return getRunning() != null;
 }
-
+//获取所在事务（可能不在事务中）
 static LockingTransaction getRunning(){
 	LockingTransaction t = transaction.get();
 	if(t == null || t.info == null)
 		return null;
 	return t;
 }
-
+//在事务中执行操作
 static public Object runInTransaction(Callable fn) throws Exception{
 	LockingTransaction t = transaction.get();
 	Object ret;
@@ -263,10 +270,10 @@ Object run(Callable fn) throws Exception{
 		{
 		try
 			{
-			getReadPoint();
+			getReadPoint();//设置读取点
 			if(i == 0)
 				{
-				startPoint = readPoint;
+				startPoint = readPoint;//设置开始点
 				startTime = System.nanoTime();
 				}
 			info = new Info(RUNNING, startPoint);
@@ -296,7 +303,7 @@ Object run(Callable fn) throws Exception{
 					Object val = ref.tvals == null ? null : ref.tvals.val;
 					vals.put(ref, val);
 					for(CFn f : e.getValue())
-						{
+						{//重新执行所有的 commute
 						vals.put(ref, f.fn.applyTo(RT.cons(vals.get(ref), f.args)));
 						}
 					}
@@ -315,7 +322,7 @@ Object run(Callable fn) throws Exception{
 
 				//at this point, all values calced, all refs to be written locked
 				//no more client code to be called
-				long commitPoint = getCommitPoint();
+				long commitPoint = getCommitPoint();//提交点
 				for(Map.Entry<Ref, Object> e : vals.entrySet())
 					{
 					Ref ref = e.getKey();
@@ -370,11 +377,11 @@ Object run(Callable fn) throws Exception{
 					{
 					for(Notify n : notify)
 						{
-						n.ref.notifyWatches(n.oldval, n.newval);
+						n.ref.notifyWatches(n.oldval, n.newval);//运行监视器
 						}
 					for(Agent.Action action : actions)
 						{
-						Agent.dispatchAction(action);
+						Agent.dispatchAction(action);//执行agent动作
 						}
 					}
 				}
@@ -416,7 +423,7 @@ Object doGet(Ref ref){
 		ref.lock.readLock().unlock();
 		}
 	//no version of val precedes the read point
-	ref.faults.incrementAndGet();
+	ref.faults.incrementAndGet();//读失败，递增“读失败”次数
 	throw retryex;
 
 }
@@ -424,14 +431,14 @@ Object doGet(Ref ref){
 Object doSet(Ref ref, Object val){
 	if(!info.running())
 		throw retryex;
-	if(commutes.containsKey(ref))
+	if(commutes.containsKey(ref))//不能在 commute 之后设置 ref 的值
 		throw new IllegalStateException("Can't set after commute");
 	if(!sets.contains(ref))
 		{
-		sets.add(ref);
+		sets.add(ref);//记录所有用到的 ref
 		lock(ref);
 		}
-	vals.put(ref, val);
+	vals.put(ref, val);//记录所有被更新的 ref
 	return val;
 }
 
@@ -443,6 +450,7 @@ void doEnsure(Ref ref){
 	ref.lock.readLock().lock();
 
 	//someone completed a write after our snapshot
+	//有别的事务已经更新 ref，所以本事务得重试
 	if(ref.tvals != null && ref.tvals.point > readPoint) {
         ref.lock.readLock().unlock();
         throw retryex;
@@ -461,7 +469,7 @@ void doEnsure(Ref ref){
 			}
 		}
 	else
-		ensures.add(ref);
+		ensures.add(ref);//记录被 ensure 的 ref
 }
 
 Object doCommute(Ref ref, IFn fn, ISeq args) {
@@ -484,7 +492,7 @@ Object doCommute(Ref ref, IFn fn, ISeq args) {
 	ArrayList<CFn> fns = commutes.get(ref);
 	if(fns == null)
 		commutes.put(ref, fns = new ArrayList<CFn>());
-	fns.add(new CFn(fn, args));
+	fns.add(new CFn(fn, args));//记录被 commute 的 ref
 	Object ret = fn.applyTo(RT.cons(vals.get(ref), args));
 	vals.put(ref, ret);
 	return ret;
