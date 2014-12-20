@@ -13,12 +13,12 @@
 package clojure.lang;
 
 import clojure.asm.Opcodes;
-
+//Intrinsics，内联函数，这里指jvm指令
 public class Intrinsics implements Opcodes{
 private static Object[] oa(Object... arr){
 	return arr;
 }
-
+//四则运算，移位，数组操作等指令
 static IPersistentMap ops = RT.map(
  "public static double clojure.lang.Numbers.add(double,double)", DADD,
  "public static long clojure.lang.Numbers.and(long,long)", LAND,
@@ -109,7 +109,7 @@ static IPersistentMap ops = RT.map(
   "public static long clojure.lang.RT.uncheckedLongCast(long)", NOP,
   "public static long clojure.lang.RT.uncheckedLongCast(int)", I2L
 );
-
+//“比较”指令
 //map to instructions terminated with comparator for branch to false
 static IPersistentMap preds = RT.map(
   "public static boolean clojure.lang.Numbers.lt(double,double)", oa(DCMPG, IFGE),

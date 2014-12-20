@@ -75,7 +75,7 @@ static final Symbol HASHMAP = Symbol.intern("clojure.core", "hash-map");
 static final Symbol VECTOR = Symbol.intern("clojure.core", "vector");
 static final Symbol IDENTITY = Symbol.intern("clojure.core", "identity");
 
-static final Symbol _AMP_ = Symbol.intern("&");
+static final Symbol _AMP_ = Symbol.intern("&");//剩余参数
 static final Symbol ISEQ = Symbol.intern("clojure.lang.ISeq");
 
 static final Keyword inlineKey = Keyword.intern(null, "inline");
@@ -161,19 +161,19 @@ private static final Type[] EXCEPTION_TYPES = {};
 static
 	{
 	OBJECT_TYPE = Type.getType(Object.class);
-	ARG_TYPES = new Type[MAX_POSITIONAL_ARITY + 2][];
+	ARG_TYPES = new Type[MAX_POSITIONAL_ARITY + 2][];//二维数组，表示所有的参数签名
 	for(int i = 0; i <= MAX_POSITIONAL_ARITY; ++i)
 		{
 		Type[] a = new Type[i];
-		for(int j = 0; j < i; j++)
+		for(int j = 0; j < i; j++)//注意，j<i
 			a[j] = OBJECT_TYPE;
-		ARG_TYPES[i] = a;
+		ARG_TYPES[i] = a;//参数类型数组，二维数组，都是Object类型
 		}
 	Type[] a = new Type[MAX_POSITIONAL_ARITY + 1];
 	for(int j = 0; j < MAX_POSITIONAL_ARITY; j++)
 		a[j] = OBJECT_TYPE;
 	a[MAX_POSITIONAL_ARITY] = Type.getType("[Ljava/lang/Object;");
-	ARG_TYPES[MAX_POSITIONAL_ARITY + 1] = a;
+	ARG_TYPES[MAX_POSITIONAL_ARITY + 1] = a;//最后一个参数，即剩余参数的类型，是Object数组
 
 
 	}
@@ -251,7 +251,7 @@ static public Object getCompilerOption(Keyword k){
 }
 
     static
-    {
+    {//设置编译选项
         Object compilerOptions = null;
 
         for (Map.Entry e : System.getProperties().entrySet())
@@ -269,7 +269,7 @@ static public Object getCompilerOption(Keyword k){
         COMPILER_OPTIONS = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
                 Symbol.intern("*compiler-options*"), compilerOptions).setDynamic();
     }
-
+    //m是元数据，去除编译选项指定的要忽略的元数据
     static Object elideMeta(Object m){
         Collection<Object> elides = (Collection<Object>) getCompilerOption(elideMetaKey);
         if(elides != null)//要忽略的元数据的键名
@@ -322,7 +322,7 @@ static final public Var CLEAR_ROOT = Var.create(null).setDynamic();
 //LocalBinding -> Set<LocalBindingExpr>
 static final public Var CLEAR_SITES = Var.create(null).setDynamic();
 
-    public enum C{//form的上下文
+    public enum C{//form的上下文（hxzon未理解）
 	STATEMENT,  //value ignored 无返回值
 	EXPRESSION, //value required 有返回值
 	RETURN,      //tail position relative to enclosing recur frame
@@ -357,31 +357,31 @@ public static abstract class UntypedExpr implements Expr{
 interface IParser{
 	Expr parse(C context, Object form) ;
 }
-
+//是否是特殊操作符
 static boolean isSpecial(Object sym){
 	return specials.containsKey(sym);
 }
-
+//识别符号
 static Symbol resolveSymbol(Symbol sym){
 	//already qualified or classname?
 	if(sym.name.indexOf('.') > 0)
-		return sym;
-	if(sym.ns != null)
+		return sym;//名字中含点号，是类名，或者是已经命名空间限定的
+	if(sym.ns != null)//如果符号有命名空间
 		{
 		Namespace ns = namespaceFor(sym);
-		if(ns == null || ns.name.name == sym.ns)
+		if(ns == null || ns.name.name == sym.ns)//如果有命名空间但是命名空间不存在（即类的静态成员），或者是本命名空间的符号（即非导入的符号）
 			return sym;
 		return Symbol.intern(ns.name.name, sym.name);
 		}
-	Object o = currentNS().getMapping(sym);
+	Object o = currentNS().getMapping(sym);//在当前命名空间查找符号
 	if(o == null)
 		return Symbol.intern(currentNS().name.name, sym.name);//如果没有命名空间，视为当前命名空间
 	else if(o instanceof Class)
 		return Symbol.intern(null, ((Class) o).getName());
-	else if(o instanceof Var)
+	else if(o instanceof Var)//如果符号对应到一个var（即该符号是别名），转化成该var的符号（定义该var时用的符号）
 			{
 			Var v = (Var) o;
-			return Symbol.intern(v.ns.name.name, v.sym.name);//hxzon：？
+			return Symbol.intern(v.ns.name.name, v.sym.name);
 			}
 	return null;
 
@@ -390,10 +390,10 @@ static Symbol resolveSymbol(Symbol sym){
 // (def sym "doc string" initExpr)
 static class DefExpr implements Expr{
 	public final Var var;
-	public final Expr init;
-	public final Expr meta;
-	public final boolean initProvided;
-	public final boolean isDynamic;
+	public final Expr init;//根值表达式
+	public final Expr meta;//元数据表达式
+	public final boolean initProvided;//是否提供了根值
+	public final boolean isDynamic;//是否动态的
 	public final String source;
 	public final int line;
 	public final int column;
@@ -426,7 +426,7 @@ static class DefExpr implements Expr{
             }
         return false;
     }
-
+    //求值def表达式
     public Object eval() {
 		try
 			{
@@ -490,7 +490,7 @@ static class DefExpr implements Expr{
 	public boolean hasJavaClass(){
 		return true;
 	}
-
+	//def表达式求值成一个Var
 	public Class getJavaClass(){
 		return Var.class;
 	}
@@ -616,7 +616,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 		this.var = var;
 		this.tag = tag != null ? tag : var.getTag();
 	}
-
+	//var求值成线程绑定值，或根值
 	public Object eval() {
 		return var.deref();//优先线程绑定值，再根值
 	}
@@ -680,7 +680,7 @@ public static class TheVarExpr implements Expr{
 	static class Parser implements IParser{
 		public Expr parse(C context, Object form) {
 			Symbol sym = (Symbol) RT.second(form);//(var sym)
-			Var v = lookupVar(sym, false);
+			Var v = lookupVar(sym, false);//查找符号所对应的var，不存在时不创建该var
 			if(v != null)
 				return new TheVarExpr(v);
 			throw Util.runtimeException("Unable to resolve var: " + sym + " in this context");
@@ -2932,6 +2932,7 @@ public static class EmptyExpr implements Expr{
 	}
 }
 //===========
+//列表表达式（非调用）
 public static class ListExpr implements Expr{
 	public final IPersistentVector args;
 	final static Method arrayToListMethod = Method.getMethod("clojure.lang.ISeq arrayToList(Object[])");
@@ -3520,7 +3521,7 @@ static class StaticInvokeExpr implements Expr, MaybePrimitiveExpr{
 		                            paramTypes.toArray(new Type[paramTypes.size()]),variadic, argv, tag);
 	}
 }
-
+//调用表达式（hxzon重要）
 static class InvokeExpr implements Expr{
 	public final Expr fexpr;
 	public final Object tag;
@@ -3596,7 +3597,7 @@ static class InvokeExpr implements Expr{
 	public Object eval() {
 		try
 			{
-			IFn fn = (IFn) fexpr.eval();
+			IFn fn = (IFn) fexpr.eval();//hxzon：var作为值时，得到当时的值，而作为函数调用，在调用发生时才取值
 			PersistentVector argvs = PersistentVector.EMPTY;
 			for(int i = 0; i < args.count(); i++)
 				argvs = argvs.cons(((Expr) args.nth(i)).eval());
@@ -3713,7 +3714,7 @@ static class InvokeExpr implements Expr{
 		if(context != C.EVAL)
 			context = C.EXPRESSION;
 		Expr fexpr = analyze(context, form.first());
-		if(fexpr instanceof VarExpr && ((VarExpr)fexpr).var.equals(INSTANCE) && RT.count(form) == 3)
+		if(fexpr instanceof VarExpr && ((VarExpr)fexpr).var.equals(INSTANCE) && RT.count(form) == 3)//instanceof? 调用
 			{
 			Expr sexpr = analyze(C.EXPRESSION, RT.second(form));
 			if(sexpr instanceof ConstantExpr)
@@ -3735,11 +3736,11 @@ static class InvokeExpr implements Expr{
 //				}
 //			}
 
-		if(fexpr instanceof VarExpr && context != C.EVAL)
+		if(fexpr instanceof VarExpr && context != C.EVAL)//如果是var
 			{
 			Var v = ((VarExpr)fexpr).var;
 			Object arglists = RT.get(RT.meta(v), arglistsKey);
-			int arity = RT.count(form.next());
+			int arity = RT.count(form.next());//参数个数
 			for(ISeq s = RT.seq(arglists); s != null; s = s.next())
 				{
 				IPersistentVector args = (IPersistentVector) s.first();
@@ -3756,7 +3757,7 @@ static class InvokeExpr implements Expr{
 				}
 			}
 
-		if(fexpr instanceof KeywordExpr && RT.count(form) == 2 && KEYWORD_CALLSITES.isBound())
+		if(fexpr instanceof KeywordExpr && RT.count(form) == 2 && KEYWORD_CALLSITES.isBound())//如果是关键字作为函数
 			{
 //			fexpr = new ConstantExpr(new KeywordCallSite(((KeywordExpr)fexpr).k));
 			Expr target = analyze(context, RT.second(form));
@@ -6812,7 +6813,7 @@ public static Object eval(Object form, boolean freshLoader) {
 			Var.popThreadBindings();
 		}
 }
-
+//在常量池里登记？
 private static int registerConstant(Object o){
 	if(!CONSTANTS.isBound())
 		return -1;
@@ -6905,11 +6906,11 @@ static void addParameterAnnotation(Object visitor, IPersistentMap meta, int i){
 	if(meta != null && ADD_ANNOTATIONS.isBound())
 		 ADD_ANNOTATIONS.invoke(visitor, meta, i);
 }
-
+//解析符号（hxzon重要）
 private static Expr analyzeSymbol(Symbol sym) {
 	Symbol tag = tagOf(sym);
 	if(sym.ns == null) //ns-qualified syms are always Vars
-		{//无限定的符号，总是Var
+		{//无限定的符号，可能是本地绑定
 		LocalBinding b = referenceLocal(sym);//检查是否是本地绑定
 		if(b != null)
             {
@@ -6917,14 +6918,14 @@ private static Expr analyzeSymbol(Symbol sym) {
             }
 		}
 	else
-		{
+		{//有命名空间限定
 		if(namespaceFor(sym) == null)
-			{
+			{//但是该命名空间不存在
 			Symbol nsSym = Symbol.intern(sym.ns);
-			Class c = HostExpr.maybeClass(nsSym, false);
+			Class c = HostExpr.maybeClass(nsSym, false);//则该命名空间有可能是类名
 			if(c != null)
 				{
-				if(Reflector.getField(c, sym.name, true) != null)
+				if(Reflector.getField(c, sym.name, true) != null)//如果是类名，则符号视为静态字段
 					return new StaticFieldExpr(lineDeref(), columnDeref(), c, sym.name, tag);
 				throw Util.runtimeException("Unable to find static field: " + sym.name + " in " + c);
 				}
@@ -6938,7 +6939,7 @@ private static Expr analyzeSymbol(Symbol sym) {
 	if(o instanceof Var)
 		{
 		Var v = (Var) o;
-		if(isMacro(v) != null)//不能是宏
+		if(isMacro(v) != null)//不能是宏，宏不能作为值
 			throw Util.runtimeException("Can't take value of a macro: " + v);
 		if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))//如果是常量
 			return analyze(C.EXPRESSION, RT.list(QUOTE, v.get()));
@@ -7112,7 +7113,7 @@ static Var lookupVar(Symbol sym, boolean internNew, boolean registerMacro) {
 static Var lookupVar(Symbol sym, boolean internNew) {
     return lookupVar(sym, internNew, true);
 }
-
+//在常量池里登记var
 private static void registerVar(Var var) {
 	if(!VARS.isBound())
 		return;
