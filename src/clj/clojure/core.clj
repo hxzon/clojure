@@ -1593,7 +1593,7 @@ defmacro (fn [&form &env
     (if forms
       (let [form (first forms)
             threaded (if (seq? form)
-                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))
+                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))    ;;注意，保持form的元数据
                        (list form x))]
         (recur threaded (next forms)))
       x)))

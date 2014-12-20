@@ -76,7 +76,7 @@ static Pattern floatPat = Pattern.compile("([-+]?[0-9]+(\\.[0-9]*)?([eE][-+]?[0-
 static Var GENSYM_ENV = Var.create(null).setDynamic();
 //sorted-map num->gensymbol
 static Var ARG_ENV = Var.create(null).setDynamic();
-static IFn ctorReader = new CtorReader();
+static IFn ctorReader = new CtorReader();//记录字面量，或者reader tag
 //读取器宏
 static
 	{
@@ -95,25 +95,25 @@ static
 	macros['}'] = new UnmatchedDelimiterReader();
 //	macros['|'] = new ArgVectorReader();
 	macros['\\'] = new CharacterReader();
-	macros['%'] = new ArgReader();
+	macros['%'] = new ArgReader();//函数字面量中的参数
 	macros['#'] = new DispatchReader();
 
 	//跟在井号之后的读取器宏
-	dispatchMacros['^'] = new MetaReader();//元数据读取器
+	dispatchMacros['^'] = new MetaReader();//带元数据的形式
 	dispatchMacros['\''] = new VarReader();//#'a，即(var a)
-	dispatchMacros['"'] = new RegexReader();
-	dispatchMacros['('] = new FnReader();//函数字面量读取器
-	dispatchMacros['{'] = new SetReader();
-	dispatchMacros['='] = new EvalReader();//#=
-	dispatchMacros['!'] = new CommentReader();
-	dispatchMacros['<'] = new UnreadableReader();
-	dispatchMacros['_'] = new DiscardReader();
+	dispatchMacros['"'] = new RegexReader();//正则表达式
+	dispatchMacros['('] = new FnReader();//函数字面量
+	dispatchMacros['{'] = new SetReader();//集字母量
+	dispatchMacros['='] = new EvalReader();//#= 读取期求值？
+	dispatchMacros['!'] = new CommentReader();//注释 #! ，和 分号相同，一直到行尾
+	dispatchMacros['<'] = new UnreadableReader();//不可达？ #< ，直接抛出异常
+	dispatchMacros['_'] = new DiscardReader();//丢弃下一个形式 #_
 	}
 
 static boolean isWhitespace(int ch){
 	return Character.isWhitespace(ch) || ch == ',';
 }
-
+//回吐一个字符
 static void unread(PushbackReader r, int ch) {
 	if(ch != -1)
 		try
@@ -136,7 +136,7 @@ public static class ReaderException extends RuntimeException{
 		this.column = column;
 	}
 }
-
+//读取一个字符
 static public int read1(Reader r){
 	try
 		{
@@ -147,7 +147,9 @@ static public int read1(Reader r){
 		throw Util.sneakyThrow(e);
 		}
 }
-
+//@param eofIsError 到达文件末是否是一个错误
+//@param eofValue 如果到达文件末不是一个错误，返回eofValue
+//@param isRecursive ？
 static public Object read(PushbackReader r, boolean eofIsError, Object eofValue, boolean isRecursive)
 {
 	if(RT.READEVAL.deref() == UNKNOWN)
@@ -178,7 +180,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 				}
 
 			IFn macroFn = getMacro(ch);
-			if(macroFn != null)//读取器宏
+			if(macroFn != null)//读取宏字符
 				{
 				Object ret = macroFn.invoke(r, (char) ch);
 				if(RT.suppressRead())
@@ -200,13 +202,13 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 						return null;
 					return n;
 					}
-				unread(r, ch2);
+				unread(r, ch2);//如果不是作为数值前面的正负号，回吐
 				}
 
 			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，Symbol（Var，关键字，命名空间）
 			if(RT.suppressRead())
 				return null;
-			return interpretToken(token);
+			return interpretToken(token);//识别token
 			}
 		}
 	catch(Exception e)
@@ -234,7 +236,7 @@ static private String readToken(PushbackReader r, char initch) {
 		sb.append((char) ch);
 		}
 }
-
+//不仅仅是空白符，遇到读取宏字符也会停止
 static private Object readNumber(PushbackReader r, char initch) {
 	StringBuilder sb = new StringBuilder();
 	sb.append(initch);
@@ -293,7 +295,7 @@ static private int readUnicodeChar(PushbackReader r, int initch, int base, int l
 		throw new IllegalArgumentException("Invalid character length: " + i + ", should be: " + length);
 	return uc;
 }
-
+//识别token
 static private Object interpretToken(String s) {
 	if(s.equals("nil"))
 		{
@@ -324,9 +326,9 @@ private static Object matchSymbol(String s){
 		int gc = m.groupCount();
 		String ns = m.group(1);
 		String name = m.group(2);
-		if(ns != null && ns.endsWith(":/")
-		   || name.endsWith(":")
-		   || s.indexOf("::", 1) != -1)
+		if(ns != null && ns.endsWith(":/")//命名空间以:/结尾，违法
+		   || name.endsWith(":")//名字以冒号结尾，违法
+		   || s.indexOf("::", 1) != -1)//三冒号开头，或开头之外还有双冒号，违法
 			return null;
 		//hxzon：(= :x ::x) false，一个无命名空间，一个当前命名空间
 		// (= :clojure.core/y ::clojure.core/y) true
@@ -342,7 +344,7 @@ private static Object matchSymbol(String s){
 			if (kns != null)
 				return Keyword.intern(kns.name.name,ks.name);//当命名空间存在时，例如::clojure.core/y
 			else
-				return null;//当命名空间x不存在时，返回null
+				return null;//当命名空间x不存在时，返回null（双冒号且带有命名空间限定时，要求命名空间已存在）
 			}
 		boolean isKeyword = s.charAt(0) == ':';//以单个冒号开头的为关键字
 		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));//一个新的Symbol对象,new Symbol(xxx)
@@ -414,11 +416,12 @@ static private IFn getMacro(int ch){
 static private boolean isMacro(int ch){
 	return (ch < macros.length && macros[ch] != null);
 }
-//除了井号，单引号，百分号之外的读取器宏字符
+//视为token终止的字符（除了井号，单引号，百分号之外的读取器宏字符）
 static private boolean isTerminatingMacro(int ch){
 	return (ch != '#' && ch != '\'' && ch != '%' && isMacro(ch));
 }
 //=====================================
+//正则表达式
 public static class RegexReader extends AFn{
 	static StringReader stringrdr = new StringReader();
 
@@ -503,7 +506,7 @@ public static class StringReader extends AFn{
 		return sb.toString();
 	}
 }
-
+//注释，分号，或者 #! ，一直读到行尾
 public static class CommentReader extends AFn{
 	public Object invoke(Object reader, Object semicolon) {
 		Reader r = (Reader) reader;
@@ -516,7 +519,7 @@ public static class CommentReader extends AFn{
 	}
 
 }
-
+//丢弃： #_
 public static class DiscardReader extends AFn{
 	public Object invoke(Object reader, Object underscore) {
 		PushbackReader r = (PushbackReader) reader;
@@ -524,7 +527,7 @@ public static class DiscardReader extends AFn{
 		return r;
 	}
 }
-
+//包裹，例如 @ 和 ' 等
 public static class WrappingReader extends AFn{
 	final Symbol sym;
 
@@ -539,7 +542,7 @@ public static class WrappingReader extends AFn{
 	}
 
 }
-
+//已不再使用的过时的包裹（目前未使用）
 public static class DeprecatedWrappingReader extends AFn{
 	final Symbol sym;
 	final String macro;
@@ -597,7 +600,7 @@ static class DerefReader extends AFn{
 
 }
 */
-
+//井号分派，如果不是“能跟在井号后”的读取宏字符，则尝试记录字面量，或者reader tag
 public static class DispatchReader extends AFn{
 	public Object invoke(Object reader, Object hash) {
 		int ch = read1((Reader) reader);
@@ -608,7 +611,7 @@ public static class DispatchReader extends AFn{
 		// Try the ctor reader first
 		if(fn == null) {
 		unread((PushbackReader) reader, ch);
-		Object result = ctorReader.invoke(reader, ch);
+		Object result = ctorReader.invoke(reader, ch);//尝试记录字面量，或者reader tag
 
 		if(result != null)
 			return result;
@@ -704,7 +707,7 @@ static class ArgReader extends AFn{
 		return registerArg(((Number) n).intValue());
 	}
 }
-//元数据字面量读取器，例如 ^{:x 1 :y 2} zz
+//读取带有元数据的形式，例如 ^{:x 1 :y 2} zz
 public static class MetaReader extends AFn{
 	public Object invoke(Object reader, Object caret) {
 		PushbackReader r = (PushbackReader) reader;
@@ -716,9 +719,9 @@ public static class MetaReader extends AFn{
 			column = ((LineNumberingPushbackReader) r).getColumnNumber()-1;
 			}
 		Object meta = read(r, true, null, true);//读取元数据
-		if(meta instanceof Symbol || meta instanceof String)
+		if(meta instanceof Symbol || meta instanceof String)//如果是符号或字符串，视为类型提示
 			meta = RT.map(RT.TAG_KEY, meta);
-		else if (meta instanceof Keyword)
+		else if (meta instanceof Keyword)//如果是关键字，视为{:k true}
 			meta = RT.map(meta, RT.T);
 		else if(!(meta instanceof IPersistentMap))
 			throw new IllegalArgumentException("Metadata must be Symbol,Keyword,String or Map");
@@ -726,16 +729,16 @@ public static class MetaReader extends AFn{
 		Object o = read(r, true, null, true);//读取对象，该对象必须能携带元数据，即实现了IMeta接口
 		if(o instanceof IMeta)
 			{
-			if(line != -1 && o instanceof ISeq)
+			if(line != -1 && o instanceof ISeq)//对象是序列类型
 				{
 				meta = ((IPersistentMap) meta).assoc(RT.LINE_KEY, line).assoc(RT.COLUMN_KEY, column);
 				}
-			if(o instanceof IReference)
+			if(o instanceof IReference)//对象是引用类型
 				{
 				((IReference)o).resetMeta((IPersistentMap) meta);
-				return o;
+				return o;//hxzon注意：引用类型直接替换掉原有的元数据，而序列类型则合并自身已有的元数据：^:x ^:y o
 				}
-			Object ometa = RT.meta(o);//对象已携带的元数据
+			Object ometa = RT.meta(o);//对象已携带的元数据，例如^:x ^:y o ，首先得到带有^:y 的 o ，现在合并^:x
 			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//合并meta到ometa
 			IMapEntry kv = (IMapEntry) s.first();
 			ometa = RT.assoc(ometa, kv.getKey(), kv.getValue());
@@ -764,7 +767,7 @@ public static class SyntaxQuoteReader extends AFn{
 			Var.popThreadBindings();
 			}
 	}
-
+	//语法引述
 	static Object syntaxQuote(Object form) {
 		Object ret;
 		if(Compiler.isSpecial(form))
@@ -790,7 +793,7 @@ public static class SyntaxQuoteReader extends AFn{
 				csym = Compiler.resolveSymbol(csym);
 				sym = Symbol.intern(null, csym.name.concat("."));
 				}
-			else if(sym.ns == null && sym.name.startsWith("."))//java实例方法
+			else if(sym.ns == null && sym.name.startsWith("."))//java方法
 				{
 				// Simply quote method names.
 				}
@@ -799,12 +802,12 @@ public static class SyntaxQuoteReader extends AFn{
 				Object maybeClass = null;
 				if(sym.ns != null)
 					maybeClass = Compiler.currentNS().getMapping(
-							Symbol.intern(null, sym.ns));
+							Symbol.intern(null, sym.ns));//是否是导入到当前命名空间的类的“短名”
 				if(maybeClass instanceof Class)
 					{
 					// Classname/foo -> package.qualified.Classname/foo
 					sym = Symbol.intern(
-							((Class)maybeClass).getName(), sym.name);
+							((Class)maybeClass).getName(), sym.name);//恢复成类的完整名（hxzon：注意）
 					}
 				else
 					sym = Compiler.resolveSymbol(sym);
@@ -1155,7 +1158,7 @@ public static List readDelimitedList(char delim, PushbackReader r, boolean isRec
 
 	return a;
 }
-
+//记录字面量，或者reader tag：#p.classname 或 #xyz
 public static class CtorReader extends AFn{
 	public Object invoke(Object reader, Object firstChar){
 		PushbackReader r = (PushbackReader) reader;
