@@ -3596,8 +3596,8 @@ static class InvokeExpr implements Expr{
 	// fexpr 求值成函数，并调用该函数
 	public Object eval() {
 		try
-			{
-			IFn fn = (IFn) fexpr.eval();//hxzon：var作为值时，得到当时的值，而作为函数调用，在调用发生时才取值
+			{//求值 fexpr 和参数
+			IFn fn = (IFn) fexpr.eval();
 			PersistentVector argvs = PersistentVector.EMPTY;
 			for(int i = 0; i < args.count(); i++)
 				argvs = argvs.cons(((Expr) args.nth(i)).eval());
@@ -3713,7 +3713,7 @@ static class InvokeExpr implements Expr{
 	static public Expr parse(C context, ISeq form) {
 		if(context != C.EVAL)
 			context = C.EXPRESSION;
-		Expr fexpr = analyze(context, form.first());
+		Expr fexpr = analyze(context, form.first());//除了#=，form.first() 总是符号，fexpr是VarExpr
 		if(fexpr instanceof VarExpr && ((VarExpr)fexpr).var.equals(INSTANCE) && RT.count(form) == 3)//instanceof? 调用
 			{
 			Expr sexpr = analyze(C.EXPRESSION, RT.second(form));
@@ -3767,7 +3767,15 @@ static class InvokeExpr implements Expr{
 		PersistentVector args = PersistentVector.EMPTY;
 		for(ISeq s = RT.seq(form.next()); s != null; s = s.next())
 			{
-			args = args.cons(analyze(context, s.first()));
+			args = args.cons(analyze(context, s.first()));//解析参数
+			//如果是符号a，且符号对应到一个var，得到VarExpr，求值时得到var的值
+			//如果是(var a)，得到TheVarExpr，求值时得到var本身
+			//(def b1 (partial a 5)) 求值时是 (partialFn aFn 5)，
+			//b1 绑定到一个匿名函数，它捕获了aFn
+			//(def b2 (partial #'a 5)) 求值时是 (partialFn aVar 5)，
+			//aVar也是函数，(aVar xx)等价于((deref aVar) xx)，
+			//b2 绑定到一个匿名函数，它捕获了aVar，通过(deref aVar)，所以总是最新值
+			//在函数位置的符号a，得到VarExpr，调用时才求值，所以总是最新值
 			}
 //		if(args.count() > MAX_POSITIONAL_ARITY)
 //			throw new IllegalArgumentException(
@@ -3787,7 +3795,8 @@ static class SourceDebugExtensionAttribute extends Attribute{
 		bv.putUTF8(smap);
 	}
 }
-//函数表达式
+//定义函数：(fn ...)
+//继承自ObjExpr，求值成一个AFunction实例（hxzon注意）
 static public class FnExpr extends ObjExpr{
 	final static Type aFnType = Type.getType(AFunction.class);
 	final static Type restFnType = Type.getType(RestFn.class);
@@ -3798,7 +3807,7 @@ static public class FnExpr extends ObjExpr{
 	private boolean hasMeta;
 	//	String superName = null;
 
-	public FnExpr(Object tag){
+	public FnExpr(Object tag){//hxzon注意：不是返回值的类型提示
 		super(tag);
 	}
 
@@ -3809,9 +3818,9 @@ static public class FnExpr extends ObjExpr{
 	boolean supportsMeta(){
 		return hasMeta;
 	}
-
+	//注意，是函数的实现类型，不是函数的返回值类型
 	public Class getJavaClass() {
-		return tag != null ? HostExpr.tagToClass(tag) : AFunction.class;
+		return tag != null ? HostExpr.tagToClass(tag) : AFunction.class;//默认是AFunction类型
 	}
 
 	protected void emitMethods(ClassVisitor cv){
@@ -6488,13 +6497,16 @@ private static int getAndIncLocalNum(){
 public static Expr analyze(C context, Object form) {
 	return analyze(context, form, null);
 }
+//hxzon重要：analyze函数是Compiler的入口
 //将form解析成表达式
+//@param context 上下文？
+//@param name ？
 private static Expr analyze(C context, Object form, String name) {
 	//todo symbol macro expansion?
 	try
 		{
-		if(form instanceof LazySeq)
-			{
+		if(form instanceof LazySeq)//延迟序列，什么时候可生成延迟序列？
+			{//如果是延迟序列，先检查是否是空列表
 			form = RT.seq(form);
 			if(form == null)
 				form = PersistentList.EMPTY;
@@ -6507,7 +6519,7 @@ private static Expr analyze(C context, Object form, String name) {
 				return FALSE_EXPR;
 		Class fclass = form.getClass();
 		if(fclass == Symbol.class)
-			return analyzeSymbol((Symbol) form);
+			return analyzeSymbol((Symbol) form);//处理符号
 		else if(fclass == Keyword.class)
 			return registerKeyword((Keyword) form);
 		else if(form instanceof Number)
@@ -6517,14 +6529,14 @@ private static Expr analyze(C context, Object form, String name) {
 //	else if(fclass == Character.class)
 //		return new CharExpr((Character) form);
 		else if(form instanceof IPersistentCollection && ((IPersistentCollection) form).count() == 0)
-				{
+				{//空集合
 				Expr ret = new EmptyExpr(form);
 				if(RT.meta(form) != null)
 					ret = new MetaExpr(ret, MapExpr
 							.parse(context == C.EVAL ? context : C.EXPRESSION, ((IObj) form).meta()));
 				return ret;
 				}
-		else if(form instanceof ISeq)
+		else if(form instanceof ISeq)//处理序列，注意，列表也是序列
 				return analyzeSeq(context, (ISeq) form, name);
 		else if(form instanceof IPersistentVector)
 				return VectorExpr.parse(context, (IPersistentVector) form);
@@ -6708,7 +6720,7 @@ static Object macroexpand(Object form) {
 		return macroexpand(exf);
 	return form;
 }
-//对“序列形式”（即“调用”）进行解析
+//对“序列形式（注意，列表也是序列）”（即“调用”）进行解析
 private static Expr analyzeSeq(C context, ISeq form, String name) {
 	Object line = lineDeref();
 	Object column = columnDeref();
@@ -6727,16 +6739,16 @@ private static Expr analyzeSeq(C context, ISeq form, String name) {
 		Object op = RT.first(form);
 		if(op == null)
 			throw new IllegalArgumentException("Can't call nil");
-		IFn inline = isInline(op, RT.count(RT.next(form)));
+		IFn inline = isInline(op, RT.count(RT.next(form)));//内联？
 		if(inline != null)
 			return analyze(context, preserveTag(form, inline.applyTo(RT.next(form))));
 		IParser p;
 		if(op.equals(FN))
-			return FnExpr.parse(context, form, name);
-		else if((p = (IParser) specials.valAt(op)) != null)
+			return FnExpr.parse(context, form, name);//特殊形式fn*，生成一个IFn实例
+		else if((p = (IParser) specials.valAt(op)) != null)//特殊形式
 			return p.parse(context, form);
 		else
-			return InvokeExpr.parse(context, form);
+			return InvokeExpr.parse(context, form);//函数或宏调用
 		}
 	catch(Throwable e)
 		{
@@ -6985,7 +6997,7 @@ static Namespace namespaceFor(Namespace inns, Symbol sym){
 	//note, presumes non-nil sym.ns
 	// first check against currentNS' aliases...
 	Symbol nsSym = Symbol.intern(sym.ns);
-	Namespace ns = inns.lookupAlias(nsSym);//先在别名中找
+	Namespace ns = inns.lookupAlias(nsSym);//先在别名中找命名空间
 	if(ns == null)
 		{
 		// ...otherwise check the Namespaces map.
@@ -6998,22 +7010,22 @@ static public Object resolveIn(Namespace n, Symbol sym, boolean allowPrivate) {
 	//note - ns-qualified vars must already exist
 	if(sym.ns != null)
 		{
-		Namespace ns = namespaceFor(n, sym);
+		Namespace ns = namespaceFor(n, sym);//sym的命名空间可能是导入的别名，找到它原来的名字
 		if(ns == null)
 			throw Util.runtimeException("No such namespace: " + sym.ns);
 
-		Var v = ns.findInternedVar(Symbol.intern(sym.name));
+		Var v = ns.findInternedVar(Symbol.intern(sym.name));//找到符号对应的var
 		if(v == null)
 			throw Util.runtimeException("No such var: " + sym);
 		else if(v.ns != currentNS() && !v.isPublic() && !allowPrivate)
 			throw new IllegalStateException("var: " + sym + " is not public");
 		return v;
 		}
-	else if(sym.name.indexOf('.') > 0 || sym.name.charAt(0) == '[')
+	else if(sym.name.indexOf('.') > 0 || sym.name.charAt(0) == '[')//完整限定的类名或数组类型名
 		{
 		return RT.classForName(sym.name);
 		}
-	else if(sym.equals(NS))
+	else if(sym.equals(NS))//特殊的var：*ns* 和 *in-ns*
 			return RT.NS_VAR;
 	else if(sym.equals(IN_NS))
 			return RT.IN_NS_VAR;
