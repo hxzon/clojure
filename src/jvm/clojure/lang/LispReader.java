@@ -147,6 +147,7 @@ static public int read1(Reader r){
 		throw Util.sneakyThrow(e);
 		}
 }
+//hxzon重要：read函数是LispReader的入口
 //@param eofIsError 到达文件末是否是一个错误
 //@param eofValue 如果到达文件末不是一个错误，返回eofValue
 //@param isRecursive ？
@@ -205,7 +206,7 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 				unread(r, ch2);//如果不是作为数值前面的正负号，回吐
 				}
 
-			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，Symbol（Var，关键字，命名空间）
+			String token = readToken(r, (char) ch);//其它tokon，包括nil，true，false，关键字，Symbol
 			if(RT.suppressRead())
 				return null;
 			return interpretToken(token);//识别token
