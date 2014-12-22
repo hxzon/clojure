@@ -102,37 +102,37 @@ static final Symbol IN_NS = Symbol.intern("in-ns");
 
 static final public IPersistentMap specials = PersistentHashMap.create(
 		DEF, new DefExpr.Parser(),//(def x y)
-		LOOP, new LetExpr.Parser(),
-		RECUR, new RecurExpr.Parser(),
-		IF, new IfExpr.Parser(),
-		CASE, new CaseExpr.Parser(),
-		LET, new LetExpr.Parser(),
-		LETFN, new LetFnExpr.Parser(),
-		DO, new BodyExpr.Parser(),
-		FN, null,
-		QUOTE, new ConstantExpr.Parser(),
+		LOOP, new LetExpr.Parser(),//loop*
+		RECUR, new RecurExpr.Parser(),//recur
+		IF, new IfExpr.Parser(),//if
+		CASE, new CaseExpr.Parser(),//case*
+		LET, new LetExpr.Parser(),//let*
+		LETFN, new LetFnExpr.Parser(),//letfn*
+		DO, new BodyExpr.Parser(),//do
+		FN, null,//fn*
+		QUOTE, new ConstantExpr.Parser(),//quote
 		THE_VAR, new TheVarExpr.Parser(),//(var a)
-		IMPORT, new ImportExpr.Parser(),
-		DOT, new HostExpr.Parser(),
-		ASSIGN, new AssignExpr.Parser(),
-		DEFTYPE, new NewInstanceExpr.DeftypeParser(),
-		REIFY, new NewInstanceExpr.ReifyParser(),
+		IMPORT, new ImportExpr.Parser(),//import*
+		DOT, new HostExpr.Parser(),//.
+		ASSIGN, new AssignExpr.Parser(),//set!
+		DEFTYPE, new NewInstanceExpr.DeftypeParser(),//deftype*
+		REIFY, new NewInstanceExpr.ReifyParser(),//reify*
 //		TRY_FINALLY, new TryFinallyExpr.Parser(),
-TRY, new TryExpr.Parser(),
-THROW, new ThrowExpr.Parser(),
-MONITOR_ENTER, new MonitorEnterExpr.Parser(),
-MONITOR_EXIT, new MonitorExitExpr.Parser(),
+TRY, new TryExpr.Parser(),//try
+THROW, new ThrowExpr.Parser(),//throw
+MONITOR_ENTER, new MonitorEnterExpr.Parser(),//monitor-enter
+MONITOR_EXIT, new MonitorExitExpr.Parser(),//monitor-exit
 //		INSTANCE, new InstanceExpr.Parser(),
 //		IDENTICAL, new IdenticalExpr.Parser(),
 //THISFN, null,
-CATCH, null,
-FINALLY, null,
+CATCH, null,//catch
+FINALLY, null,//finally
 //		CLASS, new ClassExpr.Parser(),
-NEW, new NewExpr.Parser(),
+NEW, new NewExpr.Parser(),//(new classname args)
 //		UNQUOTE, null,
 //		UNQUOTE_SPLICING, null,
 //		SYNTAX_QUOTE, null,
-_AMP_, null
+_AMP_, null//&
 );
 
 private static final int MAX_POSITIONAL_ARITY = 20;//“必须参数”的最大数量（arity，数量）
@@ -426,7 +426,7 @@ static class DefExpr implements Expr{
             }
         return false;
     }
-    //求值def表达式
+    //求值def表达式，得到var
     public Object eval() {
 		try
 			{
@@ -944,16 +944,16 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
 			int line = lineDeref();
 			int column = columnDeref();
 			String source = (String) SOURCE.deref();
-			Class c = maybeClass(RT.second(form), false);
+			Class c = maybeClass(RT.second(form), false);//第二个元素是否是类名
 			//at this point c will be non-null if static
 			Expr instance = null;
 			if(c == null)
 				instance = analyze(context == C.EVAL ? context : C.EXPRESSION, RT.second(form));
-
+			//如果第三个元素是符号，有可能是字段名（如果是序列，则肯定是方法名）
 			boolean maybeField = RT.length(form) == 3 && (RT.third(form) instanceof Symbol);
 
 			if(maybeField && !(((Symbol)RT.third(form)).name.charAt(0) == '-'))
-				{
+				{//如果找不到该名字的方法，则视为字段
 				Symbol sym = (Symbol) RT.third(form);
 				if(c != null)
 					maybeField = Reflector.getMethods(c, 0, munge(sym.name), true).size() == 0;
@@ -977,7 +977,7 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
 				ISeq call = (ISeq) ((RT.third(form) instanceof ISeq) ? RT.third(form) : RT.next(RT.next(form)));
 				if(!(RT.first(call) instanceof Symbol))
 					throw new IllegalArgumentException("Malformed member expression");
-				Symbol sym = (Symbol) RT.first(call);
+				Symbol sym = (Symbol) RT.first(call);//方法名
 				Symbol tag = tagOf(form);
 				PersistentVector args = PersistentVector.EMPTY;
 				for(ISeq s = RT.next(call); s != null; s = s.next())
@@ -2846,7 +2846,7 @@ static {
 		}
 	DEMUNGE_PATTERN = Pattern.compile(sb.toString());
 }
-
+//clojure符号中的某些字符，在jvm字节码中是不允许的。通过此映射进行转换。
 static public String munge(String name){
 	StringBuilder sb = new StringBuilder();
 	for(char c : name.toCharArray())
@@ -5145,7 +5145,7 @@ static PathNode clearPathRoot(){
 enum PSTATE{
 	REQ, REST, DONE
 }
-
+//一个fn定义，可以有多个重载。一个FnMethod，是其中一个。
 public static class FnMethod extends ObjMethod{
 	//localbinding->localbinding
 	PersistentVector reqParms = PersistentVector.EMPTY;//必须参数
@@ -5305,7 +5305,7 @@ public static class FnMethod extends ObjMethod{
 						getAndIncLocalNum();
 					}
 				}
-			method.body = (new BodyExpr.Parser()).parse(C.RETURN, body);
+			method.body = (new BodyExpr.Parser()).parse(C.RETURN, body);//hxzon注意：在这个地方传入C.RETURN
 			return method;
 			}
 		finally
@@ -5961,7 +5961,7 @@ public static class LetFnExpr implements Expr{
 	static class Parser implements IParser{
 		public Expr parse(C context, Object frm) {
 			ISeq form = (ISeq) frm;
-			//(letfns* [var (fn [args] body) ...] body...)
+			//(letfn* [f1 (fn f1 [p1 p2] f1body) , f2 (fn f2 [p1 p2] f2body)] body)
 			if(!(RT.second(form) instanceof IPersistentVector))
 				throw new IllegalArgumentException("Bad binding form, expected vector");
 
@@ -5971,7 +5971,7 @@ public static class LetFnExpr implements Expr{
 
 			ISeq body = RT.next(RT.next(form));
 
-			if(context == C.EVAL)
+			if(context == C.EVAL)//((fn* [] (letfn* [f1 .. f2 ..] body)))    ？
 				return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));
 
 			IPersistentMap dynamicBindings = RT.map(LOCAL_ENV, LOCAL_ENV.deref(),
@@ -6801,7 +6801,7 @@ public static Object eval(Object form, boolean freshLoader) {
 					(form instanceof IPersistentCollection
 					&& !(RT.first(form) instanceof Symbol
 						&& ((Symbol) RT.first(form)).name.startsWith("def"))))
-				{
+				{//例如(a 5)，会转变成(fn* [] (a 5))
 				ObjExpr fexpr = (ObjExpr) analyze(C.EXPRESSION, RT.list(FN, PersistentVector.EMPTY, form),
 													"eval" + RT.nextID());
 				IFn fn = (IFn) fexpr.eval();
@@ -6809,7 +6809,7 @@ public static Object eval(Object form, boolean freshLoader) {
 				}
 			else
 				{
-				Expr expr = analyze(C.EVAL, form);
+				Expr expr = analyze(C.EVAL, form);//hxzon注意，在这里指定为C.EVAL
 				return expr.eval();
 				}
 			}
