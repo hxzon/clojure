@@ -1040,7 +1040,7 @@ public static class EvalReader extends AFn{
 			Symbol fs = (Symbol) RT.first(o);
 			if(fs.equals(THE_VAR))//(var a) 取得Var本身
 				{
-				Symbol vs = (Symbol) RT.second(o);
+				Symbol vs = (Symbol) RT.second(o);//注意，必须带命名空间限定
 				return RT.var(vs.ns, vs.name);  //Compiler.resolve((Symbol) RT.second(o),true);
 				}
 			if(fs.name.endsWith("."))//java构造函数

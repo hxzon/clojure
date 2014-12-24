@@ -282,7 +282,7 @@
                 [name doc-string? attr-map? ([params*] prepost-map? body)+ attr-map?])
    :added "1.0"}
 
-defn (fn defn [&form &env name & fdecl]
+defn (fn defn [&form &env name & fdecl]    ;; name，函数名，必须是一个符号
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
        (if (instance? clojure.lang.Symbol name)        ;函数名name必须是一个符号
          nil
@@ -299,9 +299,9 @@ defn (fn defn [&form &env name & fdecl]
               fdecl (if (map? (first fdecl))    ;除掉fdecl开头的map（元数据），如果有。
                      (next fdecl)
                       fdecl)
-              fdecl (if (vector? (first fdecl)) ;如果fdecl第一个元素是向量（参数列表，即没有重载），将fdecl转成列表。
+              fdecl (if (vector? (first fdecl)) ;如果fdecl第一个元素是向量（参数列表），将fdecl转成列表（即统一成有重载的形式）。
                      (list fdecl)
-                      fdecl)  ;有重载
+                      fdecl)
               m (if (map? (last fdecl))     ;如果fdecl最后一个元素是map（元数据），加入到m。
                  (conj m (last fdecl))
                   m)
@@ -309,22 +309,24 @@ defn (fn defn [&form &env name & fdecl]
                      (butlast fdecl)
                       fdecl)
               m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;添加arglists到m中。
-             m (let [inline (:inline m)    ;更新m的inline信息。
-                     ifn (first inline)    ;即“fn”这个关键字。
-                     iname (second inline)]    ;内联函数名。
-                 ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
-                 (if (if (clojure.lang.Util/equiv 'fn ifn)
-                        (if (instance? clojure.lang.Symbol iname) false true))
+
+              m (let [inline (:inline m)    ;更新m的inline信息。inline示例见下。
+                      ifn (first inline)    ;即“fn”这个关键字。
+                      iname (second inline)]    ;第二部分，可能是内联函数名，或者参数列表。
+                  ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
+                  (if (if (clojure.lang.Util/equiv 'fn ifn)    ;; 如果没有指定内联函数名，自动根据函数名生成一个。
+                         (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
-                   (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
+                    (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
+
               m (conj (if (meta name) (meta name) {}) m)]   ;将m加入到name（函数名）的元数据中。
 ;hxzon深入理解：这个宏的返回值：
           (list 'def (with-meta name m)     ;定义Var（指向函数），带有元数据。
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
-                (cons `fn fdecl) ))))
+                (cons `fn fdecl) ))))    ;; 到这里，各类元数据，从 fdecl 转移到 name 上了
 
 (. (var defn) (setMacro))   ;将defn标记为宏。（宏的底层实现其实也是函数。）
 
@@ -453,24 +455,24 @@ defmacro (fn [&form &env
                             (let [f (first args)]
                               (if (string? f)    ;如果args第一个元素是字符串，视为“文档字符串”
                                 (recur (cons f p) (next args));将文档字符串加入到p，并从args中移除
-                                (if (map? f)    ;如果args第一个元素是map
+                                (if (map? f)    ;如果args第一个元素是map（元数据），加入到p
                                   (recur (cons f p) (next args))
                                   p))))
-                   fdecl (loop [fd args]    ;从args移除开头的“文档字符串”和map
+                   fdecl (loop [fd args]    ;从args移除开头的“文档字符串”和map（元数据）
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
-                   fdecl (if (vector? (first fdecl))    ;如果开头是向量（参数向量，即没有重载），将fdecl转成列表
+                   fdecl (if (vector? (first fdecl))    ;如果开头是向量（参数向量），将fdecl转成列表，即统一成有重载的形式
                            (list fdecl)
                            fdecl)    ;如果开头不是向量，即有重载
 
-                   add-implicit-args (fn [fd]    ;添加隐式参数
-                             (let [args (first fd)]    ;参数向量，取出放到 &env 中
+                   add-implicit-args (fn [fd]    ;; 在每个参数向量的开头，加入 &form 和 &evn 这两个隐式参数
+                             (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
 
-                   add-args (fn [acc ds]
+                   add-args (fn [acc ds]    ;; ds = ( {可选的元数据} ([] body) ([] body))
                               (if (nil? ds)
                                 acc
                                 (let [d (first ds)]
@@ -478,8 +480,8 @@ defmacro (fn [&form &env
                                     (conj acc d)
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
 
-                   fdecl (seq (add-args [] fdecl))
-                   decl (loop [p prefix d fdecl]
+                   fdecl (seq (add-args [] fdecl))    ;; 给每个重载形式的参数向量，添加两个隐式参数
+                   decl (loop [p prefix d fdecl]    ;; 把开头的文档字符串，和元数据，重新加回去
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
@@ -6256,6 +6258,9 @@ defmacro (fn [&form &env
   `(letfn* ~(vec (interleave (map first fnspecs) 
                              (map #(cons `fn %) fnspecs)))
            ~@body))
+
+;; (letfn [(f1 [p1 p2] f1body) (f2 [p1 p2] f2body)] body)
+;; => (letfn* [f1 (fn f1 [p1 p2] f1body) , f2 (fn f2 [p1 p2] f2body)] body)
 
 (defn fnil
   "Takes a function f, and returns a function that calls f, replacing

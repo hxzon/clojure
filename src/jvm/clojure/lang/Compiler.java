@@ -5971,7 +5971,7 @@ public static class LetFnExpr implements Expr{
 
 			ISeq body = RT.next(RT.next(form));
 
-			if(context == C.EVAL)//((fn* [] (letfn* [f1 .. f2 ..] body)))    ？
+			if(context == C.EVAL)//转成匿名立即调用函数：((fn* [] (letfn* [f1 .. f2 ..] body)))    ？
 				return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));
 
 			IPersistentMap dynamicBindings = RT.map(LOCAL_ENV, LOCAL_ENV.deref(),
@@ -6073,7 +6073,7 @@ public static class LetFnExpr implements Expr{
 		return body.getJavaClass();
 	}
 }
-// let 或 loop
+// let* 或 loop*
 public static class LetExpr implements Expr, MaybePrimitiveExpr{
 	public final PersistentVector bindingInits;//本地绑定向量
 	public final Expr body;
@@ -6101,7 +6101,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
 
 			if(context == C.EVAL
 			   || (context == C.EXPRESSION && isLoop))
-				return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));
+				return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));//转成立即调用的匿名函数：((fn [] (let* [] body)))
 
 			ObjMethod method = (ObjMethod) METHOD.deref();
 			IPersistentMap backupMethodLocals = method.locals;
@@ -6801,7 +6801,7 @@ public static Object eval(Object form, boolean freshLoader) {
 					(form instanceof IPersistentCollection
 					&& !(RT.first(form) instanceof Symbol
 						&& ((Symbol) RT.first(form)).name.startsWith("def"))))
-				{//例如(a 5)，会转变成(fn* [] (a 5))
+				{//除了(def xxx)之外，例如(a 5)，会转变成一个匿名无参函数，即(fn* [] (a 5))
 				ObjExpr fexpr = (ObjExpr) analyze(C.EXPRESSION, RT.list(FN, PersistentVector.EMPTY, form),
 													"eval" + RT.nextID());
 				IFn fn = (IFn) fexpr.eval();
@@ -7158,7 +7158,7 @@ static void closeOver(LocalBinding b, ObjMethod method){
 		}
 }
 
-
+//获取本地绑定
 static LocalBinding referenceLocal(Symbol sym) {
 	if(!LOCAL_ENV.isBound())
 		return null;
