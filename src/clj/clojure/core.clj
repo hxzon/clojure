@@ -13,14 +13,14 @@
 (def unquote)
 (def unquote-splicing)
 
-;list items ´´½¨Ò»¸öÁĞ±í£¬°üº¬Ö¸¶¨ÔªËØ
+;list items åˆ›å»ºä¸€ä¸ªåˆ—è¡¨ï¼ŒåŒ…å«æŒ‡å®šå…ƒç´ 
 (def
  ^{:arglists '([& items])
    :doc "Creates a new list containing the items."
    :added "1.0"}
   list (. clojure.lang.PersistentList creator))
 
-;fn* µÈÌØÊâĞÎÊ½µÄ¶¨Òå¼û clojure.lang.Compiler 
+;fn* ç­‰ç‰¹æ®Šå½¢å¼çš„å®šä¹‰è§ clojure.lang.Compiler 
 (def
  ^{:arglists '([x seq])
     :doc "Returns a new seq where x is the first element and seq is
@@ -30,8 +30,8 @@
 
  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))
 
-;let£¬loop£¬fn£¬Æô¶¯Ö®³õ£¬»¹²»Ö§³Ö½â¹¹£¬ÉÔºó»áÖØ¶¨ÒåËüÃÇ
-; let* £¬loop*£¬fn* ¼û clojure.lang.Compiler 
+;letï¼Œloopï¼Œfnï¼Œå¯åŠ¨ä¹‹åˆï¼Œè¿˜ä¸æ”¯æŒè§£æ„ï¼Œç¨åä¼šé‡å®šä¹‰å®ƒä»¬
+; let* ï¼Œloop*ï¼Œfn* è§ clojure.lang.Compiler 
 ;during bootstrap we don't have destructuring let, loop or fn, will redefine later
 (def
   ^{:macro true
@@ -49,8 +49,8 @@
  fn (fn* fn [&form &env & decl] 
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
-;½« &form ÉÏµÄÔªÊı¾İ¼Óµ½ (fn* decl) ÉÏ¡£
-;×¢Òâ£¬Õâ¸ö°æ±¾µÄ fn ´øÓĞ &form ºÍ &env ¡£
+;å°† &form ä¸Šçš„å…ƒæ•°æ®åŠ åˆ° (fn* decl) ä¸Šã€‚
+;æ³¨æ„ï¼Œè¿™ä¸ªç‰ˆæœ¬çš„ fn å¸¦æœ‰ &form å’Œ &env ã€‚
 
 (def
  ^{:arglists '([coll])
@@ -271,7 +271,7 @@
                (recur (conj ret (first s)) (next s))
                (seq ret)))))
 
-; defn µÄ¶¨Òå
+; defn çš„å®šä¹‰
 (def 
 
  ^{:doc "Same as (def name (fn [params* ] exprs*)) or (def
@@ -282,55 +282,55 @@
                 [name doc-string? attr-map? ([params*] prepost-map? body)+ attr-map?])
    :added "1.0"}
 
-defn (fn defn [&form &env name & fdecl]    ;; name£¬º¯ÊıÃû£¬±ØĞëÊÇÒ»¸ö·ûºÅ
+defn (fn defn [&form &env name & fdecl]    ;; nameï¼Œå‡½æ•°åï¼Œå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
-       (if (instance? clojure.lang.Symbol name)        ;º¯ÊıÃûname±ØĞëÊÇÒ»¸ö·ûºÅ
+       (if (instance? clojure.lang.Symbol name)        ;å‡½æ•°ånameå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
          nil
           (throw (IllegalArgumentException. "First argument to defn must be a symbol")))
-        (let [m (if (string? (first fdecl))     ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎªÎÄµµ²ÎÊı£¬·ÅÈëm£¨ÔªÊı¾İ£©£¬²¢ÉèÎª:docÔªÊı¾İ¡£
+        (let [m (if (string? (first fdecl))     ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºæ–‡æ¡£å‚æ•°ï¼Œæ”¾å…¥mï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¹¶è®¾ä¸º:docå…ƒæ•°æ®ã€‚
                  {:doc (first fdecl)}
                   {})
-              fdecl (if (string? (first fdecl))     ;³ıµôfdecl¿ªÍ·µÄÎÄµµ²ÎÊı£¬Èç¹ûÓĞ¡£
+              fdecl (if (string? (first fdecl))     ;é™¤æ‰fdeclå¼€å¤´çš„æ–‡æ¡£å‚æ•°ï¼Œå¦‚æœæœ‰ã€‚
                      (next fdecl)
                       fdecl)
-              m (if (map? (first fdecl))    ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
+              m (if (map? (first fdecl))    ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
                  (conj m (first fdecl))
                   m)
-              fdecl (if (map? (first fdecl))    ;³ıµôfdecl¿ªÍ·µÄmap£¨ÔªÊı¾İ£©£¬Èç¹ûÓĞ¡£
+              fdecl (if (map? (first fdecl))    ;é™¤æ‰fdeclå¼€å¤´çš„mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¦‚æœæœ‰ã€‚
                      (next fdecl)
                       fdecl)
-              fdecl (if (vector? (first fdecl)) ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇÏòÁ¿£¨²ÎÊıÁĞ±í£©£¬½«fdecl×ª³ÉÁĞ±í£¨¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½£©¡£
+              fdecl (if (vector? (first fdecl)) ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å‘é‡ï¼ˆå‚æ•°åˆ—è¡¨ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼ˆå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼ï¼‰ã€‚
                      (list fdecl)
                       fdecl)
-              m (if (map? (last fdecl))     ;Èç¹ûfdecl×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
+              m (if (map? (last fdecl))     ;å¦‚æœfdeclæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
                  (conj m (last fdecl))
                   m)
-              fdecl (if (map? (last fdecl)) ;³ıµôfdecl×îºóÒ»¸öÔªËØ£¬Èç¹û×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©¡£
+              fdecl (if (map? (last fdecl)) ;é™¤æ‰fdeclæœ€åä¸€ä¸ªå…ƒç´ ï¼Œå¦‚æœæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ã€‚
                      (butlast fdecl)
                       fdecl)
-              m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;Ìí¼Óarglistsµ½mÖĞ¡£
+              m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;æ·»åŠ arglistsåˆ°mä¸­ã€‚
 
-              m (let [inline (:inline m)    ;¸üĞÂmµÄinlineĞÅÏ¢¡£inlineÊ¾Àı¼ûÏÂ¡£
-                      ifn (first inline)    ;¼´¡°fn¡±Õâ¸ö¹Ø¼ü×Ö¡£
-                      iname (second inline)]    ;µÚ¶ş²¿·Ö£¬¿ÉÄÜÊÇÄÚÁªº¯ÊıÃû£¬»òÕß²ÎÊıÁĞ±í¡£
+              m (let [inline (:inline m)    ;æ›´æ–°mçš„inlineä¿¡æ¯ã€‚inlineç¤ºä¾‹è§ä¸‹ã€‚
+                      ifn (first inline)    ;å³â€œfnâ€è¿™ä¸ªå…³é”®å­—ã€‚
+                      iname (second inline)]    ;ç¬¬äºŒéƒ¨åˆ†ï¼Œå¯èƒ½æ˜¯å†…è”å‡½æ•°åï¼Œæˆ–è€…å‚æ•°åˆ—è¡¨ã€‚
                   ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
-                  (if (if (clojure.lang.Util/equiv 'fn ifn)    ;; Èç¹ûÃ»ÓĞÖ¸¶¨ÄÚÁªº¯ÊıÃû£¬×Ô¶¯¸ù¾İº¯ÊıÃûÉú³ÉÒ»¸ö¡£
+                  (if (if (clojure.lang.Util/equiv 'fn ifn)    ;; å¦‚æœæ²¡æœ‰æŒ‡å®šå†…è”å‡½æ•°åï¼Œè‡ªåŠ¨æ ¹æ®å‡½æ•°åç”Ÿæˆä¸€ä¸ªã€‚
                          (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
                     (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
 
-              m (conj (if (meta name) (meta name) {}) m)]   ;½«m¼ÓÈëµ½name£¨º¯ÊıÃû£©µÄÔªÊı¾İÖĞ¡£
-;hxzonÉîÈëÀí½â£ºÕâ¸öºêµÄ·µ»ØÖµ£º
-          (list 'def (with-meta name m)     ;¶¨ÒåVar£¨Ö¸Ïòº¯Êı£©£¬´øÓĞÔªÊı¾İ¡£
+              m (conj (if (meta name) (meta name) {}) m)]   ;å°†måŠ å…¥åˆ°nameï¼ˆå‡½æ•°åï¼‰çš„å…ƒæ•°æ®ä¸­ã€‚
+;hxzonæ·±å…¥ç†è§£ï¼šè¿™ä¸ªå®çš„è¿”å›å€¼ï¼š
+          (list 'def (with-meta name m)     ;å®šä¹‰Varï¼ˆæŒ‡å‘å‡½æ•°ï¼‰ï¼Œå¸¦æœ‰å…ƒæ•°æ®ã€‚
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
-                (cons `fn fdecl) ))))    ;; µ½ÕâÀï£¬¸÷ÀàÔªÊı¾İ£¬´Ó fdecl ×ªÒÆµ½ name ÉÏÁË
+                (cons `fn fdecl) ))))    ;; åˆ°è¿™é‡Œï¼Œå„ç±»å…ƒæ•°æ®ï¼Œä» fdecl è½¬ç§»åˆ° name ä¸Šäº†
 
-(. (var defn) (setMacro))   ;½«defn±ê¼ÇÎªºê¡££¨ºêµÄµ×²ãÊµÏÖÆäÊµÒ²ÊÇº¯Êı¡££©
+(. (var defn) (setMacro))   ;å°†defnæ ‡è®°ä¸ºå®ã€‚ï¼ˆå®çš„åº•å±‚å®ç°å…¶å®ä¹Ÿæ˜¯å‡½æ•°ã€‚ï¼‰
 
-;inlineĞÅÏ¢Ê¾Àı£º
+;inlineä¿¡æ¯ç¤ºä¾‹ï¼š
 ;{  :inline (fn [x] `(. clojure.lang.Numbers (incP ~x)))
 ;   :added "1.0"}
 
@@ -438,7 +438,7 @@ defn (fn defn [&form &env name & fdecl]    ;; name£¬º¯ÊıÃû£¬±ØĞëÊÇÒ»¸ö·ûºÅ
   [x] (clojure.lang.Util/identical x nil))
 
 ;;;;;;;;;;;;;;;;;;;;;
-;¶¨Òåºê£¨defmacro£©
+;å®šä¹‰å®ï¼ˆdefmacroï¼‰
 
 (def
 
@@ -453,26 +453,26 @@ defmacro (fn [&form &env
                 name & args]
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
-                              (if (string? f)    ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎª¡°ÎÄµµ×Ö·û´®¡±
-                                (recur (cons f p) (next args));½«ÎÄµµ×Ö·û´®¼ÓÈëµ½p£¬²¢´ÓargsÖĞÒÆ³ı
-                                (if (map? f)    ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½p
+                              (if (string? f)    ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºâ€œæ–‡æ¡£å­—ç¬¦ä¸²â€
+                                (recur (cons f p) (next args));å°†æ–‡æ¡£å­—ç¬¦ä¸²åŠ å…¥åˆ°pï¼Œå¹¶ä»argsä¸­ç§»é™¤
+                                (if (map? f)    ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°p
                                   (recur (cons f p) (next args))
                                   p))))
-                   fdecl (loop [fd args]    ;´ÓargsÒÆ³ı¿ªÍ·µÄ¡°ÎÄµµ×Ö·û´®¡±ºÍmap£¨ÔªÊı¾İ£©
+                   fdecl (loop [fd args]    ;ä»argsç§»é™¤å¼€å¤´çš„â€œæ–‡æ¡£å­—ç¬¦ä¸²â€å’Œmapï¼ˆå…ƒæ•°æ®ï¼‰
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
-                   fdecl (if (vector? (first fdecl))    ;Èç¹û¿ªÍ·ÊÇÏòÁ¿£¨²ÎÊıÏòÁ¿£©£¬½«fdecl×ª³ÉÁĞ±í£¬¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½
+                   fdecl (if (vector? (first fdecl))    ;å¦‚æœå¼€å¤´æ˜¯å‘é‡ï¼ˆå‚æ•°å‘é‡ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼Œå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼
                            (list fdecl)
-                           fdecl)    ;Èç¹û¿ªÍ·²»ÊÇÏòÁ¿£¬¼´ÓĞÖØÔØ
+                           fdecl)    ;å¦‚æœå¼€å¤´ä¸æ˜¯å‘é‡ï¼Œå³æœ‰é‡è½½
 
-                   add-implicit-args (fn [fd]    ;; ÔÚÃ¿¸ö²ÎÊıÏòÁ¿µÄ¿ªÍ·£¬¼ÓÈë &form ºÍ &evn ÕâÁ½¸öÒşÊ½²ÎÊı
+                   add-implicit-args (fn [fd]    ;; åœ¨æ¯ä¸ªå‚æ•°å‘é‡çš„å¼€å¤´ï¼ŒåŠ å…¥ &form å’Œ &evn è¿™ä¸¤ä¸ªéšå¼å‚æ•°
                              (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
 
-                   add-args (fn [acc ds]    ;; ds = ( {¿ÉÑ¡µÄÔªÊı¾İ} ([] body) ([] body))
+                   add-args (fn [acc ds]    ;; ds = ( {å¯é€‰çš„å…ƒæ•°æ®} ([] body) ([] body))
                               (if (nil? ds)
                                 acc
                                 (let [d (first ds)]
@@ -480,14 +480,14 @@ defmacro (fn [&form &env
                                     (conj acc d)
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
 
-                   fdecl (seq (add-args [] fdecl))    ;; ¸øÃ¿¸öÖØÔØĞÎÊ½µÄ²ÎÊıÏòÁ¿£¬Ìí¼ÓÁ½¸öÒşÊ½²ÎÊı
-                   decl (loop [p prefix d fdecl]    ;; °Ñ¿ªÍ·µÄÎÄµµ×Ö·û´®£¬ºÍÔªÊı¾İ£¬ÖØĞÂ¼Ó»ØÈ¥
+                   fdecl (seq (add-args [] fdecl))    ;; ç»™æ¯ä¸ªé‡è½½å½¢å¼çš„å‚æ•°å‘é‡ï¼Œæ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°
+                   decl (loop [p prefix d fdecl]    ;; æŠŠå¼€å¤´çš„æ–‡æ¡£å­—ç¬¦ä¸²ï¼Œå’Œå…ƒæ•°æ®ï¼Œé‡æ–°åŠ å›å»
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-;hxzonÉîÈëÀí½â£º
-;·µ»Ø´úÂë£º (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
-;µÈÍ¬ÓÚ¶¨ÒåÒ»¸öº¯Êı£¬µ«ÊÇ½«º¯Êı±ê¼ÇÎªºê£¬ÇÒÌí¼ÓÁ½¸öÒşÊ½²ÎÊı¡£
+;hxzonæ·±å…¥ç†è§£ï¼š
+;è¿”å›ä»£ç ï¼š (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;ç­‰åŒäºå®šä¹‰ä¸€ä¸ªå‡½æ•°ï¼Œä½†æ˜¯å°†å‡½æ•°æ ‡è®°ä¸ºå®ï¼Œä¸”æ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°ã€‚
                (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
@@ -1595,7 +1595,7 @@ defmacro (fn [&form &env
     (if forms
       (let [form (first forms)
             threaded (if (seq? form)
-                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))    ;;×¢Òâ£¬±£³ÖformµÄÔªÊı¾İ
+                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))    ;;æ³¨æ„ï¼Œä¿æŒformçš„å…ƒæ•°æ®
                        (list form x))]
         (recur threaded (next forms)))
       x)))
@@ -4180,7 +4180,7 @@ defmacro (fn [&form &env
       (let [ss (map seq (conj colls c2 c1))]
         (when (every? identity ss)
           (concat (map first ss) (apply interleave (map rest ss))))))))
-; ÓÅÏÈÏß³Ì°ó¶¨Öµ£¬ÔÙ¸ùÖµ
+; ä¼˜å…ˆçº¿ç¨‹ç»‘å®šå€¼ï¼Œå†æ ¹å€¼
 (defn var-get
   "Gets the value in the var object"
   {:added "1.0"
@@ -4243,7 +4243,7 @@ defmacro (fn [&form &env
      (clojure.lang.PersistentArrayMap/createAsIfByAssoc (to-array keyvals))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;ÖØ¶¨Òålet£¬fn£¬loop
+;é‡å®šä¹‰letï¼Œfnï¼Œloop
 ;redefine let and loop  with destructuring
 (defn destructure [bindings]
   (let [bents (partition 2 bindings)
@@ -4342,7 +4342,7 @@ defmacro (fn [&form &env
           (let ~lets
             ~@body))))))
 
-;ÖØ¶¨Òåfn£¬´øÉÏ½â¹¹ºÍÇ°ÖÃºóÖÃÌõ¼ş
+;é‡å®šä¹‰fnï¼Œå¸¦ä¸Šè§£æ„å’Œå‰ç½®åç½®æ¡ä»¶
 ;redefine fn with destructuring and pre/post conditions
 (defmacro fn
   "params => positional-params* , or positional-params* & next-param
@@ -4407,7 +4407,7 @@ defmacro (fn [&form &env
           (cons 'fn* new-sigs))
         (meta &form))))
 
-;ÖØ¶¨Òåloop
+;é‡å®šä¹‰loop
 (defmacro loop
   "Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts
@@ -4476,10 +4476,10 @@ defmacro (fn [&form &env
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
-                                ;;  Óöµ½¹Ø¼ü×Ö£¬[a av b bv] -> [a av [b bv :k kv]]
+                                ;;  é‡åˆ°å…³é”®å­—ï¼Œ[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
-                            ;;  °ó¶¨ÁĞ±íÁ½Á½³ÉÒ»×é
+                            ;;  ç»‘å®šåˆ—è¡¨ä¸¤ä¸¤æˆä¸€ç»„
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
