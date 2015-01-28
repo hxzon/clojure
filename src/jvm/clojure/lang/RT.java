@@ -178,7 +178,7 @@ static Object readTrueFalseUnknown(String s){
 
 static public final Namespace CLOJURE_NS = Namespace.findOrCreate(Symbol.intern("clojure.core"));
 //static final Namespace USER_NS = Namespace.findOrCreate(Symbol.intern("user"));
-//é¢„å®šä¹‰çš„åŠ¨æ€Var
+//Ô¤¶¨ÒåµÄ¶¯Ì¬Var
 final static public Var OUT =
 		Var.intern(CLOJURE_NS, Symbol.intern("*out*"), new OutputStreamWriter(System.out)).setDynamic();
 final static public Var IN =
@@ -391,7 +391,7 @@ static public long lastModified(URL url, String libfile) throws IOException{
 		return url.openConnection().getLastModified();
 	}
 }
-//ç¼–è¯‘cljæºæ–‡ä»¶
+//±àÒëcljÔ´ÎÄ¼ş
 static void compile(String cljfile) throws IOException{
         InputStream ins = resourceAsStream(baseLoader(), cljfile);
 	if(ins != null) {
@@ -564,7 +564,7 @@ static public ISeq keys(Object coll){
 static public ISeq vals(Object coll){
 	return APersistentMap.ValSeq.create(seq(coll));
 }
-//è·å–å…ƒæ•°æ®
+//»ñÈ¡ÔªÊı¾İ
 static public IPersistentMap meta(Object x){
 	if(x instanceof IMeta)
 		return ((IMeta) x).meta();
@@ -597,6 +597,8 @@ static int countFrom(Object o){
 		return ((Collection) o).size();
 	else if(o instanceof Map)
 		return ((Map) o).size();
+	else if (o instanceof Map.Entry)
+		return 2;
 	else if(o.getClass().isArray())
 		return Array.getLength(o);
 
@@ -927,7 +929,7 @@ static boolean hasTag(Object o, Object tag){
 /**
  * ********************* Boxing/casts ******************************
  */
-//è£…ç®±å’Œç±»å‹è½¬æ¢
+//×°ÏäºÍÀàĞÍ×ª»»
 static public Object box(Object x){
 	return x;
 }
@@ -1706,8 +1708,8 @@ static public int boundedLength(ISeq list, int limit) {
 }
 
 ///////////////////////////////// reader support ////////////////////////////////
-//è¯»å–å™¨æ“ä½œ
-//å°†intè½¬ä¸ºå­—ç¬¦
+//¶ÁÈ¡Æ÷²Ù×÷
+//½«int×ªÎª×Ö·û
 static Character readRet(int ret){
 	if(ret == -1)
 		return null;
@@ -1718,7 +1720,7 @@ static public Character readChar(Reader r) throws IOException{
 	int ret = r.read();
 	return readRet(ret);
 }
-//è¯»å–ä¸‹ä¸€ä¸ªå­—ç¬¦ï¼Œä½†æ˜¯ä¸å‰è¿›
+//¶ÁÈ¡ÏÂÒ»¸ö×Ö·û£¬µ«ÊÇ²»Ç°½ø
 static public Character peekChar(Reader r) throws IOException{
 	int ret;
 	if(r instanceof PushbackReader) {
@@ -2107,41 +2109,46 @@ static public URL getResource(ClassLoader loader, String name){
     }
 }
 
-static public Class classForName(String name) {
+static public Class classForName(String name, boolean load, ClassLoader loader) {
 
 	try
 		{
-		return Class.forName(name, true, baseLoader());
+		Class c = null;
+		if (!(loader instanceof DynamicClassLoader))
+			c = DynamicClassLoader.findInMemoryClass(name);
+		if (c != null)
+			return c;
+		return Class.forName(name, load, loader);
 		}
 	catch(ClassNotFoundException e)
 		{
 		throw Util.sneakyThrow(e);
 		}
+}
+
+static public Class classForName(String name) {
+	return classForName(name, true, baseLoader());
 }
 
 static public Class classForNameNonLoading(String name) {
-	try
-		{
-		return Class.forName(name, false, baseLoader());
+	return classForName(name, false, baseLoader());
 		}
-	catch(ClassNotFoundException e)
-		{
-		throw Util.sneakyThrow(e);
-		}
-}
 
-static public Class loadClassForName(String name) throws ClassNotFoundException{
+static public Class loadClassForName(String name) {
 	try
 		{
-		Class.forName(name, false, baseLoader());
+		classForNameNonLoading(name);
 		}
-	catch(ClassNotFoundException e)
+	catch(Exception e)
 		{
+		if (e instanceof ClassNotFoundException)
 		return null;
+		else
+			throw Util.sneakyThrow(e);
 		}
-	return Class.forName(name, true, baseLoader());
+	return classForName(name);
 }
-//æ•°ç»„æ“ä½œ
+//Êı×é²Ù×÷
 static public float aget(float[] xs, int i){
 	return xs[i];
 }

@@ -13,14 +13,14 @@
 (def unquote)
 (def unquote-splicing)
 
-;list items ÂàõÂª∫‰∏Ä‰∏™ÂàóË°®ÔºåÂåÖÂê´ÊåáÂÆöÂÖÉÁ¥†
+;list items ¥¥Ω®“ª∏ˆ¡–±Ì£¨∞¸∫¨÷∏∂®‘™Àÿ
 (def
  ^{:arglists '([& items])
    :doc "Creates a new list containing the items."
    :added "1.0"}
   list (. clojure.lang.PersistentList creator))
 
-;fn* Á≠âÁâπÊÆäÂΩ¢ÂºèÁöÑÂÆö‰πâËßÅ clojure.lang.Compiler 
+;fn* µ»Ãÿ ‚–Œ Ωµƒ∂®“Âº˚ clojure.lang.Compiler 
 (def
  ^{:arglists '([x seq])
     :doc "Returns a new seq where x is the first element and seq is
@@ -30,8 +30,8 @@
 
  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))
 
-;letÔºåloopÔºåfnÔºåÂêØÂä®‰πãÂàùÔºåËøò‰∏çÊîØÊåÅËß£ÊûÑÔºåÁ®çÂêé‰ºöÈáçÂÆö‰πâÂÆÉ‰ª¨
-; let* Ôºåloop*Ôºåfn* ËßÅ clojure.lang.Compiler 
+;let£¨loop£¨fn£¨∆Ù∂Ø÷Æ≥ı£¨ªπ≤ª÷ß≥÷Ω‚ππ£¨…‘∫Ûª·÷ÿ∂®“ÂÀ¸√«
+; let* £¨loop*£¨fn* º˚ clojure.lang.Compiler 
 ;during bootstrap we don't have destructuring let, loop or fn, will redefine later
 (def
   ^{:macro true
@@ -49,8 +49,8 @@
  fn (fn* fn [&form &env & decl] 
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
-;Â∞Ü &form ‰∏äÁöÑÂÖÉÊï∞ÊçÆÂä†Âà∞ (fn* decl) ‰∏ä„ÄÇ
-;Ê≥®ÊÑèÔºåËøô‰∏™ÁâàÊú¨ÁöÑ fn Â∏¶Êúâ &form Âíå &env „ÄÇ
+;Ω´ &form …œµƒ‘™ ˝æ›º”µΩ (fn* decl) …œ°£
+;◊¢“‚£¨’‚∏ˆ∞Ê±æµƒ fn ¥¯”– &form ∫Õ &env °£
 
 (def
  ^{:arglists '([coll])
@@ -271,7 +271,7 @@
                (recur (conj ret (first s)) (next s))
                (seq ret)))))
 
-; defn ÁöÑÂÆö‰πâ
+; defn µƒ∂®“Â
 (def 
 
  ^{:doc "Same as (def name (fn [params* ] exprs*)) or (def
@@ -282,55 +282,55 @@
                 [name doc-string? attr-map? ([params*] prepost-map? body)+ attr-map?])
    :added "1.0"}
 
-defn (fn defn [&form &env name & fdecl]    ;; nameÔºåÂáΩÊï∞ÂêçÔºåÂøÖÈ°ªÊòØ‰∏Ä‰∏™Á¨¶Âè∑
+defn (fn defn [&form &env name & fdecl]    ;; name£¨∫Ø ˝√˚£¨±ÿ–Î «“ª∏ˆ∑˚∫≈
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
-       (if (instance? clojure.lang.Symbol name)        ;ÂáΩÊï∞ÂêçnameÂøÖÈ°ªÊòØ‰∏Ä‰∏™Á¨¶Âè∑
+       (if (instance? clojure.lang.Symbol name)        ;∫Ø ˝√˚name±ÿ–Î «“ª∏ˆ∑˚∫≈
          nil
           (throw (IllegalArgumentException. "First argument to defn must be a symbol")))
-        (let [m (if (string? (first fdecl))     ;Â¶ÇÊûúfdeclÁ¨¨‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØÂ≠óÁ¨¶‰∏≤ÔºåËßÜ‰∏∫ÊñáÊ°£ÂèÇÊï∞ÔºåÊîæÂÖ•mÔºàÂÖÉÊï∞ÊçÆÔºâÔºåÂπ∂ËÆæ‰∏∫:docÂÖÉÊï∞ÊçÆ„ÄÇ
+        (let [m (if (string? (first fdecl))     ;»Áπ˚fdeclµ⁄“ª∏ˆ‘™Àÿ «◊÷∑˚¥Æ£¨ ”Œ™Œƒµµ≤Œ ˝£¨∑≈»Îm£®‘™ ˝æ›£©£¨≤¢…ËŒ™:doc‘™ ˝æ›°£
                  {:doc (first fdecl)}
                   {})
-              fdecl (if (string? (first fdecl))     ;Èô§ÊéâfdeclÂºÄÂ§¥ÁöÑÊñáÊ°£ÂèÇÊï∞ÔºåÂ¶ÇÊûúÊúâ„ÄÇ
+              fdecl (if (string? (first fdecl))     ;≥˝µÙfdeclø™Õ∑µƒŒƒµµ≤Œ ˝£¨»Áπ˚”–°£
                      (next fdecl)
                       fdecl)
-              m (if (map? (first fdecl))    ;Â¶ÇÊûúfdeclÁ¨¨‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØmapÔºàÂÖÉÊï∞ÊçÆÔºâÔºåÂä†ÂÖ•Âà∞m„ÄÇ
+              m (if (map? (first fdecl))    ;»Áπ˚fdeclµ⁄“ª∏ˆ‘™Àÿ «map£®‘™ ˝æ›£©£¨º”»ÎµΩm°£
                  (conj m (first fdecl))
                   m)
-              fdecl (if (map? (first fdecl))    ;Èô§ÊéâfdeclÂºÄÂ§¥ÁöÑmapÔºàÂÖÉÊï∞ÊçÆÔºâÔºåÂ¶ÇÊûúÊúâ„ÄÇ
+              fdecl (if (map? (first fdecl))    ;≥˝µÙfdeclø™Õ∑µƒmap£®‘™ ˝æ›£©£¨»Áπ˚”–°£
                      (next fdecl)
                       fdecl)
-              fdecl (if (vector? (first fdecl)) ;Â¶ÇÊûúfdeclÁ¨¨‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØÂêëÈáèÔºàÂèÇÊï∞ÂàóË°®ÔºâÔºåÂ∞ÜfdeclËΩ¨ÊàêÂàóË°®ÔºàÂç≥Áªü‰∏ÄÊàêÊúâÈáçËΩΩÁöÑÂΩ¢ÂºèÔºâ„ÄÇ
+              fdecl (if (vector? (first fdecl)) ;»Áπ˚fdeclµ⁄“ª∏ˆ‘™Àÿ «œÚ¡ø£®≤Œ ˝¡–±Ì£©£¨Ω´fdecl◊™≥…¡–±Ì£®º¥Õ≥“ª≥…”–÷ÿ‘ÿµƒ–Œ Ω£©°£
                      (list fdecl)
                       fdecl)
-              m (if (map? (last fdecl))     ;Â¶ÇÊûúfdeclÊúÄÂêé‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØmapÔºàÂÖÉÊï∞ÊçÆÔºâÔºåÂä†ÂÖ•Âà∞m„ÄÇ
+              m (if (map? (last fdecl))     ;»Áπ˚fdecl◊Ó∫Û“ª∏ˆ‘™Àÿ «map£®‘™ ˝æ›£©£¨º”»ÎµΩm°£
                  (conj m (last fdecl))
                   m)
-              fdecl (if (map? (last fdecl)) ;Èô§ÊéâfdeclÊúÄÂêé‰∏Ä‰∏™ÂÖÉÁ¥†ÔºåÂ¶ÇÊûúÊúÄÂêé‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØmapÔºàÂÖÉÊï∞ÊçÆÔºâ„ÄÇ
+              fdecl (if (map? (last fdecl)) ;≥˝µÙfdecl◊Ó∫Û“ª∏ˆ‘™Àÿ£¨»Áπ˚◊Ó∫Û“ª∏ˆ‘™Àÿ «map£®‘™ ˝æ›£©°£
                      (butlast fdecl)
                       fdecl)
-              m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;Ê∑ªÂä†arglistsÂà∞m‰∏≠„ÄÇ
+              m (conj {:arglists (list 'quote (sigs fdecl))} m)     ;ÃÌº”arglistsµΩm÷–°£
 
-              m (let [inline (:inline m)    ;Êõ¥Êñ∞mÁöÑinline‰ø°ÊÅØ„ÄÇinlineÁ§∫‰æãËßÅ‰∏ã„ÄÇ
-                      ifn (first inline)    ;Âç≥‚Äúfn‚ÄùËøô‰∏™ÂÖ≥ÈîÆÂ≠ó„ÄÇ
-                      iname (second inline)]    ;Á¨¨‰∫åÈÉ®ÂàÜÔºåÂèØËÉΩÊòØÂÜÖËÅîÂáΩÊï∞ÂêçÔºåÊàñËÄÖÂèÇÊï∞ÂàóË°®„ÄÇ
+              m (let [inline (:inline m)    ;∏¸–¬mµƒinline–≈œ¢°£inline æ¿˝º˚œ¬°£
+                      ifn (first inline)    ;º¥°∞fn°±’‚∏ˆπÿº¸◊÷°£
+                      iname (second inline)]    ;µ⁄∂˛≤ø∑÷£¨ø…ƒ‹ «ƒ⁄¡™∫Ø ˝√˚£¨ªÚ’ﬂ≤Œ ˝¡–±Ì°£
                   ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
-                  (if (if (clojure.lang.Util/equiv 'fn ifn)    ;; Â¶ÇÊûúÊ≤°ÊúâÊåáÂÆöÂÜÖËÅîÂáΩÊï∞ÂêçÔºåËá™Âä®Ê†πÊçÆÂáΩÊï∞ÂêçÁîüÊàê‰∏Ä‰∏™„ÄÇ
+                  (if (if (clojure.lang.Util/equiv 'fn ifn)    ;; »Áπ˚√ª”–÷∏∂®ƒ⁄¡™∫Ø ˝√˚£¨◊‘∂Ø∏˘æ›∫Ø ˝√˚…˙≥…“ª∏ˆ°£
                          (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
                     (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
 
-              m (conj (if (meta name) (meta name) {}) m)]   ;Â∞ÜmÂä†ÂÖ•Âà∞nameÔºàÂáΩÊï∞ÂêçÔºâÁöÑÂÖÉÊï∞ÊçÆ‰∏≠„ÄÇ
-;hxzonÊ∑±ÂÖ•ÁêÜËß£ÔºöËøô‰∏™ÂÆèÁöÑËøîÂõûÂÄºÔºö
-          (list 'def (with-meta name m)     ;ÂÆö‰πâVarÔºàÊåáÂêëÂáΩÊï∞ÔºâÔºåÂ∏¶ÊúâÂÖÉÊï∞ÊçÆ„ÄÇ
+              m (conj (if (meta name) (meta name) {}) m)]   ;Ω´mº”»ÎµΩname£®∫Ø ˝√˚£©µƒ‘™ ˝æ›÷–°£
+;hxzon…Ó»Î¿ÌΩ‚£∫’‚∏ˆ∫Íµƒ∑µªÿ÷µ£∫
+          (list 'def (with-meta name m)     ;∂®“ÂVar£®÷∏œÚ∫Ø ˝£©£¨¥¯”–‘™ ˝æ›°£
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
-                (cons `fn fdecl) ))))    ;; Âà∞ËøôÈáåÔºåÂêÑÁ±ªÂÖÉÊï∞ÊçÆÔºå‰ªé fdecl ËΩ¨ÁßªÂà∞ name ‰∏ä‰∫Ü
+                (cons `fn fdecl) ))))    ;; µΩ’‚¿Ô£¨∏˜¿‡‘™ ˝æ›£¨¥” fdecl ◊™“∆µΩ name …œ¡À
 
-(. (var defn) (setMacro))   ;Â∞ÜdefnÊ†áËÆ∞‰∏∫ÂÆè„ÄÇÔºàÂÆèÁöÑÂ∫ïÂ±ÇÂÆûÁé∞ÂÖ∂ÂÆû‰πüÊòØÂáΩÊï∞„ÄÇÔºâ
+(. (var defn) (setMacro))   ;Ω´defn±Íº«Œ™∫Í°££®∫Íµƒµ◊≤„ µœ÷∆‰ µ“≤ «∫Ø ˝°££©
 
-;inline‰ø°ÊÅØÁ§∫‰æãÔºö
+;inline–≈œ¢ æ¿˝£∫
 ;{  :inline (fn [x] `(. clojure.lang.Numbers (incP ~x)))
 ;   :added "1.0"}
 
@@ -368,9 +368,9 @@ defn (fn defn [&form &env name & fdecl]    ;; nameÔºåÂáΩÊï∞ÂêçÔºåÂøÖÈ°ªÊòØ‰∏Ä‰∏™
   {:added "1.0"
    :static true}
   ([coll]
-   (if (instance? java.util.Collection coll)
-     (clojure.lang.LazilyPersistentVector/create coll)
-     (. clojure.lang.LazilyPersistentVector (createOwning (to-array coll))))))
+   (if (vector? coll)
+     (with-meta coll nil)
+     (clojure.lang.LazilyPersistentVector/create coll))))
 
 (defn hash-map
   "keyval => key val
@@ -438,7 +438,7 @@ defn (fn defn [&form &env name & fdecl]    ;; nameÔºåÂáΩÊï∞ÂêçÔºåÂøÖÈ°ªÊòØ‰∏Ä‰∏™
   [x] (clojure.lang.Util/identical x nil))
 
 ;;;;;;;;;;;;;;;;;;;;;
-;ÂÆö‰πâÂÆèÔºàdefmacroÔºâ
+;∂®“Â∫Í£®defmacro£©
 
 (def
 
@@ -453,26 +453,26 @@ defmacro (fn [&form &env
                 name & args]
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
-                              (if (string? f)    ;Â¶ÇÊûúargsÁ¨¨‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØÂ≠óÁ¨¶‰∏≤ÔºåËßÜ‰∏∫‚ÄúÊñáÊ°£Â≠óÁ¨¶‰∏≤‚Äù
-                                (recur (cons f p) (next args));Â∞ÜÊñáÊ°£Â≠óÁ¨¶‰∏≤Âä†ÂÖ•Âà∞pÔºåÂπ∂‰ªéargs‰∏≠ÁßªÈô§
-                                (if (map? f)    ;Â¶ÇÊûúargsÁ¨¨‰∏Ä‰∏™ÂÖÉÁ¥†ÊòØmapÔºàÂÖÉÊï∞ÊçÆÔºâÔºåÂä†ÂÖ•Âà∞p
+                              (if (string? f)    ;»Áπ˚argsµ⁄“ª∏ˆ‘™Àÿ «◊÷∑˚¥Æ£¨ ”Œ™°∞Œƒµµ◊÷∑˚¥Æ°±
+                                (recur (cons f p) (next args));Ω´Œƒµµ◊÷∑˚¥Æº”»ÎµΩp£¨≤¢¥”args÷–“∆≥˝
+                                (if (map? f)    ;»Áπ˚argsµ⁄“ª∏ˆ‘™Àÿ «map£®‘™ ˝æ›£©£¨º”»ÎµΩp
                                   (recur (cons f p) (next args))
                                   p))))
-                   fdecl (loop [fd args]    ;‰ªéargsÁßªÈô§ÂºÄÂ§¥ÁöÑ‚ÄúÊñáÊ°£Â≠óÁ¨¶‰∏≤‚ÄùÂíåmapÔºàÂÖÉÊï∞ÊçÆÔºâ
+                   fdecl (loop [fd args]    ;¥”args“∆≥˝ø™Õ∑µƒ°∞Œƒµµ◊÷∑˚¥Æ°±∫Õmap£®‘™ ˝æ›£©
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
-                   fdecl (if (vector? (first fdecl))    ;Â¶ÇÊûúÂºÄÂ§¥ÊòØÂêëÈáèÔºàÂèÇÊï∞ÂêëÈáèÔºâÔºåÂ∞ÜfdeclËΩ¨ÊàêÂàóË°®ÔºåÂç≥Áªü‰∏ÄÊàêÊúâÈáçËΩΩÁöÑÂΩ¢Âºè
+                   fdecl (if (vector? (first fdecl))    ;»Áπ˚ø™Õ∑ «œÚ¡ø£®≤Œ ˝œÚ¡ø£©£¨Ω´fdecl◊™≥…¡–±Ì£¨º¥Õ≥“ª≥…”–÷ÿ‘ÿµƒ–Œ Ω
                            (list fdecl)
-                           fdecl)    ;Â¶ÇÊûúÂºÄÂ§¥‰∏çÊòØÂêëÈáèÔºåÂç≥ÊúâÈáçËΩΩ
+                           fdecl)    ;»Áπ˚ø™Õ∑≤ª «œÚ¡ø£¨º¥”–÷ÿ‘ÿ
 
-                   add-implicit-args (fn [fd]    ;; Âú®ÊØè‰∏™ÂèÇÊï∞ÂêëÈáèÁöÑÂºÄÂ§¥ÔºåÂä†ÂÖ• &form Âíå &evn Ëøô‰∏§‰∏™ÈöêÂºèÂèÇÊï∞
+                   add-implicit-args (fn [fd]    ;; ‘⁄√ø∏ˆ≤Œ ˝œÚ¡øµƒø™Õ∑£¨º”»Î &form ∫Õ &evn ’‚¡Ω∏ˆ“˛ Ω≤Œ ˝
                              (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
 
-                   add-args (fn [acc ds]    ;; ds = ( {ÂèØÈÄâÁöÑÂÖÉÊï∞ÊçÆ} ([] body) ([] body))
+                   add-args (fn [acc ds]    ;; ds = ( {ø…—°µƒ‘™ ˝æ›} ([] body) ([] body))
                               (if (nil? ds)
                                 acc
                                 (let [d (first ds)]
@@ -480,14 +480,14 @@ defmacro (fn [&form &env
                                     (conj acc d)
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
 
-                   fdecl (seq (add-args [] fdecl))    ;; ÁªôÊØè‰∏™ÈáçËΩΩÂΩ¢ÂºèÁöÑÂèÇÊï∞ÂêëÈáèÔºåÊ∑ªÂä†‰∏§‰∏™ÈöêÂºèÂèÇÊï∞
-                   decl (loop [p prefix d fdecl]    ;; ÊääÂºÄÂ§¥ÁöÑÊñáÊ°£Â≠óÁ¨¶‰∏≤ÔºåÂíåÂÖÉÊï∞ÊçÆÔºåÈáçÊñ∞Âä†ÂõûÂéª
+                   fdecl (seq (add-args [] fdecl))    ;; ∏¯√ø∏ˆ÷ÿ‘ÿ–Œ Ωµƒ≤Œ ˝œÚ¡ø£¨ÃÌº”¡Ω∏ˆ“˛ Ω≤Œ ˝
+                   decl (loop [p prefix d fdecl]    ;; ∞—ø™Õ∑µƒŒƒµµ◊÷∑˚¥Æ£¨∫Õ‘™ ˝æ›£¨÷ÿ–¬º”ªÿ»•
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-;hxzonÊ∑±ÂÖ•ÁêÜËß£Ôºö
-;ËøîÂõû‰ª£Á†ÅÔºö (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
-;Á≠âÂêå‰∫éÂÆö‰πâ‰∏Ä‰∏™ÂáΩÊï∞Ôºå‰ΩÜÊòØÂ∞ÜÂáΩÊï∞Ê†áËÆ∞‰∏∫ÂÆèÔºå‰∏îÊ∑ªÂä†‰∏§‰∏™ÈöêÂºèÂèÇÊï∞„ÄÇ
+;hxzon…Ó»Î¿ÌΩ‚£∫
+;∑µªÿ¥˙¬Î£∫ (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;µ»Õ¨”⁄∂®“Â“ª∏ˆ∫Ø ˝£¨µ´ «Ω´∫Ø ˝±Íº«Œ™∫Í£¨«“ÃÌº”¡Ω∏ˆ“˛ Ω≤Œ ˝°£
                (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
@@ -1595,7 +1595,7 @@ defmacro (fn [&form &env
     (if forms
       (let [form (first forms)
             threaded (if (seq? form)
-                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))    ;;Ê≥®ÊÑèÔºå‰øùÊåÅformÁöÑÂÖÉÊï∞ÊçÆ
+                       (with-meta `(~(first form) ~x ~@(next form)) (meta form))    ;;◊¢“‚£¨±£≥÷formµƒ‘™ ˝æ›
                        (list form x))]
         (recur threaded (next forms)))
       x)))
@@ -3953,11 +3953,22 @@ defmacro (fn [&form &env
                 (clojure.lang.LineNumberingPushbackReader.))]
     (load-reader rdr)))
 
+(defn set?
+  "Returns true if x implements IPersistentSet"
+  {:added "1.0"
+   :static true}
+  [x] (instance? clojure.lang.IPersistentSet x))
+
 (defn set
   "Returns a set of the distinct elements of coll."
   {:added "1.0"
    :static true}
-  [coll] (clojure.lang.PersistentHashSet/create (seq coll)))
+  [coll]
+  (if (set? coll)
+    (with-meta coll nil)
+    (if (instance? clojure.lang.IReduceInit coll)
+      (persistent! (.reduce ^clojure.lang.IReduceInit coll conj! (transient #{})))
+      (persistent! (reduce1 conj! (transient #{}) coll)))))
 
 (defn ^{:private true
    :static true}
@@ -4169,7 +4180,7 @@ defmacro (fn [&form &env
       (let [ss (map seq (conj colls c2 c1))]
         (when (every? identity ss)
           (concat (map first ss) (apply interleave (map rest ss))))))))
-; ‰ºòÂÖàÁ∫øÁ®ãÁªëÂÆöÂÄºÔºåÂÜçÊ†πÂÄº
+; ”≈œ»œﬂ≥Ã∞Û∂®÷µ£¨‘Ÿ∏˘÷µ
 (defn var-get
   "Gets the value in the var object"
   {:added "1.0"
@@ -4232,7 +4243,7 @@ defmacro (fn [&form &env
      (clojure.lang.PersistentArrayMap/createAsIfByAssoc (to-array keyvals))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;ÈáçÂÆö‰πâletÔºåfnÔºåloop
+;÷ÿ∂®“Âlet£¨fn£¨loop
 ;redefine let and loop  with destructuring
 (defn destructure [bindings]
   (let [bents (partition 2 bindings)
@@ -4331,7 +4342,7 @@ defmacro (fn [&form &env
           (let ~lets
             ~@body))))))
 
-;ÈáçÂÆö‰πâfnÔºåÂ∏¶‰∏äËß£ÊûÑÂíåÂâçÁΩÆÂêéÁΩÆÊù°‰ª∂
+;÷ÿ∂®“Âfn£¨¥¯…œΩ‚ππ∫Õ«∞÷√∫Û÷√Ãıº˛
 ;redefine fn with destructuring and pre/post conditions
 (defmacro fn
   "params => positional-params* , or positional-params* & next-param
@@ -4396,7 +4407,7 @@ defmacro (fn [&form &env
           (cons 'fn* new-sigs))
         (meta &form))))
 
-;ÈáçÂÆö‰πâloop
+;÷ÿ∂®“Âloop
 (defmacro loop
   "Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts
@@ -4465,10 +4476,10 @@ defmacro (fn [&form &env
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
-                                ;;  ÈÅáÂà∞ÂÖ≥ÈîÆÂ≠óÔºå[a av b bv] -> [a av [b bv :k kv]]
+                                ;;  ”ˆµΩπÿº¸◊÷£¨[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
-                            ;;  ÁªëÂÆöÂàóË°®‰∏§‰∏§Êàê‰∏ÄÁªÑ
+                            ;;  ∞Û∂®¡–±Ì¡Ω¡Ω≥…“ª◊È
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
@@ -4806,10 +4817,22 @@ defmacro (fn [&form &env
    (reduce1 #(min-key k %1 %2) (min-key k x y) more)))
 
 (defn distinct
-  "Returns a lazy sequence of the elements of coll with duplicates removed"
+  "Returns a lazy sequence of the elements of coll with duplicates removed.
+  Returns a stateful transducer when no collection is provided."
   {:added "1.0"
    :static true}
-  [coll]
+  ([]
+   (fn [rf]
+     (let [seen (volatile! #{})]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+          (if (contains? @seen input)
+            result
+            (do (vswap! seen conj input)
+                (rf result input))))))))
+  ([coll]
     (let [step (fn step [xs seen]
                    (lazy-seq
                     ((fn [[f :as xs] seen]
@@ -4818,7 +4841,7 @@ defmacro (fn [&form &env
                           (recur (rest s) seen)
                           (cons f (step (rest s) (conj seen f))))))
                      xs seen)))]
-      (step coll #{})))
+     (step coll #{}))))
 
 
 
@@ -4971,10 +4994,27 @@ defmacro (fn [&form &env
   [coll] (clojure.lang.Murmur3/hashUnordered coll))
 
 (defn interpose
-  "Returns a lazy seq of the elements of coll separated by sep"
+  "Returns a lazy seq of the elements of coll separated by sep.
+  Returns a stateful transducer when no collection is provided."
   {:added "1.0"
    :static true}
-  [sep coll] (drop 1 (interleave (repeat sep) coll)))
+  ([sep]
+   (fn [rf]
+     (let [started (volatile! false)]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+          (if @started
+            (let [sepr (rf result sep)]
+              (if (reduced? sepr)
+                sepr
+                (rf sepr input)))
+            (do
+              (vreset! started true)
+              (rf result input))))))))
+  ([sep coll]
+   (drop 1 (interleave (repeat sep) coll))))
 
 (defmacro definline
   "Experimental - like defmacro, except defines a named function whose
@@ -5935,12 +5975,6 @@ defmacro (fn [&form &env
    :static true}
   [x] (instance? clojure.lang.IPersistentList x))
 
-(defn set?
-  "Returns true if x implements IPersistentSet"
-  {:added "1.0"
-   :static true}
-  [x] (instance? clojure.lang.IPersistentSet x))
-
 (defn ifn?
   "Returns true if x implements IFn. Note that many data structures
   (e.g. sets and maps) implement IFn"
@@ -6493,9 +6527,13 @@ defmacro (fn [&form &env
   items, returns val and f is not called."
   {:added "1.0"}
   ([f coll]
-     (clojure.core.protocols/coll-reduce coll f))
+     (if (instance? clojure.lang.IReduce coll)
+       (.reduce ^clojure.lang.IReduce coll f)
+       (clojure.core.protocols/coll-reduce coll f)))
   ([f val coll]
-     (clojure.core.protocols/coll-reduce coll f val)))
+     (if (instance? clojure.lang.IReduceInit coll)
+       (.reduce ^clojure.lang.IReduceInit coll f val)
+       (clojure.core.protocols/coll-reduce coll f val))))
 
 (extend-protocol clojure.core.protocols/IKVReduce
  nil
@@ -6970,10 +7008,19 @@ defmacro (fn [&form &env
   "Returns a lazy sequence consisting of the result of applying f to 0
   and the first item of coll, followed by applying f to 1 and the second
   item in coll, etc, until coll is exhausted. Thus function f should
-  accept 2 arguments, index and item."
+  accept 2 arguments, index and item. Returns a stateful transducer when
+  no collection is provided."
   {:added "1.2"
    :static true}
-  [f coll]
+  ([f]
+   (fn [rf]
+     (let [i (volatile! -1)]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+          (rf result (f (vswap! i inc) input)))))))
+  ([f coll]
   (letfn [(mapi [idx coll]
             (lazy-seq
              (when-let [s (seq coll)]
@@ -6985,7 +7032,7 @@ defmacro (fn [&form &env
                      (chunk-append b (f (+ idx i) (.nth c i))))
                    (chunk-cons (chunk b) (mapi (+ idx size) (chunk-rest s))))
                  (cons (f idx (first s)) (mapi (inc idx) (rest s)))))))]
-    (mapi 0 coll)))
+     (mapi 0 coll))))
 
 (defn keep
   "Returns a lazy sequence of the non-nil results of (f item). Note,
@@ -7314,7 +7361,9 @@ defmacro (fn [&form &env
    (seq [_] (seq (sequence xform coll)))
 
    clojure.lang.IReduceInit
-   (reduce [_ f init] (transduce xform f init coll))
+   (reduce [_ f init]
+     ;; NB (completing f) isolates completion of inner rf from outer rf
+     (transduce xform (completing f) init coll))
 
    clojure.lang.Sequential)
 

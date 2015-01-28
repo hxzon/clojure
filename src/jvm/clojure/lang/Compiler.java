@@ -75,7 +75,7 @@ static final Symbol HASHMAP = Symbol.intern("clojure.core", "hash-map");
 static final Symbol VECTOR = Symbol.intern("clojure.core", "vector");
 static final Symbol IDENTITY = Symbol.intern("clojure.core", "identity");
 
-static final Symbol _AMP_ = Symbol.intern("&");//å‰©ä½™å‚æ•°
+static final Symbol _AMP_ = Symbol.intern("&");//Ê£Óà²ÎÊı
 static final Symbol ISEQ = Symbol.intern("clojure.lang.ISeq");
 
 static final Keyword inlineKey = Keyword.intern(null, "inline");
@@ -135,7 +135,7 @@ NEW, new NewExpr.Parser(),//(new classname args)
 _AMP_, null//&
 );
 
-private static final int MAX_POSITIONAL_ARITY = 20;//â€œå¿…é¡»å‚æ•°â€çš„æœ€å¤§æ•°é‡ï¼ˆarityï¼Œæ•°é‡ï¼‰
+private static final int MAX_POSITIONAL_ARITY = 20;//¡°±ØĞë²ÎÊı¡±µÄ×î´óÊıÁ¿£¨arity£¬ÊıÁ¿£©
 private static final Type OBJECT_TYPE;
 private static final Type KEYWORD_TYPE = Type.getType(Keyword.class);
 private static final Type VAR_TYPE = Type.getType(Var.class);
@@ -161,19 +161,19 @@ private static final Type[] EXCEPTION_TYPES = {};
 static
     {
     OBJECT_TYPE = Type.getType(Object.class);
-    ARG_TYPES = new Type[MAX_POSITIONAL_ARITY + 2][];//äºŒç»´æ•°ç»„ï¼Œè¡¨ç¤ºæ‰€æœ‰çš„å‚æ•°ç­¾å
+    ARG_TYPES = new Type[MAX_POSITIONAL_ARITY + 2][];//¶şÎ¬Êı×é£¬±íÊ¾ËùÓĞµÄ²ÎÊıÇ©Ãû
     for(int i = 0; i <= MAX_POSITIONAL_ARITY; ++i)
         {
         Type[] a = new Type[i];
-        for(int j = 0; j < i; j++)//æ³¨æ„ï¼Œj<i
+        for(int j = 0; j < i; j++)//×¢Òâ£¬j<i
             a[j] = OBJECT_TYPE;
-        ARG_TYPES[i] = a;//å‚æ•°ç±»å‹æ•°ç»„ï¼ŒäºŒç»´æ•°ç»„ï¼Œéƒ½æ˜¯Objectç±»å‹
+        ARG_TYPES[i] = a;//²ÎÊıÀàĞÍÊı×é£¬¶şÎ¬Êı×é£¬¶¼ÊÇObjectÀàĞÍ
         }
     Type[] a = new Type[MAX_POSITIONAL_ARITY + 1];
     for(int j = 0; j < MAX_POSITIONAL_ARITY; j++)
         a[j] = OBJECT_TYPE;
     a[MAX_POSITIONAL_ARITY] = Type.getType("[Ljava/lang/Object;");
-    ARG_TYPES[MAX_POSITIONAL_ARITY + 1] = a;//æœ€åä¸€ä¸ªå‚æ•°ï¼Œå³å‰©ä½™å‚æ•°çš„ç±»å‹ï¼Œæ˜¯Objectæ•°ç»„
+    ARG_TYPES[MAX_POSITIONAL_ARITY + 1] = a;//×îºóÒ»¸ö²ÎÊı£¬¼´Ê£Óà²ÎÊıµÄÀàĞÍ£¬ÊÇObjectÊı×é
 
 
     }
@@ -242,16 +242,16 @@ static final public Var ADD_ANNOTATIONS = Var.intern(Namespace.findOrCreate(Symb
                                             Symbol.intern("add-annotations"));
 
 static final public Keyword disableLocalsClearingKey = Keyword.intern("disable-locals-clearing");
-static final public Keyword elideMetaKey = Keyword.intern("elide-meta");//è¦å¿½ç•¥çš„å…ƒæ•°æ®ï¼ˆelideï¼Œçœç•¥ï¼‰
+static final public Keyword elideMetaKey = Keyword.intern("elide-meta");//ÒªºöÂÔµÄÔªÊı¾İ£¨elide£¬Ê¡ÂÔ£©
 
 static final public Var COMPILER_OPTIONS;
-//è·å–ç¼–è¯‘å™¨å‚æ•°
+//»ñÈ¡±àÒëÆ÷²ÎÊı
 static public Object getCompilerOption(Keyword k){
     return RT.get(COMPILER_OPTIONS.deref(),k);
 }
 
     static
-    {//è®¾ç½®ç¼–è¯‘é€‰é¡¹
+    {//ÉèÖÃ±àÒëÑ¡Ïî
         Object compilerOptions = null;
 
         for (Map.Entry e : System.getProperties().entrySet())
@@ -269,10 +269,10 @@ static public Object getCompilerOption(Keyword k){
         COMPILER_OPTIONS = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
                 Symbol.intern("*compiler-options*"), compilerOptions).setDynamic();
     }
-    //mæ˜¯å…ƒæ•°æ®ï¼Œå»é™¤ç¼–è¯‘é€‰é¡¹æŒ‡å®šçš„è¦å¿½ç•¥çš„å…ƒæ•°æ®
+    //mÊÇÔªÊı¾İ£¬È¥³ı±àÒëÑ¡ÏîÖ¸¶¨µÄÒªºöÂÔµÄÔªÊı¾İ
     static Object elideMeta(Object m){
         Collection<Object> elides = (Collection<Object>) getCompilerOption(elideMetaKey);
-        if(elides != null)//è¦å¿½ç•¥çš„å…ƒæ•°æ®çš„é”®å
+        if(elides != null)//ÒªºöÂÔµÄÔªÊı¾İµÄ¼üÃû
             {
             for(Object k : elides)
                 {
@@ -302,7 +302,7 @@ static final public Var COLUMN_BEFORE = Var.create(0).setDynamic();
 static final public Var LINE_AFTER = Var.create(0).setDynamic();
 static final public Var COLUMN_AFTER = Var.create(0).setDynamic();
 
-//Integer ä¸‹ä¸€ä¸ªæœ¬åœ°ç»‘å®šä½ç½®å·
+//Integer ÏÂÒ»¸ö±¾µØ°ó¶¨Î»ÖÃºÅ
 static final public Var NEXT_LOCAL_NUM = Var.create(0).setDynamic();
 
 //Integer
@@ -322,17 +322,17 @@ static final public Var CLEAR_ROOT = Var.create(null).setDynamic();
 //LocalBinding -> Set<LocalBindingExpr>
 static final public Var CLEAR_SITES = Var.create(null).setDynamic();
 
-    public enum C{//formçš„ä¸Šä¸‹æ–‡ï¼ˆhxzonæœªç†è§£ï¼‰
-    STATEMENT,  //value ignored æ— è¿”å›å€¼
-    EXPRESSION, //value required æœ‰è¿”å›å€¼
+    public enum C{//formµÄÉÏÏÂÎÄ£¨hxzonÎ´Àí½â£©
+    STATEMENT,  //value ignored ÎŞ·µ»ØÖµ
+    EXPRESSION, //value required ÓĞ·µ»ØÖµ
     RETURN,      //tail position relative to enclosing recur frame
     EVAL
 }
 
 private class Recur {};
 static final public Class RECUR_CLASS = Recur.class;
-//LispReaderæŠŠæ–‡æœ¬è§£ææˆformï¼ŒIParserå†æŠŠformè§£ææˆExprã€‚
-//å¦‚æœæ±‚å€¼ï¼Œè°ƒç”¨å®ƒçš„evalæ–¹æ³•ï¼Œå¦‚æœç¼–è¯‘æˆclassæ–‡ä»¶ï¼Œè°ƒç”¨å®ƒçš„emitæ–¹æ³•ã€‚
+//LispReader°ÑÎÄ±¾½âÎö³Éform£¬IParserÔÙ°Ñform½âÎö³ÉExpr¡£
+//Èç¹ûÇóÖµ£¬µ÷ÓÃËüµÄeval·½·¨£¬Èç¹û±àÒë³ÉclassÎÄ¼ş£¬µ÷ÓÃËüµÄemit·½·¨¡£
 interface Expr{
     Object eval() ;
 
@@ -342,7 +342,7 @@ interface Expr{
 
     Class getJavaClass() ;
 }
-//ä¸å¯¹åº”javaç±»å‹çš„Expr
+//²»¶ÔÓ¦javaÀàĞÍµÄExpr
 public static abstract class UntypedExpr implements Expr{
 
     public Class getJavaClass(){
@@ -353,32 +353,32 @@ public static abstract class UntypedExpr implements Expr{
         return false;
     }
 }
-//å°†formè§£ææˆExprã€‚
+//½«form½âÎö³ÉExpr¡£
 interface IParser{
     Expr parse(C context, Object form) ;
 }
-//æ˜¯å¦æ˜¯ç‰¹æ®Šæ“ä½œç¬¦
+//ÊÇ·ñÊÇÌØÊâ²Ù×÷·û
 static boolean isSpecial(Object sym){
     return specials.containsKey(sym);
 }
-//è¯†åˆ«ç¬¦å·
+//Ê¶±ğ·ûºÅ
 static Symbol resolveSymbol(Symbol sym){
     //already qualified or classname?
     if(sym.name.indexOf('.') > 0)
-        return sym;//åå­—ä¸­å«ç‚¹å·ï¼Œæ˜¯ç±»åï¼Œæˆ–è€…æ˜¯å·²ç»å‘½åç©ºé—´é™å®šçš„
-    if(sym.ns != null)//å¦‚æœç¬¦å·æœ‰å‘½åç©ºé—´
+        return sym;//Ãû×ÖÖĞº¬µãºÅ£¬ÊÇÀàÃû£¬»òÕßÊÇÒÑ¾­ÃüÃû¿Õ¼äÏŞ¶¨µÄ
+    if(sym.ns != null)//Èç¹û·ûºÅÓĞÃüÃû¿Õ¼ä
         {
         Namespace ns = namespaceFor(sym);
-        if(ns == null || ns.name.name == sym.ns)//å¦‚æœæœ‰å‘½åç©ºé—´ä½†æ˜¯å‘½åç©ºé—´ä¸å­˜åœ¨ï¼ˆå³ç±»çš„é™æ€æˆå‘˜ï¼‰ï¼Œæˆ–è€…æ˜¯æœ¬å‘½åç©ºé—´çš„ç¬¦å·ï¼ˆå³éå¯¼å…¥çš„ç¬¦å·ï¼‰
+        if(ns == null || ns.name.name == sym.ns)//Èç¹ûÓĞÃüÃû¿Õ¼äµ«ÊÇÃüÃû¿Õ¼ä²»´æÔÚ£¨¼´ÀàµÄ¾²Ì¬³ÉÔ±£©£¬»òÕßÊÇ±¾ÃüÃû¿Õ¼äµÄ·ûºÅ£¨¼´·Çµ¼ÈëµÄ·ûºÅ£©
             return sym;
         return Symbol.intern(ns.name.name, sym.name);
         }
-    Object o = currentNS().getMapping(sym);//åœ¨å½“å‰å‘½åç©ºé—´æŸ¥æ‰¾ç¬¦å·
+    Object o = currentNS().getMapping(sym);//ÔÚµ±Ç°ÃüÃû¿Õ¼ä²éÕÒ·ûºÅ
     if(o == null)
-        return Symbol.intern(currentNS().name.name, sym.name);//å¦‚æœæ²¡æœ‰å‘½åç©ºé—´ï¼Œè§†ä¸ºå½“å‰å‘½åç©ºé—´
+        return Symbol.intern(currentNS().name.name, sym.name);//Èç¹ûÃ»ÓĞÃüÃû¿Õ¼ä£¬ÊÓÎªµ±Ç°ÃüÃû¿Õ¼ä
     else if(o instanceof Class)
         return Symbol.intern(null, ((Class) o).getName());
-    else if(o instanceof Var)//å¦‚æœç¬¦å·å¯¹åº”åˆ°ä¸€ä¸ªvarï¼ˆå³è¯¥ç¬¦å·æ˜¯åˆ«åï¼‰ï¼Œè½¬åŒ–æˆè¯¥varçš„ç¬¦å·ï¼ˆå®šä¹‰è¯¥varæ—¶ç”¨çš„ç¬¦å·ï¼‰
+    else if(o instanceof Var)//Èç¹û·ûºÅ¶ÔÓ¦µ½Ò»¸övar£¨¼´¸Ã·ûºÅÊÇ±ğÃû£©£¬×ª»¯³É¸ÃvarµÄ·ûºÅ£¨¶¨Òå¸ÃvarÊ±ÓÃµÄ·ûºÅ£©
             {
             Var v = (Var) o;
             return Symbol.intern(v.ns.name.name, v.sym.name);
@@ -390,10 +390,10 @@ static Symbol resolveSymbol(Symbol sym){
 // (def sym "doc string" initExpr)
 static class DefExpr implements Expr{
     public final Var var;
-    public final Expr init;//æ ¹å€¼è¡¨è¾¾å¼
-    public final Expr meta;//å…ƒæ•°æ®è¡¨è¾¾å¼
-    public final boolean initProvided;//æ˜¯å¦æä¾›äº†æ ¹å€¼
-    public final boolean isDynamic;//æ˜¯å¦åŠ¨æ€çš„
+    public final Expr init;//¸ùÖµ±í´ïÊ½
+    public final Expr meta;//ÔªÊı¾İ±í´ïÊ½
+    public final boolean initProvided;//ÊÇ·ñÌá¹©ÁË¸ùÖµ
+    public final boolean isDynamic;//ÊÇ·ñ¶¯Ì¬µÄ
     public final String source;
     public final int line;
     public final int column;
@@ -426,7 +426,7 @@ static class DefExpr implements Expr{
             }
         return false;
     }
-    //æ±‚å€¼defè¡¨è¾¾å¼ï¼Œå¾—åˆ°var
+    //ÇóÖµdef±í´ïÊ½£¬µÃµ½var
     public Object eval() {
         try
             {
@@ -435,13 +435,13 @@ static class DefExpr implements Expr{
 //          if(init instanceof FnExpr && ((FnExpr) init).closes.count()==0)
 //              var.bindRoot(new FnLoaderThunk((FnExpr) init,var));
 //          else
-                var.bindRoot(init.eval());//æ±‚å€¼åˆå§‹å€¼ï¼Œä½œä¸ºVarçš„æ ¹å€¼
+                var.bindRoot(init.eval());//ÇóÖµ³õÊ¼Öµ£¬×÷ÎªVarµÄ¸ùÖµ
                 }
             if(meta != null)
                 {
                 IPersistentMap metaMap = (IPersistentMap) meta.eval();
                 if (initProvided || true)//includesExplicitMetadata((MapExpr) meta))
-                    var.setMeta((IPersistentMap) meta.eval());//hxzonæ³¨æ„ï¼šæ±‚å€¼å…ƒæ•°æ®ï¼Œæ·»åŠ åˆ°Varä¸Š
+                    var.setMeta((IPersistentMap) meta.eval());//hxzon×¢Òâ£ºÇóÖµÔªÊı¾İ£¬Ìí¼Óµ½VarÉÏ
                 }
             return var.setDynamic(isDynamic);
             }
@@ -490,7 +490,7 @@ static class DefExpr implements Expr{
     public boolean hasJavaClass(){
         return true;
     }
-    //defè¡¨è¾¾å¼æ±‚å€¼æˆä¸€ä¸ªVar
+    //def±í´ïÊ½ÇóÖµ³ÉÒ»¸öVar
     public Class getJavaClass(){
         return Var.class;
     }
@@ -500,7 +500,7 @@ static class DefExpr implements Expr{
             //(def x) or (def x initexpr) or (def x "docstring" initexpr)
             String docstring = null;
             if(RT.count(form) == 4 && (RT.third(form) instanceof String)) {
-                docstring = (String) RT.third(form);//æ–‡æ¡£å­—ç¬¦ä¸²
+                docstring = (String) RT.third(form);//ÎÄµµ×Ö·û´®
                 form = RT.list(RT.first(form), RT.second(form), RT.fourth(form));
             }
             if(RT.count(form) > 3)
@@ -525,12 +525,12 @@ static class DefExpr implements Expr{
                 else
                     throw Util.runtimeException("Can't create defs outside of current ns");
                 }
-            IPersistentMap mm = sym.meta();//å…ƒæ•°æ®åœ¨è§£ææˆformæ—¶ï¼Œæ˜¯é™„ç€åœ¨symä¸Šçš„ï¼Œ
+            IPersistentMap mm = sym.meta();//ÔªÊı¾İÔÚ½âÎö³ÉformÊ±£¬ÊÇ¸½×ÅÔÚsymÉÏµÄ£¬
             boolean isDynamic = RT.booleanCast(RT.get(mm,dynamicKey));
             if(isDynamic)
                v.setDynamic();
             if(!isDynamic && sym.name.startsWith("*") && sym.name.endsWith("*") && sym.name.length() > 2)
-                {//ä¸æ˜¯åŠ¨æ€Varï¼Œå´ä½¿ç”¨â€œæŠ¤è€³å‘½åâ€ï¼Œå‘å‡ºè­¦å‘Šã€‚
+                {//²»ÊÇ¶¯Ì¬Var£¬È´Ê¹ÓÃ¡°»¤¶úÃüÃû¡±£¬·¢³ö¾¯¸æ¡£
                 RT.errPrintWriter().format("Warning: %1$s not declared dynamic and thus is not dynamically rebindable, "
                                           +"but its name suggests otherwise. Please either indicate ^:dynamic %1$s or change the name. (%2$s:%3$d)\n",
                                            sym, SOURCE_PATH.get(), LINE.get());
@@ -541,7 +541,7 @@ static class DefExpr implements Expr{
                 //vm = (IPersistentMap) RT.assoc(vm,staticKey,RT.T);
                 //drop quote
                 vm = (IPersistentMap) RT.assoc(vm,arglistsKey,RT.second(mm.valAt(arglistsKey)));
-                v.setMeta(vm);//hxzonæ³¨æ„ï¼šsymçš„arglistså…ƒæ•°æ®ï¼ŒåŠ å…¥åˆ°Var
+                v.setMeta(vm);//hxzon×¢Òâ£ºsymµÄarglistsÔªÊı¾İ£¬¼ÓÈëµ½Var
                 }
             Object source_path = SOURCE_PATH.get();
             source_path = source_path == null ? "NO_SOURCE_FILE" : source_path;
@@ -557,10 +557,10 @@ static class DefExpr implements Expr{
 //                  .without(Keyword.intern(null, "name"))
 //                  .without(Keyword.intern(null, "added"))
 //                  .without(Keyword.intern(null, "static"));
-            mm = (IPersistentMap) elideMeta(mm);//å»é™¤è¦å¿½ç•¥çš„å…ƒæ•°æ®
-            Expr meta = mm.count()==0 ? null:analyze(context == C.EVAL ? context : C.EXPRESSION, mm);//æœ€ç»ˆè°ƒç”¨MapExpr.parse
+            mm = (IPersistentMap) elideMeta(mm);//È¥³ıÒªºöÂÔµÄÔªÊı¾İ
+            Expr meta = mm.count()==0 ? null:analyze(context == C.EVAL ? context : C.EXPRESSION, mm);//×îÖÕµ÷ÓÃMapExpr.parse
             return new DefExpr((String) SOURCE.deref(), lineDeref(), columnDeref(),
-                               v, //è§£æ initExprï¼ˆå³Varçš„æ ¹å€¼ï¼‰
+                               v, //½âÎö initExpr£¨¼´VarµÄ¸ùÖµ£©
                                analyze(context == C.EVAL ? context : C.EXPRESSION, RT.third(form), v.sym.name),
                                meta, RT.count(form) == 3, isDynamic);
         }
@@ -578,7 +578,7 @@ public static class AssignExpr implements Expr{
     }
 
     public Object eval() {//InstanceFieldExpr,StaticFieldExpr,
-        return target.evalAssign(val);//VarExprï¼ˆè®¾ç½®æœ¬çº¿ç¨‹ç»‘å®šå€¼ï¼‰,LocalBindingExprï¼ˆä¸æ”¯æŒï¼‰
+        return target.evalAssign(val);//VarExpr£¨ÉèÖÃ±¾Ïß³Ì°ó¶¨Öµ£©,LocalBindingExpr£¨²»Ö§³Ö£©
     }
 
     public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -616,9 +616,9 @@ public static class VarExpr implements Expr, AssignableExpr{
         this.var = var;
         this.tag = tag != null ? tag : var.getTag();
     }
-    //varæ±‚å€¼æˆçº¿ç¨‹ç»‘å®šå€¼ï¼Œæˆ–æ ¹å€¼
+    //varÇóÖµ³ÉÏß³Ì°ó¶¨Öµ£¬»ò¸ùÖµ
     public Object eval() {
-        return var.deref();//ä¼˜å…ˆçº¿ç¨‹ç»‘å®šå€¼ï¼Œå†æ ¹å€¼
+        return var.deref();//ÓÅÏÈÏß³Ì°ó¶¨Öµ£¬ÔÙ¸ùÖµ
     }
 
     public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -638,7 +638,7 @@ public static class VarExpr implements Expr, AssignableExpr{
     }
 
     public Object evalAssign(Expr val) {
-        return var.set(val.eval());//è®¾ç½®æœ¬çº¿ç¨‹çš„ç»‘å®šå€¼
+        return var.set(val.eval());//ÉèÖÃ±¾Ïß³ÌµÄ°ó¶¨Öµ
     }
 
     public void emitAssign(C context, ObjExpr objx, GeneratorAdapter gen,
@@ -651,7 +651,7 @@ public static class VarExpr implements Expr, AssignableExpr{
     }
 }
 //===========
-//(var a) è·å¾—ç¬¦å·æ‰€å¯¹åº”çš„Var
+//(var a) »ñµÃ·ûºÅËù¶ÔÓ¦µÄVar
 public static class TheVarExpr implements Expr{
     public final Var var;
 
@@ -680,7 +680,7 @@ public static class TheVarExpr implements Expr{
     static class Parser implements IParser{
         public Expr parse(C context, Object form) {
             Symbol sym = (Symbol) RT.second(form);//(var sym)
-            Var v = lookupVar(sym, false);//æŸ¥æ‰¾ç¬¦å·æ‰€å¯¹åº”çš„varï¼Œä¸å­˜åœ¨æ—¶ä¸åˆ›å»ºè¯¥var
+            Var v = lookupVar(sym, false);//²éÕÒ·ûºÅËù¶ÔÓ¦µÄvar£¬²»´æÔÚÊ±²»´´½¨¸Ãvar
             if(v != null)
                 return new TheVarExpr(v);
             throw Util.runtimeException("Unable to resolve var: " + sym + " in this context");
@@ -768,18 +768,18 @@ public static abstract class LiteralExpr implements Expr{
         return val();
     }
 }
-//å¯è¢«èµ‹å€¼çš„Expr
+//¿É±»¸³ÖµµÄExpr
 static interface AssignableExpr{
     Object evalAssign(Expr val) ;
 
     void emitAssign(C context, ObjExpr objx, GeneratorAdapter gen, Expr val);
 }
-//å¯èƒ½æ˜¯åŸå§‹ç±»å‹çš„Expr
+//¿ÉÄÜÊÇÔ­Ê¼ÀàĞÍµÄExpr
 static public interface MaybePrimitiveExpr extends Expr{
     public boolean canEmitPrimitive();
     public void emitUnboxed(C context, ObjExpr objx, GeneratorAdapter gen);
 }
-//å®¿ä¸»ç±»å‹çš„Exprï¼Œå³â€œç‚¹â€ç‰¹æ®Šå½¢å¼
+//ËŞÖ÷ÀàĞÍµÄExpr£¬¼´¡°µã¡±ÌØÊâĞÎÊ½
 static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
     final static Type BOOLEAN_TYPE = Type.getType(Boolean.class);
     final static Type CHAR_TYPE = Type.getType(Character.class);
@@ -944,16 +944,16 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
             int line = lineDeref();
             int column = columnDeref();
             String source = (String) SOURCE.deref();
-            Class c = maybeClass(RT.second(form), false);//ç¬¬äºŒä¸ªå…ƒç´ æ˜¯å¦æ˜¯ç±»å
+            Class c = maybeClass(RT.second(form), false);//µÚ¶ş¸öÔªËØÊÇ·ñÊÇÀàÃû
             //at this point c will be non-null if static
             Expr instance = null;
             if(c == null)
                 instance = analyze(context == C.EVAL ? context : C.EXPRESSION, RT.second(form));
-            //å¦‚æœç¬¬ä¸‰ä¸ªå…ƒç´ æ˜¯ç¬¦å·ï¼Œæœ‰å¯èƒ½æ˜¯å­—æ®µåï¼ˆå¦‚æœæ˜¯åºåˆ—ï¼Œåˆ™è‚¯å®šæ˜¯æ–¹æ³•åï¼‰
+            //Èç¹ûµÚÈı¸öÔªËØÊÇ·ûºÅ£¬ÓĞ¿ÉÄÜÊÇ×Ö¶ÎÃû£¨Èç¹ûÊÇĞòÁĞ£¬Ôò¿Ï¶¨ÊÇ·½·¨Ãû£©
             boolean maybeField = RT.length(form) == 3 && (RT.third(form) instanceof Symbol);
 
             if(maybeField && !(((Symbol)RT.third(form)).name.charAt(0) == '-'))
-                {//å¦‚æœæ‰¾ä¸åˆ°è¯¥åå­—çš„æ–¹æ³•ï¼Œåˆ™è§†ä¸ºå­—æ®µ
+                {//Èç¹ûÕÒ²»µ½¸ÃÃû×ÖµÄ·½·¨£¬ÔòÊÓÎª×Ö¶Î
                 Symbol sym = (Symbol) RT.third(form);
                 if(c != null)
                     maybeField = Reflector.getMethods(c, 0, munge(sym.name), true).size() == 0;
@@ -977,7 +977,7 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
                 ISeq call = (ISeq) ((RT.third(form) instanceof ISeq) ? RT.third(form) : RT.next(RT.next(form)));
                 if(!(RT.first(call) instanceof Symbol))
                     throw new IllegalArgumentException("Malformed member expression");
-                Symbol sym = (Symbol) RT.first(call);//æ–¹æ³•å
+                Symbol sym = (Symbol) RT.first(call);//·½·¨Ãû
                 Symbol tag = tagOf(form);
                 PersistentVector args = PersistentVector.EMPTY;
                 for(ISeq s = RT.next(call); s != null; s = s.next())
@@ -1601,7 +1601,7 @@ static class StaticMethodExpr extends MethodExpr{
     public final int column;
     public final java.lang.reflect.Method method;
     public final Symbol tag;
-    final static Method forNameMethod = Method.getMethod("Class forName(String)");
+	final static Method forNameMethod = Method.getMethod("Class classForName(String)");
     final static Method invokeStaticMethodMethod =
             Method.getMethod("Object invokeStaticMethod(Class,String,Object[])");
     final static Keyword warnOnBoxedKeyword = Keyword.intern("warn-on-boxed");
@@ -1778,7 +1778,7 @@ static class StaticMethodExpr extends MethodExpr{
         else
             {
             gen.push(c.getName());
-            gen.invokeStatic(CLASS_TYPE, forNameMethod);
+			gen.invokeStatic(RT_TYPE, forNameMethod);
             gen.push(methodName);
             emitArgsAsArray(args, objx, gen);
             if(context == C.RETURN)
@@ -1801,7 +1801,7 @@ static class StaticMethodExpr extends MethodExpr{
     }
 }
 //===============
-//æœªèƒ½è¯†åˆ«çš„ç¬¦å·
+//Î´ÄÜÊ¶±ğµÄ·ûºÅ
 static class UnresolvedVarExpr implements Expr{
     public final Symbol symbol;
 
@@ -1902,7 +1902,7 @@ static class ConstantExpr extends LiteralExpr{
     }
 
     Object val(){
-        return v;//eval() æ±‚å€¼æˆv
+        return v;//eval() ÇóÖµ³Év
     }
 
     public void emit(C context, ObjExpr objx, GeneratorAdapter gen){
@@ -2488,8 +2488,7 @@ public static class NewExpr implements Expr{
     public final Class c;
     final static Method invokeConstructorMethod =
             Method.getMethod("Object invokeConstructor(Class,Object[])");
-//  final static Method forNameMethod = Method.getMethod("Class classForName(String)");
-    final static Method forNameMethod = Method.getMethod("Class forName(String)");
+	final static Method forNameMethod = Method.getMethod("Class classForName(String)");
 
 
     public NewExpr(Class c, IPersistentVector args, int line, int column) {
@@ -2562,7 +2561,7 @@ public static class NewExpr implements Expr{
         else
             {
             gen.push(destubClassName(c.getName()));
-            gen.invokeStatic(CLASS_TYPE, forNameMethod);
+			gen.invokeStatic(RT_TYPE, forNameMethod);
             MethodExpr.emitArgsAsArray(args, objx, gen);
             if(context == C.RETURN)
                 {
@@ -2614,7 +2613,7 @@ public static class MetaExpr implements Expr{
         this.expr = expr;
         this.meta = meta;
     }
-    //metaæ±‚å€¼æˆä¸€ä¸ªmapï¼Œexpræ±‚å€¼æˆä¸€ä¸ªå¯¹è±¡ï¼Œç„¶åå¸¦ä¸Šæ­¤å…ƒæ•°æ®
+    //metaÇóÖµ³ÉÒ»¸ömap£¬exprÇóÖµ³ÉÒ»¸ö¶ÔÏó£¬È»ºó´øÉÏ´ËÔªÊı¾İ
     public Object eval() {
         return ((IObj) expr.eval()).withMeta((IPersistentMap) meta.eval());
     }
@@ -2780,7 +2779,7 @@ public static class IfExpr implements Expr, MaybePrimitiveExpr{
         }
     }
 }
-//clojureç¬¦å·ä¸­çš„æŸäº›å­—ç¬¦ï¼Œåœ¨jvmå­—èŠ‚ç ä¸­æ˜¯ä¸å…è®¸çš„ã€‚é€šè¿‡æ­¤æ˜ å°„è¿›è¡Œè½¬æ¢ã€‚
+//clojure·ûºÅÖĞµÄÄ³Ğ©×Ö·û£¬ÔÚjvm×Ö½ÚÂëÖĞÊÇ²»ÔÊĞíµÄ¡£Í¨¹ı´ËÓ³Éä½øĞĞ×ª»»¡£
 static final public IPersistentMap CHAR_MAP =
         PersistentHashMap.create('-', "_",
 //                               '.', "_DOT_",
@@ -2850,7 +2849,7 @@ static {
         }
     DEMUNGE_PATTERN = Pattern.compile(sb.toString());
 }
-//clojureç¬¦å·ä¸­çš„æŸäº›å­—ç¬¦ï¼Œåœ¨jvmå­—èŠ‚ç ä¸­æ˜¯ä¸å…è®¸çš„ã€‚é€šè¿‡æ­¤æ˜ å°„è¿›è¡Œè½¬æ¢ã€‚
+//clojure·ûºÅÖĞµÄÄ³Ğ©×Ö·û£¬ÔÚjvm×Ö½ÚÂëÖĞÊÇ²»ÔÊĞíµÄ¡£Í¨¹ı´ËÓ³Éä½øĞĞ×ª»»¡£
 static public String munge(String name){
     StringBuilder sb = new StringBuilder();
     for(char c : name.toCharArray())
@@ -2936,7 +2935,7 @@ public static class EmptyExpr implements Expr{
     }
 }
 //===========
-//åˆ—è¡¨è¡¨è¾¾å¼ï¼ˆéè°ƒç”¨ï¼‰
+//ÁĞ±í±í´ïÊ½£¨·Çµ÷ÓÃ£©
 public static class ListExpr implements Expr{
     public final IPersistentVector args;
     final static Method arrayToListMethod = Method.getMethod("clojure.lang.ISeq arrayToList(Object[])");
@@ -2971,7 +2970,7 @@ public static class ListExpr implements Expr{
 }
 
 public static class MapExpr implements Expr{
-    public final IPersistentVector keyvals;//å…ƒç´ éƒ½æ˜¯Expr
+    public final IPersistentVector keyvals;//ÔªËØ¶¼ÊÇExpr
     final static Method mapMethod = Method.getMethod("clojure.lang.IPersistentMap map(Object[])");
     final static Method mapUniqueKeysMethod = Method.getMethod("clojure.lang.IPersistentMap mapUniqueKeys(Object[])");
 
@@ -3525,7 +3524,7 @@ static class StaticInvokeExpr implements Expr, MaybePrimitiveExpr{
                                     paramTypes.toArray(new Type[paramTypes.size()]),variadic, argv, tag);
     }
 }
-//è°ƒç”¨è¡¨è¾¾å¼ï¼ˆhxzoné‡è¦ï¼‰
+//µ÷ÓÃ±í´ïÊ½£¨hxzonÖØÒª£©
 static class InvokeExpr implements Expr{
     public final Expr fexpr;
     public final Object tag;
@@ -3585,7 +3584,7 @@ static class InvokeExpr implements Expr{
             Object sigTag = null;
             for(ISeq s = RT.seq(arglists); s != null; s = s.next()) {
                 APersistentVector sig = (APersistentVector) s.first();
-                int restOffset = sig.indexOf(_AMP_);//â€œå‰©ä½™å‚æ•°â€
+                int restOffset = sig.indexOf(_AMP_);//¡°Ê£Óà²ÎÊı¡±
                 if (args.count() == sig.count() || (restOffset > -1 && args.count() >= restOffset)) {
                     sigTag = tagOf(sig);
                     break;
@@ -3597,10 +3596,10 @@ static class InvokeExpr implements Expr{
             this.tag = null;
         }
     }
-    // fexpr æ±‚å€¼æˆå‡½æ•°ï¼Œå¹¶è°ƒç”¨è¯¥å‡½æ•°
+    // fexpr ÇóÖµ³Éº¯Êı£¬²¢µ÷ÓÃ¸Ãº¯Êı
     public Object eval() {
         try
-            {//æ±‚å€¼ fexpr å’Œå‚æ•°
+            {//ÇóÖµ fexpr ºÍ²ÎÊı
             IFn fn = (IFn) fexpr.eval();
             PersistentVector argvs = PersistentVector.EMPTY;
             for(int i = 0; i < args.count(); i++)
@@ -3717,8 +3716,8 @@ static class InvokeExpr implements Expr{
     static public Expr parse(C context, ISeq form) {
         if(context != C.EVAL)
             context = C.EXPRESSION;
-        Expr fexpr = analyze(context, form.first());//é™¤äº†#=ï¼Œform.first() æ€»æ˜¯ç¬¦å·ï¼Œfexpræ˜¯VarExpr
-        if(fexpr instanceof VarExpr && ((VarExpr)fexpr).var.equals(INSTANCE) && RT.count(form) == 3)//instanceof? è°ƒç”¨
+        Expr fexpr = analyze(context, form.first());//³ıÁË#=£¬form.first() ×ÜÊÇ·ûºÅ£¬fexprÊÇVarExpr
+        if(fexpr instanceof VarExpr && ((VarExpr)fexpr).var.equals(INSTANCE) && RT.count(form) == 3)//instanceof? µ÷ÓÃ
             {
             Expr sexpr = analyze(C.EXPRESSION, RT.second(form));
             if(sexpr instanceof ConstantExpr)
@@ -3740,11 +3739,11 @@ static class InvokeExpr implements Expr{
 //              }
 //          }
 
-        if(fexpr instanceof VarExpr && context != C.EVAL)//å¦‚æœæ˜¯var
+        if(fexpr instanceof VarExpr && context != C.EVAL)//Èç¹ûÊÇvar
             {
             Var v = ((VarExpr)fexpr).var;
             Object arglists = RT.get(RT.meta(v), arglistsKey);
-            int arity = RT.count(form.next());//å‚æ•°ä¸ªæ•°
+            int arity = RT.count(form.next());//²ÎÊı¸öÊı
             for(ISeq s = RT.seq(arglists); s != null; s = s.next())
                 {
                 IPersistentVector args = (IPersistentVector) s.first();
@@ -3761,7 +3760,7 @@ static class InvokeExpr implements Expr{
                 }
             }
 
-        if(fexpr instanceof KeywordExpr && RT.count(form) == 2 && KEYWORD_CALLSITES.isBound())//å¦‚æœæ˜¯å…³é”®å­—ä½œä¸ºå‡½æ•°
+        if(fexpr instanceof KeywordExpr && RT.count(form) == 2 && KEYWORD_CALLSITES.isBound())//Èç¹ûÊÇ¹Ø¼ü×Ö×÷Îªº¯Êı
             {
 //          fexpr = new ConstantExpr(new KeywordCallSite(((KeywordExpr)fexpr).k));
             Expr target = analyze(context, RT.second(form));
@@ -3771,15 +3770,15 @@ static class InvokeExpr implements Expr{
         PersistentVector args = PersistentVector.EMPTY;
         for(ISeq s = RT.seq(form.next()); s != null; s = s.next())
             {
-            args = args.cons(analyze(context, s.first()));//è§£æå‚æ•°
-            //å¦‚æœæ˜¯ç¬¦å·aï¼Œä¸”ç¬¦å·å¯¹åº”åˆ°ä¸€ä¸ªvarï¼Œå¾—åˆ°VarExprï¼Œæ±‚å€¼æ—¶å¾—åˆ°varçš„å€¼
-            //å¦‚æœæ˜¯(var a)ï¼Œå¾—åˆ°TheVarExprï¼Œæ±‚å€¼æ—¶å¾—åˆ°varæœ¬èº«
-            //(def b1 (partial a 5)) æ±‚å€¼æ—¶æ˜¯ (partialFn aFn 5)ï¼Œ
-            //b1 ç»‘å®šåˆ°ä¸€ä¸ªåŒ¿åå‡½æ•°ï¼Œå®ƒæ•è·äº†aFn
-            //(def b2 (partial #'a 5)) æ±‚å€¼æ—¶æ˜¯ (partialFn aVar 5)ï¼Œ
-            //aVarä¹Ÿæ˜¯å‡½æ•°ï¼Œ(aVar xx)ç­‰ä»·äº((deref aVar) xx)ï¼Œ
-            //b2 ç»‘å®šåˆ°ä¸€ä¸ªåŒ¿åå‡½æ•°ï¼Œå®ƒæ•è·äº†aVarï¼Œé€šè¿‡(deref aVar)ï¼Œæ‰€ä»¥æ€»æ˜¯æœ€æ–°å€¼
-            //åœ¨å‡½æ•°ä½ç½®çš„ç¬¦å·aï¼Œå¾—åˆ°VarExprï¼Œè°ƒç”¨æ—¶æ‰æ±‚å€¼ï¼Œæ‰€ä»¥æ€»æ˜¯æœ€æ–°å€¼
+            args = args.cons(analyze(context, s.first()));//½âÎö²ÎÊı
+            //Èç¹ûÊÇ·ûºÅa£¬ÇÒ·ûºÅ¶ÔÓ¦µ½Ò»¸övar£¬µÃµ½VarExpr£¬ÇóÖµÊ±µÃµ½varµÄÖµ
+            //Èç¹ûÊÇ(var a)£¬µÃµ½TheVarExpr£¬ÇóÖµÊ±µÃµ½var±¾Éí
+            //(def b1 (partial a 5)) ÇóÖµÊ±ÊÇ (partialFn aFn 5)£¬
+            //b1 °ó¶¨µ½Ò»¸öÄäÃûº¯Êı£¬Ëü²¶»ñÁËaFn
+            //(def b2 (partial #'a 5)) ÇóÖµÊ±ÊÇ (partialFn aVar 5)£¬
+            //aVarÒ²ÊÇº¯Êı£¬(aVar xx)µÈ¼ÛÓÚ((deref aVar) xx)£¬
+            //b2 °ó¶¨µ½Ò»¸öÄäÃûº¯Êı£¬Ëü²¶»ñÁËaVar£¬Í¨¹ı(deref aVar)£¬ËùÒÔ×ÜÊÇ×îĞÂÖµ
+            //ÔÚº¯ÊıÎ»ÖÃµÄ·ûºÅa£¬µÃµ½VarExpr£¬µ÷ÓÃÊ±²ÅÇóÖµ£¬ËùÒÔ×ÜÊÇ×îĞÂÖµ
             }
 //      if(args.count() > MAX_POSITIONAL_ARITY)
 //          throw new IllegalArgumentException(
@@ -3799,19 +3798,19 @@ static class SourceDebugExtensionAttribute extends Attribute{
         bv.putUTF8(smap);
     }
 }
-//å®šä¹‰å‡½æ•°ï¼š(fn ...)
-//ç»§æ‰¿è‡ªObjExprï¼Œæ±‚å€¼æˆä¸€ä¸ªAFunctionå®ä¾‹ï¼ˆhxzonæ³¨æ„ï¼‰
+//¶¨Òåº¯Êı£º(fn ...)
+//¼Ì³Ğ×ÔObjExpr£¬ÇóÖµ³ÉÒ»¸öAFunctionÊµÀı£¨hxzon×¢Òâ£©
 static public class FnExpr extends ObjExpr{
     final static Type aFnType = Type.getType(AFunction.class);
     final static Type restFnType = Type.getType(RestFn.class);
     //if there is a variadic overload (there can only be one) it is stored here
-    FnMethod variadicMethod = null;//ä¸å®šå‚æ•°å‡½æ•°
-    IPersistentCollection methods;//é‡è½½å‡½æ•°
+    FnMethod variadicMethod = null;//²»¶¨²ÎÊıº¯Êı
+    IPersistentCollection methods;//ÖØÔØº¯Êı
     private boolean hasPrimSigs;
     private boolean hasMeta;
     //  String superName = null;
 
-    public FnExpr(Object tag){//hxzonæ³¨æ„ï¼šä¸æ˜¯è¿”å›å€¼çš„ç±»å‹æç¤º
+    public FnExpr(Object tag){//hxzon×¢Òâ£º²»ÊÇ·µ»ØÖµµÄÀàĞÍÌáÊ¾
         super(tag);
     }
 
@@ -3822,9 +3821,9 @@ static public class FnExpr extends ObjExpr{
     boolean supportsMeta(){
         return hasMeta;
     }
-    //æ³¨æ„ï¼Œæ˜¯å‡½æ•°çš„å®ç°ç±»å‹ï¼Œä¸æ˜¯å‡½æ•°çš„è¿”å›å€¼ç±»å‹
+    //×¢Òâ£¬ÊÇº¯ÊıµÄÊµÏÖÀàĞÍ£¬²»ÊÇº¯ÊıµÄ·µ»ØÖµÀàĞÍ
     public Class getJavaClass() {
-        return tag != null ? HostExpr.tagToClass(tag) : AFunction.class;//é»˜è®¤æ˜¯AFunctionç±»å‹
+        return tag != null ? HostExpr.tagToClass(tag) : AFunction.class;//Ä¬ÈÏÊÇAFunctionÀàĞÍ
     }
 
     protected void emitMethods(ClassVisitor cv){
@@ -3887,7 +3886,7 @@ static public class FnExpr extends ObjExpr{
 
         Symbol nm = null;
 
-        if(RT.second(form) instanceof Symbol) {//ç¬¬äºŒä¸ªå…ƒç´ å¦‚æœæ˜¯ç¬¦å·ï¼Œå³å‡½æ•°å†…éƒ¨åç§°
+        if(RT.second(form) instanceof Symbol) {//µÚ¶ş¸öÔªËØÈç¹ûÊÇ·ûºÅ£¬¼´º¯ÊıÄÚ²¿Ãû³Æ
             nm = (Symbol) RT.second(form);
                 name = nm.name + "__" + RT.nextID();
         } else {
@@ -3921,16 +3920,16 @@ static public class FnExpr extends ObjExpr{
                 {
                 fn.thisName = nm.name;
                 fn.isStatic = false; //RT.booleanCast(RT.get(nm.meta(), staticKey));
-                form = RT.cons(FN, RT.next(RT.next(form)));//ç§»æ‰äº†å‡½æ•°å†…éƒ¨åç§°
+                form = RT.cons(FN, RT.next(RT.next(form)));//ÒÆµôÁËº¯ÊıÄÚ²¿Ãû³Æ
                 }
 
             //now (fn [args] body...) or (fn ([args] body...) ([args2] body2...) ...)
             //turn former into latter
-            if(RT.second(form) instanceof IPersistentVector)//å¦‚æœç¬¬äºŒä¸ªå…ƒç´ æ˜¯å‘é‡ï¼ˆå‚æ•°å‘é‡ï¼‰ï¼Œå³æ²¡æœ‰é‡è½½
-                form = RT.list(FN, RT.next(form));//è½¬æˆé‡è½½å½¢å¼
+            if(RT.second(form) instanceof IPersistentVector)//Èç¹ûµÚ¶ş¸öÔªËØÊÇÏòÁ¿£¨²ÎÊıÏòÁ¿£©£¬¼´Ã»ÓĞÖØÔØ
+                form = RT.list(FN, RT.next(form));//×ª³ÉÖØÔØĞÎÊ½
             fn.line = lineDeref();
             fn.column = columnDeref();
-            FnMethod[] methodArray = new FnMethod[MAX_POSITIONAL_ARITY + 1];//é‡è½½å‡½æ•°æ˜ å°„ï¼šå‚æ•°ä¸ªæ•°->å‡½æ•°
+            FnMethod[] methodArray = new FnMethod[MAX_POSITIONAL_ARITY + 1];//ÖØÔØº¯ÊıÓ³Éä£º²ÎÊı¸öÊı->º¯Êı
             FnMethod variadicMethod = null;
             for(ISeq s = RT.next(form); s != null; s = RT.next(s))
                 {
@@ -3957,7 +3956,7 @@ static public class FnExpr extends ObjExpr{
                                 "Can't have fixed arity function with more params than variadic function");
                 }
 
-            if(fn.isStatic && fn.closes.count() > 0)//é™æ€å‡½æ•°ä¸èƒ½æ•æ‰å˜é‡
+            if(fn.isStatic && fn.closes.count() > 0)//¾²Ì¬º¯Êı²»ÄÜ²¶×½±äÁ¿
                 throw new IllegalArgumentException("static fns can't be closures");
             IPersistentCollection methods = null;
             for(int i = 0; i < methodArray.length; i++)
@@ -3966,7 +3965,7 @@ static public class FnExpr extends ObjExpr{
             if(variadicMethod != null)
                 methods = RT.conj(methods, variadicMethod);
 
-            fn.methods = methods;//æ‰€æœ‰é‡è½½å‡½æ•°ï¼Œä¸å®šå‚æ•°åœ¨æœ€å
+            fn.methods = methods;//ËùÓĞÖØÔØº¯Êı£¬²»¶¨²ÎÊıÔÚ×îºó
             fn.variadicMethod = variadicMethod;
             fn.keywords = (IPersistentMap) KEYWORDS.deref();
             fn.vars = (IPersistentMap) VARS.deref();
@@ -3984,7 +3983,7 @@ static public class FnExpr extends ObjExpr{
             Var.popThreadBindings();
             }
         fn.hasPrimSigs = prims.size() > 0;
-        IPersistentMap fmeta = RT.meta(origForm);//è·å–origFormè¿™ä¸ªå¯¹è±¡çš„å…ƒæ•°æ®
+        IPersistentMap fmeta = RT.meta(origForm);//»ñÈ¡origFormÕâ¸ö¶ÔÏóµÄÔªÊı¾İ
         if(fmeta != null)
             fmeta = fmeta.without(RT.LINE_KEY).without(RT.COLUMN_KEY).without(RT.FILE_KEY);
 
@@ -4045,9 +4044,9 @@ static public class FnExpr extends ObjExpr{
 
 static public class ObjExpr implements Expr{
     static final String CONST_PREFIX = "const__";
-    String name;//å…¨é™å®šç±»å
+    String name;//È«ÏŞ¶¨ÀàÃû
     //String simpleName;
-    String internalName;//å…¨é™å®šç±»åçš„å†…éƒ¨è¡¨ç¤ºï¼ˆå³ç‚¹å·æ¢æˆæ–œæ ï¼‰
+    String internalName;//È«ÏŞ¶¨ÀàÃûµÄÄÚ²¿±íÊ¾£¨¼´µãºÅ»»³ÉĞ±¸Ü£©
     String thisName;
     Type objtype;
     public final Object tag;
@@ -4181,8 +4180,8 @@ static public class ObjExpr implements Expr{
             ret[i] = (Type) tv.nth(i);
         return ret;
     }
-    //superNameï¼Œå¦‚æœæœ‰å‰©ä½™å‚æ•°ï¼Œä¸ºclojure/lang/RestFnï¼Œ å¦åˆ™ä¸ºclojure/lang/AFunction
-    //interfaceNamesï¼Œå®ç°çš„æ¥å£åå­—ï¼Œç”±ç±»å‹æç¤ºï¼ˆlongï¼Œdoubleï¼‰å†³å®š
+    //superName£¬Èç¹ûÓĞÊ£Óà²ÎÊı£¬Îªclojure/lang/RestFn£¬ ·ñÔòÎªclojure/lang/AFunction
+    //interfaceNames£¬ÊµÏÖµÄ½Ó¿ÚÃû×Ö£¬ÓÉÀàĞÍÌáÊ¾£¨long£¬double£©¾ö¶¨
     void compile(String superName, String[] interfaceNames, boolean oneTimeUse) throws IOException{
         //create bytecode for a class
         //with name current_ns.defname[$letname]+
@@ -4638,7 +4637,7 @@ static public class ObjExpr implements Expr{
             else
                 {
                 gen.push(destubClassName(cc.getName()));
-                gen.invokeStatic(Type.getType(Class.class), Method.getMethod("Class forName(String)"));
+				gen.invokeStatic(RT_TYPE, Method.getMethod("Class classForName(String)"));
                 }
             }
         else if(value instanceof Symbol)
@@ -5142,19 +5141,19 @@ static class PathNode{
 static PathNode clearPathRoot(){
     return (PathNode) CLEAR_ROOT.get();
 }
-//å‚æ•°è§£æçŠ¶æ€ï¼Œå¿…é¡»å‚æ•°ï¼Œå‰©ä½™å‚æ•°
+//²ÎÊı½âÎö×´Ì¬£¬±ØĞë²ÎÊı£¬Ê£Óà²ÎÊı
 enum PSTATE{
     REQ, REST, DONE
 }
-//ä¸€ä¸ªfnå®šä¹‰ï¼Œå¯ä»¥æœ‰å¤šä¸ªé‡è½½ã€‚ä¸€ä¸ªFnMethodï¼Œæ˜¯å…¶ä¸­ä¸€ä¸ªã€‚
+//Ò»¸öfn¶¨Òå£¬¿ÉÒÔÓĞ¶à¸öÖØÔØ¡£Ò»¸öFnMethod£¬ÊÇÆäÖĞÒ»¸ö¡£
 public static class FnMethod extends ObjMethod{
     //localbinding->localbinding
-    PersistentVector reqParms = PersistentVector.EMPTY;//å¿…é¡»å‚æ•°
-    LocalBinding restParm = null;//å‰©ä½™å‚æ•°
+    PersistentVector reqParms = PersistentVector.EMPTY;//±ØĞë²ÎÊı
+    LocalBinding restParm = null;//Ê£Óà²ÎÊı
     Type[] argtypes;
-    Class[] argclasses;//å‚æ•°ç±»å‹
-    Class retClass;//è¿”å›å€¼ç±»å‹
-    String prim ;//å‡½æ•°çš„primitive interface(å¦‚æœæœ‰çš„è¯)
+    Class[] argclasses;//²ÎÊıÀàĞÍ
+    Class retClass;//·µ»ØÖµÀàĞÍ
+    String prim ;//º¯ÊıµÄprimitive interface(Èç¹ûÓĞµÄ»°)
 
     public FnMethod(ObjExpr objx, ObjMethod parent){
         super(objx, parent);
@@ -5182,7 +5181,7 @@ public static class FnMethod extends ObjMethod{
         sb.append(classChar(tagOf(arglist)));
         String ret = sb.toString();
         boolean prim = ret.contains("L") || ret.contains("D");
-        if(prim && arglist.count() > 4)//å¦‚æœå‚æ•°æœ‰ç±»å‹æç¤ºï¼Œé‚£ä¹ˆå‚æ•°ä¸ªæ•°å¿…é¡»åœ¨4ä¸ªä»¥å†…
+        if(prim && arglist.count() > 4)//Èç¹û²ÎÊıÓĞÀàĞÍÌáÊ¾£¬ÄÇÃ´²ÎÊı¸öÊı±ØĞëÔÚ4¸öÒÔÄÚ
             throw new IllegalArgumentException("fns taking primitives support only 4 or fewer args");
         if(prim)
             return "clojure.lang.IFn$" + ret;
@@ -5217,7 +5216,7 @@ public static class FnMethod extends ObjMethod{
             if(method.prim != null)
                 method.prim = method.prim.replace('.', '/');
 
-            method.retClass = tagClass(tagOf(parms));//å‡½æ•°è¿”å›å€¼çš„ç±»å‹æç¤ºï¼Œé™„åœ¨å‚æ•°å‘é‡ä¸Š
+            method.retClass = tagClass(tagOf(parms));//º¯Êı·µ»ØÖµµÄÀàĞÍÌáÊ¾£¬¸½ÔÚ²ÎÊıÏòÁ¿ÉÏ
             if(method.retClass.isPrimitive() && !(method.retClass == double.class || method.retClass == long.class))
                 throw new IllegalArgumentException("Only long and double primitives are supported");
 
@@ -5241,7 +5240,7 @@ public static class FnMethod extends ObjMethod{
                 Symbol p = (Symbol) parms.nth(i);
                 if(p.getNamespace() != null)
                     throw Util.runtimeException("Can't use qualified name as parameter: " + p);
-                if(p.equals(_AMP_))// å¦‚æœpä¸º&
+                if(p.equals(_AMP_))// Èç¹ûpÎª&
                     {
 //                  if(isStatic)
 //                      throw Util.runtimeException("Variadic fns cannot be static");
@@ -5253,7 +5252,7 @@ public static class FnMethod extends ObjMethod{
 
                 else
                     {
-                    Class pc = primClass(tagClass(tagOf(p)));//å‚æ•°çš„ç±»å‹æç¤º
+                    Class pc = primClass(tagClass(tagOf(p)));//²ÎÊıµÄÀàĞÍÌáÊ¾
 //                  if(pc.isPrimitive() && !isStatic)
 //                      {
 //                      pc = Object.class;
@@ -5265,7 +5264,7 @@ public static class FnMethod extends ObjMethod{
 
                     if(state == PSTATE.REST && tagOf(p) != null)
                         throw Util.runtimeException("& arg cannot have type hint");
-                    if(state == PSTATE.REST && method.prim != null)//å¦‚æœå‚æ•°æœ‰ç±»å‹æç¤ºï¼Œåˆ™ä¸æ”¯æŒä¸å®šå‚æ•°
+                    if(state == PSTATE.REST && method.prim != null)//Èç¹û²ÎÊıÓĞÀàĞÍÌáÊ¾£¬Ôò²»Ö§³Ö²»¶¨²ÎÊı
                         throw Util.runtimeException("fns taking primitives cannot be variadic");
                                             
                     if(state == PSTATE.REST)
@@ -5291,7 +5290,7 @@ public static class FnMethod extends ObjMethod{
                         }
                     }
                 }
-            if(method.reqParms.count() > MAX_POSITIONAL_ARITY)//â€œå¿…é¡»å‚æ•°â€çš„ä¸ªæ•°ä¸èƒ½è¶…è¿‡20
+            if(method.reqParms.count() > MAX_POSITIONAL_ARITY)//¡°±ØĞë²ÎÊı¡±µÄ¸öÊı²»ÄÜ³¬¹ı20
                 throw Util.runtimeException("Can't specify more than " + MAX_POSITIONAL_ARITY + " params");
             LOOP_LOCALS.set(argLocals);
             method.argLocals = argLocals;
@@ -5306,7 +5305,7 @@ public static class FnMethod extends ObjMethod{
                         getAndIncLocalNum();
                     }
                 }
-            method.body = (new BodyExpr.Parser()).parse(C.RETURN, body);//hxzonæ³¨æ„ï¼šåœ¨è¿™ä¸ªåœ°æ–¹ä¼ å…¥C.RETURN
+            method.body = (new BodyExpr.Parser()).parse(C.RETURN, body);//hxzon×¢Òâ£ºÔÚÕâ¸öµØ·½´«ÈëC.RETURN
             return method;
             }
         finally
@@ -5492,7 +5491,7 @@ public static class FnMethod extends ObjMethod{
     public final LocalBinding restParm(){
         return restParm;
     }
-    //æ˜¯å¦æ˜¯ä¸å®šå‚æ•°ä¸ªæ•°
+    //ÊÇ·ñÊÇ²»¶¨²ÎÊı¸öÊı
     boolean isVariadic(){
         return restParm != null;
     }
@@ -5553,7 +5552,7 @@ public static class FnMethod extends ObjMethod{
 abstract public static class ObjMethod{
     //when closures are defined inside other closures,
     //the closed over locals need to be propagated to the enclosing objx
-    //å½“é—­åŒ…åœ¨å¦ä¸€ä¸ªé—­åŒ…å†…éƒ¨å®šä¹‰ï¼Œ
+    //µ±±Õ°üÔÚÁíÒ»¸ö±Õ°üÄÚ²¿¶¨Òå£¬
     public final ObjMethod parent;
     //localbinding->localbinding
     IPersistentMap locals = null;
@@ -5721,14 +5720,14 @@ abstract public static class ObjMethod{
             }
     }
 }
-//æœ¬åœ°ç»‘å®š
+//±¾µØ°ó¶¨
 public static class LocalBinding{
     public final Symbol sym;
-    public final Symbol tag;//æœ¬åœ°ç»‘å®šçš„ç±»å‹æç¤º
-    public Expr init;//æœ¬åœ°ç»‘å®šçš„å€¼ï¼ˆè¡¨è¾¾å¼ï¼‰
+    public final Symbol tag;//±¾µØ°ó¶¨µÄÀàĞÍÌáÊ¾
+    public Expr init;//±¾µØ°ó¶¨µÄÖµ£¨±í´ïÊ½£©
     public final int idx;
     public final String name;
-    public final boolean isArg;//æ˜¯å¦æ˜¯å‚æ•°ï¼ˆå®šä¹‰å‡½æ•°æ—¶ï¼‰
+    public final boolean isArg;//ÊÇ·ñÊÇ²ÎÊı£¨¶¨Òåº¯ÊıÊ±£©
     public final PathNode clearPathRoot;
     public boolean canBeCleared = !RT.booleanCast(getCompilerOption(disableLocalsClearingKey));
     public boolean recurMistmatch = false;
@@ -5868,7 +5867,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
         public Expr parse(C context, Object frms) {
             ISeq forms = (ISeq) frms;
             if(Util.equals(RT.first(forms), DO))
-                forms = RT.next(forms);//å¦‚æœå¼€å¤´æ˜¯doï¼Œå»æ‰do
+                forms = RT.next(forms);//Èç¹û¿ªÍ·ÊÇdo£¬È¥µôdo
             PersistentVector exprs = PersistentVector.EMPTY;
             for(; forms != null; forms = forms.next())
                 {
@@ -5884,7 +5883,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
             return new BodyExpr(exprs);
         }
     }
-    //æ±‚å€¼bodyä¸­çš„æ‰€æœ‰è¡¨è¾¾å¼ï¼Œè¿”å›æœ€åä¸€ä¸ªè¡¨è¾¾å¼çš„å€¼
+    //ÇóÖµbodyÖĞµÄËùÓĞ±í´ïÊ½£¬·µ»Ø×îºóÒ»¸ö±í´ïÊ½µÄÖµ
     public Object eval() {
         Object ret = null;
         for(Object o : exprs)
@@ -5931,7 +5930,7 @@ public static class BodyExpr implements Expr, MaybePrimitiveExpr{
         return (Expr) exprs.nth(exprs.count() - 1);
     }
 }
-//æœ¬åœ°ç»‘å®šå’Œå®ƒçš„åˆå§‹å€¼
+//±¾µØ°ó¶¨ºÍËüµÄ³õÊ¼Öµ
 public static class BindingInit{
     LocalBinding binding;
     Expr init;
@@ -5972,7 +5971,7 @@ public static class LetFnExpr implements Expr{
 
             ISeq body = RT.next(RT.next(form));
 
-            if(context == C.EVAL)//è½¬æˆåŒ¿åç«‹å³è°ƒç”¨å‡½æ•°ï¼š((fn* [] (letfn* [f1 .. f2 ..] body)))    ï¼Ÿ
+            if(context == C.EVAL)//×ª³ÉÄäÃûÁ¢¼´µ÷ÓÃº¯Êı£º((fn* [] (letfn* [f1 .. f2 ..] body)))    £¿
                 return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));
 
             IPersistentMap dynamicBindings = RT.map(LOCAL_ENV, LOCAL_ENV.deref(),
@@ -6074,9 +6073,9 @@ public static class LetFnExpr implements Expr{
         return body.getJavaClass();
     }
 }
-// let* æˆ– loop*
+// let* »ò loop*
 public static class LetExpr implements Expr, MaybePrimitiveExpr{
-    public final PersistentVector bindingInits;//æœ¬åœ°ç»‘å®šå‘é‡
+    public final PersistentVector bindingInits;//±¾µØ°ó¶¨ÏòÁ¿
     public final Expr body;
     public final boolean isLoop;
 
@@ -6091,18 +6090,18 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
             ISeq form = (ISeq) frm;
             //(let [var val var2 val2 ...] body...)
             boolean isLoop = RT.first(form).equals(LOOP);
-            if(!(RT.second(form) instanceof IPersistentVector))//ç¬¬äºŒä¸ªå…ƒç´ å¿…é¡»æ˜¯å‘é‡ï¼ˆç»‘å®šåˆ—è¡¨ï¼‰
+            if(!(RT.second(form) instanceof IPersistentVector))//µÚ¶ş¸öÔªËØ±ØĞëÊÇÏòÁ¿£¨°ó¶¨ÁĞ±í£©
                 throw new IllegalArgumentException("Bad binding form, expected vector");
 
             IPersistentVector bindings = (IPersistentVector) RT.second(form);
             if((bindings.count() % 2) != 0)
                 throw new IllegalArgumentException("Bad binding form, expected matched symbol expression pairs");
 
-            ISeq body = RT.next(RT.next(form));//ç»‘å®šåˆ—è¡¨ä¹‹åçš„éƒ¨åˆ†
+            ISeq body = RT.next(RT.next(form));//°ó¶¨ÁĞ±íÖ®ºóµÄ²¿·Ö
 
             if(context == C.EVAL
                || (context == C.EXPRESSION && isLoop))
-                return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));//è½¬æˆç«‹å³è°ƒç”¨çš„åŒ¿åå‡½æ•°ï¼š((fn [] (let* [] body)))
+                return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));//×ª³ÉÁ¢¼´µ÷ÓÃµÄÄäÃûº¯Êı£º((fn [] (let* [] body)))
 
             ObjMethod method = (ObjMethod) METHOD.deref();
             IPersistentMap backupMethodLocals = method.locals;
@@ -6110,7 +6109,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
             IPersistentVector recurMismatches = PersistentVector.EMPTY;
             for (int i = 0; i < bindings.count()/2; i++)
                 {
-                recurMismatches = recurMismatches.cons(RT.F);//falseå‘é‡
+                recurMismatches = recurMismatches.cons(RT.F);//falseÏòÁ¿
                 }
 
             //may repeat once for each binding with a mismatch, return breaks
@@ -6134,13 +6133,13 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
                     PersistentVector loopLocals = PersistentVector.EMPTY;
                     for(int i = 0; i < bindings.count(); i += 2)
                         {
-                        if(!(bindings.nth(i) instanceof Symbol))//ç»‘å®šå‘é‡çš„å¥‡ä½ç½®å¿…é¡»æ˜¯ç¬¦å·
+                        if(!(bindings.nth(i) instanceof Symbol))//°ó¶¨ÏòÁ¿µÄÆæÎ»ÖÃ±ØĞëÊÇ·ûºÅ
                             throw new IllegalArgumentException(
                                     "Bad binding form, expected symbol, got: " + bindings.nth(i));
                         Symbol sym = (Symbol) bindings.nth(i);
-                        if(sym.getNamespace() != null)//ç¬¦å·å¿…é¡»æ˜¯æ— é™å®šçš„
+                        if(sym.getNamespace() != null)//·ûºÅ±ØĞëÊÇÎŞÏŞ¶¨µÄ
                             throw Util.runtimeException("Can't let qualified name: " + sym);
-                        Expr init = analyze(C.EXPRESSION, bindings.nth(i + 1), sym.name);//è§£æç»‘å®šå‘é‡çš„å¶ä½ç½®ï¼ˆè¡¨è¾¾å¼ï¼‰
+                        Expr init = analyze(C.EXPRESSION, bindings.nth(i + 1), sym.name);//½âÎö°ó¶¨ÏòÁ¿µÄÅ¼Î»ÖÃ£¨±í´ïÊ½£©
                         if(isLoop)
                             {
                             if(recurMismatches != null && RT.booleanCast(recurMismatches.nth(i/2)))
@@ -6165,7 +6164,7 @@ public static class LetExpr implements Expr, MaybePrimitiveExpr{
                                            NO_RECUR, null));
 
                                 }
-                            LocalBinding lb = registerLocal(sym, tagOf(sym), init,false);//hxzonï¼šç±»å‹æç¤º
+                            LocalBinding lb = registerLocal(sym, tagOf(sym), init,false);//hxzon£ºÀàĞÍÌáÊ¾
                             BindingInit bi = new BindingInit(lb, init);
                             bindingInits = bindingInits.cons(bi);
                             if(isLoop)
@@ -6498,16 +6497,16 @@ private static int getAndIncLocalNum(){
 public static Expr analyze(C context, Object form) {
     return analyze(context, form, null);
 }
-//hxzoné‡è¦ï¼šanalyzeå‡½æ•°æ˜¯Compilerçš„å…¥å£
-//å°†formè§£ææˆè¡¨è¾¾å¼
-//@param context ä¸Šä¸‹æ–‡ï¼Ÿ
-//@param name ï¼Ÿ
+//hxzonÖØÒª£ºanalyzeº¯ÊıÊÇCompilerµÄÈë¿Ú
+//½«form½âÎö³É±í´ïÊ½
+//@param context ÉÏÏÂÎÄ£¿
+//@param name £¿
 private static Expr analyze(C context, Object form, String name) {
     //todo symbol macro expansion?
     try
         {
-        if(form instanceof LazySeq)//å»¶è¿Ÿåºåˆ—ï¼Œä»€ä¹ˆæ—¶å€™å¯ç”Ÿæˆå»¶è¿Ÿåºåˆ—ï¼Ÿ
-            {//å¦‚æœæ˜¯å»¶è¿Ÿåºåˆ—ï¼Œå…ˆæ£€æŸ¥æ˜¯å¦æ˜¯ç©ºåˆ—è¡¨
+        if(form instanceof LazySeq)//ÑÓ³ÙĞòÁĞ£¬Ê²Ã´Ê±ºò¿ÉÉú³ÉÑÓ³ÙĞòÁĞ£¿
+            {//Èç¹ûÊÇÑÓ³ÙĞòÁĞ£¬ÏÈ¼ì²éÊÇ·ñÊÇ¿ÕÁĞ±í
             form = RT.seq(form);
             if(form == null)
                 form = PersistentList.EMPTY;
@@ -6520,7 +6519,7 @@ private static Expr analyze(C context, Object form, String name) {
                 return FALSE_EXPR;
         Class fclass = form.getClass();
         if(fclass == Symbol.class)
-            return analyzeSymbol((Symbol) form);//å¤„ç†ç¬¦å·
+            return analyzeSymbol((Symbol) form);//´¦Àí·ûºÅ
         else if(fclass == Keyword.class)
             return registerKeyword((Keyword) form);
         else if(form instanceof Number)
@@ -6530,14 +6529,14 @@ private static Expr analyze(C context, Object form, String name) {
 //  else if(fclass == Character.class)
 //      return new CharExpr((Character) form);
         else if(form instanceof IPersistentCollection && ((IPersistentCollection) form).count() == 0)
-                {//ç©ºé›†åˆ
+                {//¿Õ¼¯ºÏ
                 Expr ret = new EmptyExpr(form);
                 if(RT.meta(form) != null)
                     ret = new MetaExpr(ret, MapExpr
                             .parse(context == C.EVAL ? context : C.EXPRESSION, ((IObj) form).meta()));
                 return ret;
                 }
-        else if(form instanceof ISeq)//å¤„ç†åºåˆ—ï¼Œæ³¨æ„ï¼Œåˆ—è¡¨ä¹Ÿæ˜¯åºåˆ—
+        else if(form instanceof ISeq)//´¦ÀíĞòÁĞ£¬×¢Òâ£¬ÁĞ±íÒ²ÊÇĞòÁĞ
                 return analyzeSeq(context, (ISeq) form, name);
         else if(form instanceof IPersistentVector)
                 return VectorExpr.parse(context, (IPersistentVector) form);
@@ -6582,7 +6581,7 @@ static public class CompilerException extends RuntimeException{
 static public Var isMacro(Object op) {
     //no local macros for now
     if(op instanceof Symbol && referenceLocal((Symbol) op) != null)
-        return null;//å¦‚æœæ˜¯æœ¬åœ°ç»‘å®š
+        return null;//Èç¹ûÊÇ±¾µØ°ó¶¨
     if(op instanceof Symbol || op instanceof Var)
         {
                 Var v = (op instanceof Var) ? (Var) op : lookupVar((Symbol) op, false, false);
@@ -6622,7 +6621,7 @@ static public IFn isInline(Object op, int arity) {
 public static boolean namesStaticMember(Symbol sym){
     return sym.ns != null && namespaceFor(sym) == null;
 }
-//hxzonæ³¨æ„ï¼šå¤åˆ¶ç±»å‹æç¤º
+//hxzon×¢Òâ£º¸´ÖÆÀàĞÍÌáÊ¾
 public static Object preserveTag(ISeq src, Object dst) {
     Symbol tag = tagOf(src);
     if (tag != null && dst instanceof IObj) {
@@ -6631,20 +6630,20 @@ public static Object preserveTag(ISeq src, Object dst) {
     }
     return dst;
 }
-//å®å±•å¼€
+//ºêÕ¹¿ª
 public static Object macroexpand1(Object x) {
-    if(x instanceof ISeq)//å¿…é¡»æ˜¯åºåˆ—
+    if(x instanceof ISeq)//±ØĞëÊÇĞòÁĞ
         {
         ISeq form = (ISeq) x;
         Object op = RT.first(form);
         if(isSpecial(op))
             return x;
         //macro expansion
-        Var v = isMacro(op);//æŸ¥æ‰¾æ‰€å¯¹åº”çš„Var
+        Var v = isMacro(op);//²éÕÒËù¶ÔÓ¦µÄVar
         if(v != null)
             {
                 try
-                    {//ä¸¤ä¸ªéšå¼å‚æ•° &form &env //hxzonæ³¨æ„ï¼šå®çš„æ‰§è¡Œ
+                    {//Á½¸öÒşÊ½²ÎÊı &form &env //hxzon×¢Òâ£ººêµÄÖ´ĞĞ
                         return v.applyTo(RT.cons(form,RT.cons(LOCAL_ENV.get(),form.next())));
                     }
                 catch(ArityException e)
@@ -6663,7 +6662,7 @@ public static Object macroexpand1(Object x) {
                             throw (CompilerException) e;
                     }
             }
-        else//javaæ–¹æ³•ï¼ˆå®ä¾‹æ–¹æ³•æˆ–é™æ€æ–¹æ³•ï¼‰
+        else//java·½·¨£¨ÊµÀı·½·¨»ò¾²Ì¬·½·¨£©
             {
             if(op instanceof Symbol)
                 {
@@ -6721,7 +6720,7 @@ static Object macroexpand(Object form) {
         return macroexpand(exf);
     return form;
 }
-//å¯¹â€œåºåˆ—å½¢å¼ï¼ˆæ³¨æ„ï¼Œåˆ—è¡¨ä¹Ÿæ˜¯åºåˆ—ï¼‰â€ï¼ˆå³â€œè°ƒç”¨â€ï¼‰è¿›è¡Œè§£æ
+//¶Ô¡°ĞòÁĞĞÎÊ½£¨×¢Òâ£¬ÁĞ±íÒ²ÊÇĞòÁĞ£©¡±£¨¼´¡°µ÷ÓÃ¡±£©½øĞĞ½âÎö
 private static Expr analyzeSeq(C context, ISeq form, String name) {
     Object line = lineDeref();
     Object column = columnDeref();
@@ -6733,23 +6732,23 @@ private static Expr analyzeSeq(C context, ISeq form, String name) {
             RT.map(LINE, line, COLUMN, column));
     try
         {
-        Object me = macroexpand1(form);//hxzonæ³¨æ„ï¼šå¯¹formè¿›è¡Œâ€œå®å±•å¼€â€
+        Object me = macroexpand1(form);//hxzon×¢Òâ£º¶Ôform½øĞĞ¡°ºêÕ¹¿ª¡±
         if(me != form)
             return analyze(context, me, name);
 
         Object op = RT.first(form);
         if(op == null)
             throw new IllegalArgumentException("Can't call nil");
-        IFn inline = isInline(op, RT.count(RT.next(form)));//å†…è”ï¼Ÿ
+        IFn inline = isInline(op, RT.count(RT.next(form)));//ÄÚÁª£¿
         if(inline != null)
             return analyze(context, preserveTag(form, inline.applyTo(RT.next(form))));
         IParser p;
         if(op.equals(FN))
-            return FnExpr.parse(context, form, name);//ç‰¹æ®Šå½¢å¼fn*ï¼Œç”Ÿæˆä¸€ä¸ªIFnå®ä¾‹
-        else if((p = (IParser) specials.valAt(op)) != null)//ç‰¹æ®Šå½¢å¼
+            return FnExpr.parse(context, form, name);//ÌØÊâĞÎÊ½fn*£¬Éú³ÉÒ»¸öIFnÊµÀı
+        else if((p = (IParser) specials.valAt(op)) != null)//ÌØÊâĞÎÊ½
             return p.parse(context, form);
         else
-            return InvokeExpr.parse(context, form);//å‡½æ•°æˆ–å®è°ƒç”¨
+            return InvokeExpr.parse(context, form);//º¯Êı»òºêµ÷ÓÃ
         }
     catch(Throwable e)
         {
@@ -6790,8 +6789,8 @@ public static Object eval(Object form, boolean freshLoader) {
         Var.pushThreadBindings(RT.map(LINE, line, COLUMN, column));
         try
             {
-            form = macroexpand(form);//hxzonæ³¨æ„ï¼šâ€œå®å±•å¼€â€
-            if(form instanceof ISeq && Util.equals(RT.first(form), DO))//ç‰¹æ®Šå½¢å¼â€œdoâ€
+            form = macroexpand(form);//hxzon×¢Òâ£º¡°ºêÕ¹¿ª¡±
+            if(form instanceof ISeq && Util.equals(RT.first(form), DO))//ÌØÊâĞÎÊ½¡°do¡±
                 {
                 ISeq s = RT.next(form);
                 for(; RT.next(s) != null; s = RT.next(s))
@@ -6802,7 +6801,7 @@ public static Object eval(Object form, boolean freshLoader) {
                     (form instanceof IPersistentCollection
                     && !(RT.first(form) instanceof Symbol
                         && ((Symbol) RT.first(form)).name.startsWith("def"))))
-                {//é™¤äº†(def xxx)ä¹‹å¤–ï¼Œä¾‹å¦‚(a 5)ï¼Œä¼šè½¬å˜æˆä¸€ä¸ªåŒ¿åæ— å‚å‡½æ•°ï¼Œå³(fn* [] (a 5))
+                {//³ıÁË(def xxx)Ö®Íâ£¬ÀıÈç(a 5)£¬»á×ª±ä³ÉÒ»¸öÄäÃûÎŞ²Îº¯Êı£¬¼´(fn* [] (a 5))
                 ObjExpr fexpr = (ObjExpr) analyze(C.EXPRESSION, RT.list(FN, PersistentVector.EMPTY, form),
                                                     "eval" + RT.nextID());
                 IFn fn = (IFn) fexpr.eval();
@@ -6810,7 +6809,7 @@ public static Object eval(Object form, boolean freshLoader) {
                 }
             else
                 {
-                Expr expr = analyze(C.EVAL, form);//hxzonæ³¨æ„ï¼Œåœ¨è¿™é‡ŒæŒ‡å®šä¸ºC.EVAL
+                Expr expr = analyze(C.EVAL, form);//hxzon×¢Òâ£¬ÔÚÕâÀïÖ¸¶¨ÎªC.EVAL
                 return expr.eval();
                 }
             }
@@ -6826,7 +6825,7 @@ public static Object eval(Object form, boolean freshLoader) {
             Var.popThreadBindings();
         }
 }
-//åœ¨å¸¸é‡æ± é‡Œç™»è®°ï¼Ÿ
+//ÔÚ³£Á¿³ØÀïµÇ¼Ç£¿
 private static int registerConstant(Object o){
     if(!CONSTANTS.isBound())
         return -1;
@@ -6919,26 +6918,26 @@ static void addParameterAnnotation(Object visitor, IPersistentMap meta, int i){
     if(meta != null && ADD_ANNOTATIONS.isBound())
          ADD_ANNOTATIONS.invoke(visitor, meta, i);
 }
-//è§£æç¬¦å·ï¼ˆhxzoné‡è¦ï¼‰
+//½âÎö·ûºÅ£¨hxzonÖØÒª£©
 private static Expr analyzeSymbol(Symbol sym) {
     Symbol tag = tagOf(sym);
     if(sym.ns == null) //ns-qualified syms are always Vars
-        {//æ— é™å®šçš„ç¬¦å·ï¼Œå¯èƒ½æ˜¯æœ¬åœ°ç»‘å®š
-        LocalBinding b = referenceLocal(sym);//æ£€æŸ¥æ˜¯å¦æ˜¯æœ¬åœ°ç»‘å®š
+        {//ÎŞÏŞ¶¨µÄ·ûºÅ£¬¿ÉÄÜÊÇ±¾µØ°ó¶¨
+        LocalBinding b = referenceLocal(sym);//¼ì²éÊÇ·ñÊÇ±¾µØ°ó¶¨
         if(b != null)
             {
             return new LocalBindingExpr(b, tag);
             }
         }
     else
-        {//æœ‰å‘½åç©ºé—´é™å®š
+        {//ÓĞÃüÃû¿Õ¼äÏŞ¶¨
         if(namespaceFor(sym) == null)
-            {//ä½†æ˜¯è¯¥å‘½åç©ºé—´ä¸å­˜åœ¨
+            {//µ«ÊÇ¸ÃÃüÃû¿Õ¼ä²»´æÔÚ
             Symbol nsSym = Symbol.intern(sym.ns);
-            Class c = HostExpr.maybeClass(nsSym, false);//åˆ™è¯¥å‘½åç©ºé—´æœ‰å¯èƒ½æ˜¯ç±»å
+            Class c = HostExpr.maybeClass(nsSym, false);//Ôò¸ÃÃüÃû¿Õ¼äÓĞ¿ÉÄÜÊÇÀàÃû
             if(c != null)
                 {
-                if(Reflector.getField(c, sym.name, true) != null)//å¦‚æœæ˜¯ç±»åï¼Œåˆ™ç¬¦å·è§†ä¸ºé™æ€å­—æ®µ
+                if(Reflector.getField(c, sym.name, true) != null)//Èç¹ûÊÇÀàÃû£¬Ôò·ûºÅÊÓÎª¾²Ì¬×Ö¶Î
                     return new StaticFieldExpr(lineDeref(), columnDeref(), c, sym.name, tag);
                 throw Util.runtimeException("Unable to find static field: " + sym.name + " in " + c);
                 }
@@ -6952,16 +6951,16 @@ private static Expr analyzeSymbol(Symbol sym) {
     if(o instanceof Var)
         {
         Var v = (Var) o;
-        if(isMacro(v) != null)//ä¸èƒ½æ˜¯å®ï¼Œå®ä¸èƒ½ä½œä¸ºå€¼
+        if(isMacro(v) != null)//²»ÄÜÊÇºê£¬ºê²»ÄÜ×÷ÎªÖµ
             throw Util.runtimeException("Can't take value of a macro: " + v);
-        if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))//å¦‚æœæ˜¯å¸¸é‡
+        if(RT.booleanCast(RT.get(v.meta(),RT.CONST_KEY)))//Èç¹ûÊÇ³£Á¿
             return analyze(C.EXPRESSION, RT.list(QUOTE, v.get()));
         registerVar(v);
         return new VarExpr(v, tag);
         }
     else if(o instanceof Class)
         return new ConstantExpr(o);
-    else if(o instanceof Symbol)//ä¸æ˜¯Varï¼Œä¹Ÿä¸æ˜¯ç±»åï¼ŒæŠ›å‡ºå¼‚å¸¸
+    else if(o instanceof Symbol)//²»ÊÇVar£¬Ò²²»ÊÇÀàÃû£¬Å×³öÒì³£
             return new UnresolvedVarExpr((Symbol) o);
 
     throw Util.runtimeException("Unable to resolve symbol: " + sym + " in this context");
@@ -6998,7 +6997,7 @@ static Namespace namespaceFor(Namespace inns, Symbol sym){
     //note, presumes non-nil sym.ns
     // first check against currentNS' aliases...
     Symbol nsSym = Symbol.intern(sym.ns);
-    Namespace ns = inns.lookupAlias(nsSym);//å…ˆåœ¨åˆ«åä¸­æ‰¾å‘½åç©ºé—´
+    Namespace ns = inns.lookupAlias(nsSym);//ÏÈÔÚ±ğÃûÖĞÕÒÃüÃû¿Õ¼ä
     if(ns == null)
         {
         // ...otherwise check the Namespaces map.
@@ -7011,22 +7010,22 @@ static public Object resolveIn(Namespace n, Symbol sym, boolean allowPrivate) {
     //note - ns-qualified vars must already exist
     if(sym.ns != null)
         {
-        Namespace ns = namespaceFor(n, sym);//symçš„å‘½åç©ºé—´å¯èƒ½æ˜¯å¯¼å…¥çš„åˆ«åï¼Œæ‰¾åˆ°å®ƒåŸæ¥çš„åå­—
+        Namespace ns = namespaceFor(n, sym);//symµÄÃüÃû¿Õ¼ä¿ÉÄÜÊÇµ¼ÈëµÄ±ğÃû£¬ÕÒµ½ËüÔ­À´µÄÃû×Ö
         if(ns == null)
             throw Util.runtimeException("No such namespace: " + sym.ns);
 
-        Var v = ns.findInternedVar(Symbol.intern(sym.name));//æ‰¾åˆ°ç¬¦å·å¯¹åº”çš„var
+        Var v = ns.findInternedVar(Symbol.intern(sym.name));//ÕÒµ½·ûºÅ¶ÔÓ¦µÄvar
         if(v == null)
             throw Util.runtimeException("No such var: " + sym);
         else if(v.ns != currentNS() && !v.isPublic() && !allowPrivate)
             throw new IllegalStateException("var: " + sym + " is not public");
         return v;
         }
-    else if(sym.name.indexOf('.') > 0 || sym.name.charAt(0) == '[')//å®Œæ•´é™å®šçš„ç±»åæˆ–æ•°ç»„ç±»å‹å
+    else if(sym.name.indexOf('.') > 0 || sym.name.charAt(0) == '[')//ÍêÕûÏŞ¶¨µÄÀàÃû»òÊı×éÀàĞÍÃû
         {
         return RT.classForName(sym.name);
         }
-    else if(sym.equals(NS))//ç‰¹æ®Šçš„varï¼š*ns* å’Œ *in-ns*
+    else if(sym.equals(NS))//ÌØÊâµÄvar£º*ns* ºÍ *in-ns*
             return RT.NS_VAR;
     else if(sym.equals(IN_NS))
             return RT.IN_NS_VAR;
@@ -7126,7 +7125,7 @@ static Var lookupVar(Symbol sym, boolean internNew, boolean registerMacro) {
 static Var lookupVar(Symbol sym, boolean internNew) {
     return lookupVar(sym, internNew, true);
 }
-//åœ¨å¸¸é‡æ± é‡Œç™»è®°var
+//ÔÚ³£Á¿³ØÀïµÇ¼Çvar
 private static void registerVar(Var var) {
     if(!VARS.isBound())
         return;
@@ -7159,7 +7158,7 @@ static void closeOver(LocalBinding b, ObjMethod method){
         }
 }
 
-//è·å–æœ¬åœ°ç»‘å®š
+//»ñÈ¡±¾µØ°ó¶¨
 static LocalBinding referenceLocal(Symbol sym) {
     if(!LOCAL_ENV.isBound())
         return null;
@@ -7462,7 +7461,7 @@ public static Object compile(Reader rdr, String sourcePath, String sourceName) t
             clinitgen.invokeStatic(objx.objtype, Method.getMethod("void __init" + n + "()"));
 
         clinitgen.push(objx.internalName.replace('/','.'));
-        clinitgen.invokeStatic(CLASS_TYPE, Method.getMethod("Class forName(String)"));
+		clinitgen.invokeStatic(RT_TYPE, Method.getMethod("Class classForName(String)"));
         clinitgen.invokeVirtual(CLASS_TYPE,Method.getMethod("ClassLoader getClassLoader()"));
         clinitgen.invokeStatic(Type.getType(Compiler.class), Method.getMethod("void pushNSandLoader(ClassLoader)"));
         clinitgen.mark(startTry);
@@ -8547,7 +8546,7 @@ public static class CaseExpr implements Expr, MaybePrimitiveExpr{
             ISeq form = (ISeq) frm;
             if(context == C.EVAL)
                 return analyze(context, RT.list(RT.list(FNONCE, PersistentVector.EMPTY, form)));
-            PersistentVector args = PersistentVector.create(form.next());
+			IPersistentVector args = LazilyPersistentVector.create(form.next());
 
             Object exprForm = args.nth(0);
             int shift = ((Number)args.nth(1)).intValue();
