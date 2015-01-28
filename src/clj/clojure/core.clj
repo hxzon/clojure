@@ -4465,8 +4465,10 @@ defmacro (fn [&form &env
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
+                                ;;  遇到关键字，[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
+                            ;;  绑定列表两两成一组
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
