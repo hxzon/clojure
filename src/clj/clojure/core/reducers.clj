@@ -293,6 +293,7 @@
   with the supplied identity constructor. Tests for identity
   with (zero? (count x)). See also foldcat."
   {:added "1.5"}
+  ;; 高性能的组合函数
   ([] (java.util.ArrayList.))
   ([ctor]
      (fn
@@ -305,6 +306,7 @@
       :else
       (Cat. (+ (count left) (count right)) left right))))
 
+;; 集合原地累加
 (defn append!
   ".adds x to acc and returns acc"
   {:added "1.5"}
@@ -322,6 +324,7 @@
   constructor. op must be associative and ctor called with no args
   must return an identity value for it."
   {:added "1.5"}
+  ;; 基于 操作函数 和 初始值 创建一个组合函数。
   [op ctor]
   (fn m
     ([] (ctor))
