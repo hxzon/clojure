@@ -670,6 +670,7 @@ public static class VarExpr implements Expr, AssignableExpr{
 
     public VarExpr(Var var, Symbol tag){
         this.var = var;
+        //hxzon注意，类型提示：如果符号不带tag，则从var获取tag
         this.tag = tag != null ? tag : var.getTag();
     }
     //var求值成线程绑定值，或根值
@@ -1004,11 +1005,12 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
             int line = lineDeref();
             int column = columnDeref();
             String source = (String) SOURCE.deref();
-            //第二个元素是否是类名
+            //第二个元素是否是类名（即静态字段或静态方法）
             Class c = maybeClass(RT.second(form), false);
             //at this point c will be non-null if static
             Expr instance = null;
             if(c == null)
+                //当符号是var时 ，instance 是 VarExpr
                 instance = analyze(context == C.EVAL ? context : C.EXPRESSION, RT.second(form));
             //如果第三个元素是符号，有可能是字段名（如果是序列，则肯定是方法名）
             boolean maybeField = RT.length(form) == 3 && (RT.third(form) instanceof Symbol);
@@ -1029,6 +1031,7 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
                     Symbol.intern(((Symbol)RT.third(form)).name.substring(1))
                         :(Symbol) RT.third(form);
                 Symbol tag = tagOf(form);
+                //hxzon注意，类型提示：从整体，即 (. inst method) 获取字段的类型
                 if(c != null) {
                     return new StaticFieldExpr(line, column, c, munge(sym.name), tag);
                 } else
@@ -1042,6 +1045,7 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
                 //方法名
                 Symbol sym = (Symbol) RT.first(call);
                 Symbol tag = tagOf(form);
+                //类型提示：获取方法的返回值类型
                 PersistentVector args = PersistentVector.EMPTY;
                 for(ISeq s = RT.next(call); s != null; s = s.next())
                     args = args.cons(analyze(context == C.EVAL ? context : C.EXPRESSION, s.first()));
@@ -1052,7 +1056,7 @@ static public abstract class HostExpr implements Expr, MaybePrimitiveExpr{
                 }
         }
     }
-
+    //form 可以是 Class，符号（类名），字符串（类名）
     private static Class maybeClass(Object form, boolean stringOk) {
         if(form instanceof Class)
             return (Class) form;
@@ -1293,6 +1297,7 @@ static class StaticFieldExpr extends FieldExpr implements AssignableExpr{
     public final String fieldName;
     public final Class c;
     public final java.lang.reflect.Field field;
+    //注意，这里的 tag 是字段的 tag
     public final Symbol tag;
 //  final static Method getStaticFieldMethod = Method.getMethod("Object getStaticField(String,String)");
 //  final static Method setStaticFieldMethod = Method.getMethod("Object setStaticField(String,String,Object)");
@@ -7072,6 +7077,7 @@ private static Expr analyzeSymbol(Symbol sym) {
                 {
                 if(Reflector.getField(c, sym.name, true) != null)
                     //如果是类名，则符号视为静态字段
+                    //hxzon注意，类型提示：这里的 tag 是字段的类型，而不是类的类型
                     return new StaticFieldExpr(lineDeref(), columnDeref(), c, sym.name, tag);
                 throw Util.runtimeException("Unable to find static field: " + sym.name + " in " + c);
                 }
@@ -7312,7 +7318,7 @@ static LocalBinding referenceLocal(Symbol sym) {
         }
     return b;
 }
-
+//hxzon注意，类型提示：o 必须是符号或字符串，不能是 Class
 private static Symbol tagOf(Object o){
     Object tag = RT.get(RT.meta(o), RT.TAG_KEY);
     if(tag instanceof Symbol)
