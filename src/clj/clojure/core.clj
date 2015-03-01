@@ -4501,42 +4501,55 @@ defmacro (fn [&form &env
      (vector? seq-exprs) "a vector for its binding"
      (even? (count seq-exprs)) "an even number of forms in binding vector")
   (let [to-groups (fn [seq-exprs]
+                    ;; seq-exprs : for 的绑定向量
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
                                 ;;  遇到关键字，[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
-                            ;;  绑定列表两两成一组
+                            ;;  绑定向量中的元素两两成一组
+                            ;; 输出： [ [a av ] [b bv :k kv :k2 k2v] [c cv] ]
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
+        ;; emit-bind 生成一个函数 iter# ，这个 iter# 对 seq-exprs 的第二个元素（即 av ）操作
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
+                    ;; 输入即 to-groups 的输出
+                    ;; bind = a , expr = av , mod-pairs = [:k kv :k2 k2v]
+                    ;; next-expr = bv , next-groups =[ [b bv] [c cv] ]
                     (let [giter (gensym "iter__")
+                          ;; emit-bind 生成一个函数，giter 是这个函数的名字 （gen_iter）
                           gxs (gensym "s__")
+                          ;; gxs ： giter 的参数名
                           do-mod (fn do-mod [[[k v :as pair] & etc]]
-                                   (cond
+                 ;; 输入 ： [ :k v :k2 k2v ]
+                 (cond
                                      (= k :let) `(let ~v ~(do-mod etc))
                                      (= k :while) `(when ~v ~(do-mod etc))
                                      (= k :when) `(if ~v
                                                     ~(do-mod etc)
                                                     (recur (rest ~gxs)))
                                      (keyword? k) (err "Invalid 'for' keyword " k)
-                                     next-groups
+                   ;; 有下一组时（闭包，捕获了 next-groups）
+                   next-groups
                                       `(let [iterys# ~(emit-bind next-groups)
                                              fs# (seq (iterys# ~next-expr))]
                                          (if fs#
                                            (concat fs# (~giter (rest ~gxs)))
                                            (recur (rest ~gxs))))
-                                     :else `(cons ~body-expr
+                    ;; 没有下一组时（插入 for 的 body-expr）
+                   :else `(cons ~body-expr
                                                   (~giter (rest ~gxs)))))]
                       (if next-groups
                         #_"not the inner-most loop"
                         `(fn ~giter [~gxs]
+                           ;; 输入是 for 绑定向量的第二个元素，即 av
                            (lazy-seq
                              (loop [~gxs ~gxs]
                                (when-first [~bind ~gxs]
                                  ~(do-mod mod-pairs)))))
                         #_"inner-most loop"
+                        ;; 已经是最后一层
                         (let [gi (gensym "i__")
                               gb (gensym "b__")
                               do-cmod (fn do-cmod [[[k v :as pair] & etc]]
@@ -4572,9 +4585,39 @@ defmacro (fn [&form &env
                                      (let [~bind (first ~gxs)]
                                        ~(do-mod mod-pairs)))))))))))]
     `(let [iter# ~(emit-bind (to-groups seq-exprs))]
+       ;; seq-exprs : for 的绑定向量
+       ;; emit-bind 生成一个函数 iter# ，这个 iter# 对 seq-exprs 的第二个元素（即 av ）操作
         (iter# ~(second seq-exprs)))))
 
-(defmacro comment
+;; (for [a av] (fff a))
+#_ (let [iter__1062__auto__ 
+	(fn iter__6232 [s__6233] 
+	(lazy-seq 
+		(loop [s__6233 s__6233] 
+			(when-let [s__6233 (seq s__6233)] 
+				(if (chunked-seq? s__6233) 
+					(let [c__1060__auto__ (chunk-first s__6233) 
+						size__1061__auto__ (int (count c__1060__auto__)) 
+						b__6235 (chunk-buffer size__1061__auto__)] 
+						(if 
+							(loop [i__6234 (int 0)] 
+								(if (< i__6234 size__1061__auto__) 
+									(let [a (.nth c__1060__auto__ i__6234)] 
+										(do 
+											(chunk-append b__6235 ^{:line 1, :column 29} (fff a))
+											(recur (unchecked-inc i__6234))))
+									true)) ;; end loop
+								(chunk-cons (chunk b__6235) 
+									(iter__6232 (chunk-rest s__6233))) 
+								(chunk-cons (chunk b__6235) nil)
+							)) ;; end if end let
+						(let [a (first s__6233)] 
+							(cons ^{:line 1, :column 29} (fff a) 
+								(iter__6232 (rest s__6233))))
+	)))))] 
+	(iter__1062__auto__ av))
+
+(defmacro comment
   "Ignores body, yields nil"
   {:added "1.0"}
   [& body])
@@ -5220,15 +5263,15 @@ defmacro (fn [&form &env
                              n-or-q
                              (LinkedBlockingQueue. (int n-or-q)))
          NIL (Object.) ;nil sentinel since LBQ doesn't support nils
-         agt (agent (lazy-seq s)) ; never start with nil; that signifies we've already put eos
-         log-error (fn [q e]
+        agt (agent (lazy-seq s)) ; never start with nil; that signifies we've already put eos
+        log-error (fn [q e]
                      (if (.offer q q)
                        (throw e)
                        e))
          fill (fn [s]
                 (when s
                   (if (instance? Exception s) ; we failed to .offer an error earlier
-                    (log-error q s)
+                   (log-error q s)
                     (try
                       (loop [[x & xs :as s] (seq s)]
                         (if s
@@ -5236,15 +5279,15 @@ defmacro (fn [&form &env
                             (recur xs)
                             s)
                           (when-not (.offer q q) ; q itself is eos sentinel
-                            ()))) ; empty seq, not nil, so we know to put eos next time
-                      (catch Exception e
+                           ()))) ; empty seq, not nil, so we know to put eos next time
+                     (catch Exception e
                         (log-error q e))))))
          drain (fn drain []
                  (lazy-seq
                   (let [x (.take q)]
                     (if (identical? x q) ;q itself is eos sentinel
-                      (do @agt nil)  ;touch agent just to propagate errors
-                      (do
+                     (do @agt nil)  ;touch agent just to propagate errors
+                     (do
                         (send-off agt fill)
                         (release-pending-sends)
                         (cons (if (identical? x NIL) nil x) (drain)))))))]
@@ -5305,7 +5348,7 @@ defmacro (fn [&form &env
          (when-let [c (resolve k)]
            (when (is-annotation? c)
                                         ;this is known duck/reflective as no common base of ASM Visitors
-             (let [av (if i
+            (let [av (if i
                         (.visitParameterAnnotation visitor i (descriptor c) 
                                                    (is-runtime-annotation? c))
                         (.visitAnnotation visitor (descriptor c) 
@@ -5614,7 +5657,7 @@ defmacro (fn [&form &env
             (list* `gen-class :name (.replace (str name) \- \_) :impl-ns name :main true (next gen-class-clause)))
         references (remove #(= :gen-class (first %)) references)
         ;ns-effect (clojure.core/in-ns name)
-        ]
+       ]
     `(do
        (clojure.core/in-ns '~name)
        (with-loading-context
@@ -5642,8 +5685,7 @@ defmacro (fn [&form &env
        (def ~name ~expr))))
 
 ;;;;;;;;;;; require/use/load, contributed by Stephen C. Gilardi ;;;;;;;;;;;;;;;;;;
-
-(defonce ^:dynamic
+(defonce ^:dynamic
   ^{:private true
      :doc "A ref to a sorted set of symbols representing loaded libs"}
   *loaded-libs* (ref (sorted-set)))
@@ -5781,13 +5823,13 @@ defmacro (fn [&form &env
         opts (interleave flags (repeat true))
         args (filter (complement keyword?) args)]
     ; check for unsupported options
-    (let [supported #{:as :reload :reload-all :require :use :verbose :refer}
+   (let [supported #{:as :reload :reload-all :require :use :verbose :refer}
           unsupported (seq (remove supported flags))]
       (throw-if unsupported
                 (apply str "Unsupported option(s) supplied: "
                      (interpose \, unsupported))))
     ; check a load target was specified
-    (throw-if (not (seq args)) "Nothing specified to load")
+   (throw-if (not (seq args)) "Nothing specified to load")
     (doseq [arg args]
       (if (libspec? arg)
         (apply load-lib nil (prependss arg opts))
@@ -5810,8 +5852,7 @@ defmacro (fn [&form &env
       (throw-if true "Cyclic load dependency: %s" chain))))
 
 ;; Public
-
-(defn require
+(defn require
   "Loads libs, skipping any that are already loaded. Each argument is
   either a libspec that identifies a lib, a prefix list that identifies
   multiple libs whose names share a common prefix, or a flag that modifies
@@ -5922,8 +5963,7 @@ defmacro (fn [&form &env
   lib)
 
 ;;;;;;;;;;;;; nested associative ops ;;;;;;;;;;;
-
-(defn get-in
+(defn get-in
   "Returns the value in a nested associative structure,
   where ks is a sequence of keys. Returns nil if the key
   is not present, or the not-found value if supplied."
@@ -6170,8 +6210,7 @@ defmacro (fn [&form &env
        ~(emit gpred gexpr clauses))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; var documentation ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(alter-meta! #'*agent* assoc :added "1.0")
+(alter-meta! #'*agent* assoc :added "1.0")
 (alter-meta! #'in-ns assoc :added "1.0")
 (alter-meta! #'load-file assoc :added "1.0")
 
