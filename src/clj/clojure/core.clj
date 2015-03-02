@@ -4500,6 +4500,7 @@ defmacro (fn [&form &env
   (assert-args
      (vector? seq-exprs) "a vector for its binding"
      (even? (count seq-exprs)) "an even number of forms in binding vector")
+
   (let [to-groups (fn [seq-exprs]
                     ;; seq-exprs : for 的绑定向量
                     (reduce1 (fn [groups [k v]]
@@ -4509,20 +4510,26 @@ defmacro (fn [&form &env
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
                             ;;  绑定向量中的元素两两成一组
-                            ;; 输出： [ [a av ] [b bv :k kv :k2 k2v] [c cv] ]
+                            ;; 输出： [ [a av ] [b bv :k kv :k2 k2v] [c cv] ] ，每个元素是一层
+
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
-        ;; emit-bind 生成一个函数 iter# ，这个 iter# 对 seq-exprs 的第二个元素（即 av ）操作
+
+        ;; emit-bind 生成一个迭代函数 iter# 
+        ;; 迭代函数的输入是本层的值（序列），它处理第一个元素，然后递归调用，处理剩余的元素
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
                     ;; 输入即 to-groups 的输出
                     ;; bind = a , expr = av , mod-pairs = [:k kv :k2 k2v]
                     ;; next-expr = bv , next-groups =[ [b bv] [c cv] ]
+
                     (let [giter (gensym "iter__")
                           ;; emit-bind 生成一个函数，giter 是这个函数的名字 （gen_iter）
                           gxs (gensym "s__")
                           ;; gxs ： giter 的参数名
+
                           do-mod (fn do-mod [[[k v :as pair] & etc]]
-                 ;; 输入 ： [ :k v :k2 k2v ]
+                          ;; do-mod 递归的生成本层的身体（非chunked-seq版本）
+                          ;; 输入 ： [ :k v :k2 k2v ] ，即下一层的修饰器
                  (cond
                                      (= k :let) `(let ~v ~(do-mod etc))
                                      (= k :while) `(when ~v ~(do-mod etc))
@@ -4530,29 +4537,39 @@ defmacro (fn [&form &env
                                                     ~(do-mod etc)
                                                     (recur (rest ~gxs)))
                                      (keyword? k) (err "Invalid 'for' keyword " k)
-                   ;; 有下一组时（闭包，捕获了 next-groups）
+                   ;; 有下一层时（闭包，捕获了 next-groups）
                    next-groups
                                       `(let [iterys# ~(emit-bind next-groups)
                                              fs# (seq (iterys# ~next-expr))]
+                                         ;; iterys# ：下一层的迭代函数
+                                         ;; fs# ：本层第一个元素的收集结果
+                                         ;; 收集本层第一个元素的结果，并递归处理本层剩余的元素
                                          (if fs#
                                            (concat fs# (~giter (rest ~gxs)))
                                            (recur (rest ~gxs))))
-                    ;; 没有下一组时（插入 for 的 body-expr）
+                    ;; 最后一层时（插入 for 的 body-expr），递归处理本层剩余的元素
                    :else `(cons ~body-expr
                                                   (~giter (rest ~gxs)))))]
+
                       (if next-groups
+
                         #_"not the inner-most loop"
                         `(fn ~giter [~gxs]
-                           ;; 输入是 for 绑定向量的第二个元素，即 av
+                           ;; 迭代函数，输入是本层的值
                            (lazy-seq
                              (loop [~gxs ~gxs]
                                (when-first [~bind ~gxs]
                                  ~(do-mod mod-pairs)))))
+
                         #_"inner-most loop"
                         ;; 已经是最后一层
                         (let [gi (gensym "i__")
+                              ;; gi ：迭代本段的元素时的位置索引
                               gb (gensym "b__")
+                              ;; gb ：本段的结果缓存的名字
+
                               do-cmod (fn do-cmod [[[k v :as pair] & etc]]
+                              ;; do-cmod 递归的生成本层的身体（chunked-seq版本）
                                         (cond
                                           (= k :let) `(let ~v ~(do-cmod etc))
                                           (= k :while) `(when ~v ~(do-cmod etc))
@@ -4562,31 +4579,41 @@ defmacro (fn [&form &env
                                                            (unchecked-inc ~gi)))
                                           (keyword? k)
                                             (err "Invalid 'for' keyword " k)
+                                          ;; 收集当前元素的结果，迭代本段下一个元素
                                           :else
                                             `(do (chunk-append ~gb ~body-expr)
                                                  (recur (unchecked-inc ~gi)))))]
+
                           `(fn ~giter [~gxs]
                              (lazy-seq
                                (loop [~gxs ~gxs]
                                  (when-let [~gxs (seq ~gxs)]
                                    (if (chunked-seq? ~gxs)
+                                     ;; chunked版本，一段一段批量处理本层元素
                                      (let [c# (chunk-first ~gxs)
+                                           ;; c# ：本层的第一段
                                            size# (int (count c#))
+                                           ;; size# ：第一段的大小
                                            ~gb (chunk-buffer size#)]
+                                           ;; gb ：本段的结果缓存，放置第一段的结果
+                                       ;; 迭代第一段的元素
                                        (if (loop [~gi (int 0)]
                                              (if (< ~gi size#)
                                                (let [~bind (.nth c# ~gi)]
                                                  ~(do-cmod mod-pairs))
                                                true))
+                                         ;; 收集第一段的结果，并迭代剩余的段
                                          (chunk-cons
                                            (chunk ~gb)
                                            (~giter (chunk-rest ~gxs)))
                                          (chunk-cons (chunk ~gb) nil)))
+                                     ;; 非chunked版本，逐个处理本层的元素
                                      (let [~bind (first ~gxs)]
                                        ~(do-mod mod-pairs)))))))))))]
+
     `(let [iter# ~(emit-bind (to-groups seq-exprs))]
        ;; seq-exprs : for 的绑定向量
-       ;; emit-bind 生成一个函数 iter# ，这个 iter# 对 seq-exprs 的第二个元素（即 av ）操作
+       ;; emit-bind 生成第一层的迭代函数 iter# ，然后这个迭代函数处理第一层的值
         (iter# ~(second seq-exprs)))))
 
 ;; (for [a av] (fff a))
