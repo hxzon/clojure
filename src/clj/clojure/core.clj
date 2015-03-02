@@ -4596,26 +4596,66 @@ defmacro (fn [&form &env
 		(loop [s__6233 s__6233] 
 			(when-let [s__6233 (seq s__6233)] 
 				(if (chunked-seq? s__6233) 
-					(let [c__1060__auto__ (chunk-first s__6233) 
-						size__1061__auto__ (int (count c__1060__auto__)) 
-						b__6235 (chunk-buffer size__1061__auto__)] 
+					;; 分段批量处理
+					(let [c__1060__auto__ (chunk-first s__6233) ;; a 的第一段
+						size__1061__auto__ (int (count c__1060__auto__)) ;; 第一段大小 
+						b__6235 (chunk-buffer size__1061__auto__)] ;; 缓存，放置结果
 						(if 
-							(loop [i__6234 (int 0)] 
+							(loop [i__6234 (int 0)] ;; 迭代段中的元素
 								(if (< i__6234 size__1061__auto__) 
-									(let [a (.nth c__1060__auto__ i__6234)] 
+									(let [a (.nth c__1060__auto__ i__6234)] ;; 段中的元素 a
 										(do 
-											(chunk-append b__6235 ^{:line 1, :column 29} (fff a))
-											(recur (unchecked-inc i__6234))))
+											(chunk-append b__6235 ^{:line 1, :column 29} (fff a)) ;; 放置结果
+											(recur (unchecked-inc i__6234)))) ;; 段中的下一个元素
 									true)) ;; end loop
 								(chunk-cons (chunk b__6235) 
-									(iter__6232 (chunk-rest s__6233))) 
+									(iter__6232 (chunk-rest s__6233))) ;; 迭代剩余的段（递归 iter__6232）
 								(chunk-cons (chunk b__6235) nil)
 							)) ;; end if end let
+						;; not chunked-seq ，逐个元素处理
 						(let [a (first s__6233)] 
 							(cons ^{:line 1, :column 29} (fff a) 
 								(iter__6232 (rest s__6233))))
 	)))))] 
 	(iter__1062__auto__ av))
+
+;; (macroexpand-1 '(for [a av :let [bv (:k a)] :while (> bv 0) b bv] (fff b)))
+#_(let [iter__1062__auto__ 
+        (fn iter__6234 [s__6235] 
+          (lazy-seq (loop [s__6235 s__6235] 
+                      (when-first [a s__6235] ;; 第一层的第一个元素，a 
+                        (let [bv ^{:line 1, :column 37} (:k a)] ;; 第二层开始，let
+                          (when ^{:line 1, :column 52} (> bv 0) ;; 第二层，when
+                            (let [iterys__1058__auto__ 
+                                  (fn iter__6236 [s__6237] ;; 第二层迭代
+                                    (lazy-seq (loop [s__6237 s__6237] 
+                                                (when-let [s__6237 (seq s__6237)] 
+                                                  (if (chunked-seq? s__6237) 
+                                                    (let [c__1060__auto__ (chunk-first s__6237) 
+                                                          size__1061__auto__ (int (count c__1060__auto__)) 
+                                                          b__6239 (chunk-buffer size__1061__auto__)] 
+                                                      (if (loop [i__6238 (int 0)] 
+                                                            (if (< i__6238 size__1061__auto__) 
+                                                              (let [b (.nth c__1060__auto__ i__6238)] 
+                                                                (do 
+                                                                  (chunk-append b__6239 ^{:line 1, :column 67} (fff b)) ;; 收集结果
+                                                                  (recur (unchecked-inc i__6238)))) 
+                                                              true)) 
+                                                        (chunk-cons (chunk b__6239) 
+                                                                    (iter__6236 (chunk-rest s__6237))) ;; 第二层，迭代剩余的段
+                                                        (chunk-cons (chunk b__6239) nil))) 
+                                                    (let [b (first s__6237)] 
+                                                      (cons ^{:line 1, :column 67} (fff b) 
+                                                            (iter__6236 (rest s__6237))))))))) 
+                                  ;; 计算第一层的第一个元素的结果
+                                  fs__1059__auto__ (seq (iterys__1058__auto__ bv))] 
+                              ;; 收集第一层的第一个元素的结果，迭代第一层剩余的元素
+                              (if fs__1059__auto__ 
+                                (concat fs__1059__auto__ (iter__6234 (rest s__6235))) 
+                                (recur (rest s__6235))))))
+                        ))))] 
+    (iter__1062__auto__ av))
+
 
 (defmacro comment
   "Ignores body, yields nil"
