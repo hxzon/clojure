@@ -335,7 +335,8 @@ defn (fn defn [&form &env name & fdecl]
                                                      (next inline))))
                     m))
 
-              m (conj (if (meta name) (meta name) {}) m)]   ;将m加入到name（函数名）的元数据中。
+              ;将m加入到name（函数名）的元数据中。
+              m (conj (if (meta name) (meta name) {}) m)]
 ;hxzon深入理解：这个宏的返回值：
           (list 'def (with-meta name m)
                 ;定义Var（指向函数），带有元数据。
@@ -3139,6 +3140,7 @@ defmacro (fn [&form &env
   (assert-args
      (vector? seq-exprs) "a vector for its binding"
      (even? (count seq-exprs)) "an even number of forms in binding vector")
+
   (let [step (fn step [recform exprs]
                (if-not exprs
                  [true `(do ~@body)]
@@ -4384,13 +4386,16 @@ defmacro (fn [&form &env
 
   [& sigs]
     (let [name (if (symbol? (first sigs)) (first sigs) nil)
+          ;; 第一个元素可能是名字
           sigs (if name (next sigs) sigs)
+          ;; 移除名字，如果有
+          ;; 如果没有重载，改成重载形式
           sigs (if (vector? (first sigs)) 
                  (list sigs) 
                  (if (seq? (first sigs))
                    sigs
                    ;; Assume single arity syntax
-                   (throw (IllegalArgumentException. 
+(throw (IllegalArgumentException. 
                             (if (seq sigs)
                               (str "Parameter declaration " 
                                    (first sigs)
@@ -4402,6 +4407,7 @@ defmacro (fn [&form &env
                    (throw (IllegalArgumentException.
                             (str "Invalid signature " sig
                                  " should be a list"))))
+                 ;; 签名解构成参数列表和函数体
                  (let [[params & body] sig
                        _ (when (not (vector? params))
                            (throw (IllegalArgumentException. 
@@ -4410,12 +4416,15 @@ defmacro (fn [&form &env
                                            " should be a vector")
                                       (str "Invalid signature " sig
                                            " should be a list")))))
+                       ;; body 的第一个元素如果是map，视为前置和后置条件
                        conds (when (and (next body) (map? (first body))) 
                                            (first body))
+                       ;; 移除前置和后置条件
                        body (if conds (next body) body)
                        conds (or conds (meta params))
                        pre (:pre conds)
                        post (:post conds)                       
+                       ;; 插入前置条件
                        body (if post
                               `((let [~'% ~(if (< 1 (count body)) 
                                             `(do ~@body) 
@@ -4428,6 +4437,7 @@ defmacro (fn [&form &env
                                       body)
                               body)]
                    (maybe-destructured params body)))
+          ;; 对每个重载形式进行变换
           new-sigs (map psig sigs)]
       (with-meta
         (if name
