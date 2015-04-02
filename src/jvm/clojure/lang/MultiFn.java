@@ -14,7 +14,7 @@ package clojure.lang;
 
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+//多重方法
 public class MultiFn extends AFn{
 final public IFn dispatchFn;
 final public Object defaultDispatchVal;
