@@ -13,14 +13,14 @@
 (def unquote)
 (def unquote-splicing)
 
-;list items åˆ›å»ºä¸€ä¸ªåˆ—è¡¨ï¼ŒåŒ…å«æŒ‡å®šå…ƒç´ 
+;list items ´´½¨Ò»¸öÁĞ±í£¬°üº¬Ö¸¶¨ÔªËØ
 (def
  ^{:arglists '([& items])
    :doc "Creates a new list containing the items."
    :added "1.0"}
   list (. clojure.lang.PersistentList creator))
 
-;fn* ç­‰ç‰¹æ®Šå½¢å¼çš„å®šä¹‰è§ clojure.lang.Compiler 
+;fn* µÈÌØÊâĞÎÊ½µÄ¶¨Òå¼û clojure.lang.Compiler 
 (def
  ^{:arglists '([x seq])
     :doc "Returns a new seq where x is the first element and seq is
@@ -30,8 +30,8 @@
 
  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))
 
-;letï¼Œloopï¼Œfnï¼Œå¯åŠ¨ä¹‹åˆï¼Œè¿˜ä¸æ”¯æŒè§£æ„ï¼Œç¨åä¼šé‡å®šä¹‰å®ƒä»¬
-; let* ï¼Œloop*ï¼Œfn* è§ clojure.lang.Compiler 
+;let£¬loop£¬fn£¬Æô¶¯Ö®³õ£¬»¹²»Ö§³Ö½â¹¹£¬ÉÔºó»áÖØ¶¨ÒåËüÃÇ
+; let* £¬loop*£¬fn* ¼û clojure.lang.Compiler 
 ;during bootstrap we don't have destructuring let, loop or fn, will redefine later
 (def
   ^{:macro true
@@ -49,8 +49,8 @@
  fn (fn* fn [&form &env & decl] 
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
-;å°† &form ä¸Šçš„å…ƒæ•°æ®åŠ åˆ° (fn* decl) ä¸Šã€‚
-;æ³¨æ„ï¼Œè¿™ä¸ªç‰ˆæœ¬çš„ fn å¸¦æœ‰ &form å’Œ &env ã€‚
+;½« &form ÉÏµÄÔªÊı¾İ¼Óµ½ (fn* decl) ÉÏ¡£
+;×¢Òâ£¬Õâ¸ö°æ±¾µÄ fn ´øÓĞ &form ºÍ &env ¡£
 
 (def
  ^{:arglists '([coll])
@@ -271,7 +271,7 @@
                (recur (conj ret (first s)) (next s))
                (seq ret)))))
 
-; defn çš„å®šä¹‰
+; defn µÄ¶¨Òå
 (def 
 
  ^{:doc "Same as (def name (fn [params* ] exprs*)) or (def
@@ -283,72 +283,72 @@
    :added "1.0"}
 
 defn (fn defn [&form &env name & fdecl]
-       ;; nameï¼Œå‡½æ•°åï¼Œå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
+       ;; name£¬º¯ÊıÃû£¬±ØĞëÊÇÒ»¸ö·ûºÅ
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
        (if (instance? clojure.lang.Symbol name)
-         ;å‡½æ•°ånameå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
+         ;º¯ÊıÃûname±ØĞëÊÇÒ»¸ö·ûºÅ
          nil
           (throw (IllegalArgumentException. "First argument to defn must be a symbol")))
         (let [m (if (string? (first fdecl))
-                  ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºæ–‡æ¡£å‚æ•°ï¼Œæ”¾å…¥mï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¹¶è®¾ä¸º:docå…ƒæ•°æ®ã€‚
+                  ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎªÎÄµµ²ÎÊı£¬·ÅÈëm£¨ÔªÊı¾İ£©£¬²¢ÉèÎª:docÔªÊı¾İ¡£
                  {:doc (first fdecl)}
                   {})
               fdecl (if (string? (first fdecl))
-                      ;é™¤æ‰fdeclå¼€å¤´çš„æ–‡æ¡£å‚æ•°ï¼Œå¦‚æœæœ‰ã€‚
+                      ;³ıµôfdecl¿ªÍ·µÄÎÄµµ²ÎÊı£¬Èç¹ûÓĞ¡£
                      (next fdecl)
                       fdecl)
               m (if (map? (first fdecl))
-                  ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
+                  ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
                  (conj m (first fdecl))
                   m)
               fdecl (if (map? (first fdecl))
-                      ;é™¤æ‰fdeclå¼€å¤´çš„mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¦‚æœæœ‰ã€‚
+                      ;³ıµôfdecl¿ªÍ·µÄmap£¨ÔªÊı¾İ£©£¬Èç¹ûÓĞ¡£
                      (next fdecl)
                       fdecl)
               fdecl (if (vector? (first fdecl))
-                      ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å‘é‡ï¼ˆå‚æ•°åˆ—è¡¨ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼ˆå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼ï¼‰ã€‚
+                      ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇÏòÁ¿£¨²ÎÊıÁĞ±í£©£¬½«fdecl×ª³ÉÁĞ±í£¨¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½£©¡£
                      (list fdecl)
                       fdecl)
               m (if (map? (last fdecl))
-                  ;å¦‚æœfdeclæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
+                  ;Èç¹ûfdecl×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
                  (conj m (last fdecl))
                   m)
               fdecl (if (map? (last fdecl))
-                      ;é™¤æ‰fdeclæœ€åä¸€ä¸ªå…ƒç´ ï¼Œå¦‚æœæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ã€‚
+                      ;³ıµôfdecl×îºóÒ»¸öÔªËØ£¬Èç¹û×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©¡£
                      (butlast fdecl)
                       fdecl)
               m (conj {:arglists (list 'quote (sigs fdecl))} m)
-              ;æ·»åŠ arglistsåˆ°mä¸­ã€‚
+              ;Ìí¼Óarglistsµ½mÖĞ¡£
 
               m (let [inline (:inline m)
-                      ;æ›´æ–°mçš„inlineä¿¡æ¯ã€‚inlineç¤ºä¾‹è§ä¸‹ã€‚
+                      ;¸üĞÂmµÄinlineĞÅÏ¢¡£inlineÊ¾Àı¼ûÏÂ¡£
                       ifn (first inline)
-                      ;å³â€œfnâ€è¿™ä¸ªå…³é”®å­—ã€‚
+                      ;¼´¡°fn¡±Õâ¸ö¹Ø¼ü×Ö¡£
                       iname (second inline)]
-                  ;ç¬¬äºŒéƒ¨åˆ†ï¼Œå¯èƒ½æ˜¯å†…è”å‡½æ•°åï¼Œæˆ–è€…å‚æ•°åˆ—è¡¨ã€‚
+                  ;µÚ¶ş²¿·Ö£¬¿ÉÄÜÊÇÄÚÁªº¯ÊıÃû£¬»òÕß²ÎÊıÁĞ±í¡£
                   ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
                   (if (if (clojure.lang.Util/equiv 'fn ifn)
-                        ;; å¦‚æœæ²¡æœ‰æŒ‡å®šå†…è”å‡½æ•°åï¼Œè‡ªåŠ¨æ ¹æ®å‡½æ•°åç”Ÿæˆä¸€ä¸ªã€‚
+                        ;; Èç¹ûÃ»ÓĞÖ¸¶¨ÄÚÁªº¯ÊıÃû£¬×Ô¶¯¸ù¾İº¯ÊıÃûÉú³ÉÒ»¸ö¡£
                          (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
                     (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
 
-              ;å°†måŠ å…¥åˆ°nameï¼ˆå‡½æ•°åï¼‰çš„å…ƒæ•°æ®ä¸­ã€‚
+              ;½«m¼ÓÈëµ½name£¨º¯ÊıÃû£©µÄÔªÊı¾İÖĞ¡£
               m (conj (if (meta name) (meta name) {}) m)]
-;hxzonæ·±å…¥ç†è§£ï¼šè¿™ä¸ªå®çš„è¿”å›å€¼ï¼š
+;hxzonÉîÈëÀí½â£ºÕâ¸öºêµÄ·µ»ØÖµ£º
           (list 'def (with-meta name m)
-                ;å®šä¹‰Varï¼ˆæŒ‡å‘å‡½æ•°ï¼‰ï¼Œå¸¦æœ‰å…ƒæ•°æ®ã€‚
+                ;¶¨ÒåVar£¨Ö¸Ïòº¯Êı£©£¬´øÓĞÔªÊı¾İ¡£
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
                 (cons `fn fdecl) ))))
-;; åˆ°è¿™é‡Œï¼Œå„ç±»å…ƒæ•°æ®ï¼Œä» fdecl è½¬ç§»åˆ° name ä¸Šäº†
+;; µ½ÕâÀï£¬¸÷ÀàÔªÊı¾İ£¬´Ó fdecl ×ªÒÆµ½ name ÉÏÁË
 
 (. (var defn) (setMacro))
-;å°†defnæ ‡è®°ä¸ºå®ã€‚ï¼ˆå®çš„åº•å±‚å®ç°å…¶å®ä¹Ÿæ˜¯å‡½æ•°ã€‚ï¼‰
+;½«defn±ê¼ÇÎªºê¡££¨ºêµÄµ×²ãÊµÏÖÆäÊµÒ²ÊÇº¯Êı¡££©
 
-;inlineä¿¡æ¯ç¤ºä¾‹ï¼š
+;inlineĞÅÏ¢Ê¾Àı£º
 ;{  :inline (fn [x] `(. clojure.lang.Numbers (incP ~x)))
 ;   :added "1.0"}
 
@@ -387,7 +387,9 @@ defn (fn defn [&form &env name & fdecl]
    :static true}
   ([coll]
    (if (vector? coll)
+     (if (instance? clojure.lang.IObj coll)
      (with-meta coll nil)
+       (clojure.lang.LazilyPersistentVector/create coll))
      (clojure.lang.LazilyPersistentVector/create coll))))
 
 (defn hash-map
@@ -456,7 +458,7 @@ defn (fn defn [&form &env name & fdecl]
   [x] (clojure.lang.Util/identical x nil))
 
 ;;;;;;;;;;;;;;;;;;;;;
-;å®šä¹‰å®ï¼ˆdefmacroï¼‰
+;¶¨Òåºê£¨defmacro£©
 
 (def
 
@@ -472,33 +474,33 @@ defmacro (fn [&form &env
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
                               (if (string? f)
-                                ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºâ€œæ–‡æ¡£å­—ç¬¦ä¸²â€
+                                ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎª¡°ÎÄµµ×Ö·û´®¡±
                                 (recur (cons f p) (next args))
-                                ;å°†æ–‡æ¡£å­—ç¬¦ä¸²åŠ å…¥åˆ°pï¼Œå¹¶ä»argsä¸­ç§»é™¤
+                                ;½«ÎÄµµ×Ö·û´®¼ÓÈëµ½p£¬²¢´ÓargsÖĞÒÆ³ı
                                 (if (map? f)
-                                  ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°p
+                                  ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½p
                                   (recur (cons f p) (next args))
                                   p))))
                    fdecl (loop [fd args]
-                           ;ä»argsç§»é™¤å¼€å¤´çš„â€œæ–‡æ¡£å­—ç¬¦ä¸²â€å’Œmapï¼ˆå…ƒæ•°æ®ï¼‰
+                           ;´ÓargsÒÆ³ı¿ªÍ·µÄ¡°ÎÄµµ×Ö·û´®¡±ºÍmap£¨ÔªÊı¾İ£©
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
                    fdecl (if (vector? (first fdecl))
-                           ;å¦‚æœå¼€å¤´æ˜¯å‘é‡ï¼ˆå‚æ•°å‘é‡ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼Œå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼
+                           ;Èç¹û¿ªÍ·ÊÇÏòÁ¿£¨²ÎÊıÏòÁ¿£©£¬½«fdecl×ª³ÉÁĞ±í£¬¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½
                            (list fdecl)
                            fdecl)
-                   ;å¦‚æœå¼€å¤´ä¸æ˜¯å‘é‡ï¼Œå³æœ‰é‡è½½
+                   ;Èç¹û¿ªÍ·²»ÊÇÏòÁ¿£¬¼´ÓĞÖØÔØ
 
                    add-implicit-args (fn [fd]
-                                       ;; åœ¨æ¯ä¸ªå‚æ•°å‘é‡çš„å¼€å¤´ï¼ŒåŠ å…¥ &form å’Œ &evn è¿™ä¸¤ä¸ªéšå¼å‚æ•°
+                                       ;; ÔÚÃ¿¸ö²ÎÊıÏòÁ¿µÄ¿ªÍ·£¬¼ÓÈë &form ºÍ &evn ÕâÁ½¸öÒşÊ½²ÎÊı
                              (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
 
                    add-args (fn [acc ds]
-                              ;; ds = ( {å¯é€‰çš„å…ƒæ•°æ®} ([] body) ([] body))
+                              ;; ds = ( {¿ÉÑ¡µÄÔªÊı¾İ} ([] body) ([] body))
                               (if (nil? ds)
                                 acc
                                 (let [d (first ds)]
@@ -507,15 +509,15 @@ defmacro (fn [&form &env
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
 
                    fdecl (seq (add-args [] fdecl))
-                   ;; ç»™æ¯ä¸ªé‡è½½å½¢å¼çš„å‚æ•°å‘é‡ï¼Œæ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°
+                   ;; ¸øÃ¿¸öÖØÔØĞÎÊ½µÄ²ÎÊıÏòÁ¿£¬Ìí¼ÓÁ½¸öÒşÊ½²ÎÊı
                    decl (loop [p prefix d fdecl]
-                          ;; æŠŠå¼€å¤´çš„æ–‡æ¡£å­—ç¬¦ä¸²ï¼Œå’Œå…ƒæ•°æ®ï¼Œé‡æ–°åŠ å›å»
+                          ;; °Ñ¿ªÍ·µÄÎÄµµ×Ö·û´®£¬ºÍÔªÊı¾İ£¬ÖØĞÂ¼Ó»ØÈ¥
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-;hxzonæ·±å…¥ç†è§£ï¼š
-;è¿”å›ä»£ç ï¼š (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
-;ç­‰åŒäºå®šä¹‰ä¸€ä¸ªå‡½æ•°ï¼Œä½†æ˜¯å°†å‡½æ•°æ ‡è®°ä¸ºå®ï¼Œä¸”æ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°ã€‚
+;hxzonÉîÈëÀí½â£º
+;·µ»Ø´úÂë£º (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;µÈÍ¬ÓÚ¶¨ÒåÒ»¸öº¯Êı£¬µ«ÊÇ½«º¯Êı±ê¼ÇÎªºê£¬ÇÒÌí¼ÓÁ½¸öÒşÊ½²ÎÊı¡£
                (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
@@ -1624,7 +1626,7 @@ defmacro (fn [&form &env
       (let [form (first forms)
             threaded (if (seq? form)
                        (with-meta `(~(first form) ~x ~@(next form)) (meta form))
-                       ;;æ³¨æ„ï¼Œä¿æŒformçš„å…ƒæ•°æ®
+                       ;;×¢Òâ£¬±£³ÖformµÄÔªÊı¾İ
                        (list form x))]
         (recur threaded (next forms)))
       x)))
@@ -2580,9 +2582,15 @@ defmacro (fn [&form &env
      (if (seq? coll) coll
          (or (seq coll) ())))
   ([xform coll]
-     (clojure.lang.LazyTransformer/create xform coll))
+     (or (clojure.lang.RT/chunkIteratorSeq
+         (clojure.lang.TransformerIterator/create xform (clojure.lang.RT/iter coll)))
+       ()))
   ([xform coll & colls]
-     (clojure.lang.LazyTransformer/createMulti xform (to-array (cons coll colls)))))
+     (or (clojure.lang.RT/chunkIteratorSeq
+         (clojure.lang.TransformerIterator/createMulti
+           xform
+           (map #(clojure.lang.RT/iter %) (cons coll colls))))
+       ())))
 
 (defn every?
   "Returns true if (pred x) is logical true for every x in coll, else
@@ -2894,9 +2902,7 @@ defmacro (fn [&form &env
   "Returns a lazy (infinite!) sequence of repetitions of the items in coll."
   {:added "1.0"
    :static true}
-  [coll] (lazy-seq 
-          (when-let [s (seq coll)] 
-              (concat s (cycle s)))))
+  [coll] (clojure.lang.Cycle/create (seq coll)))
 
 (defn split-at
   "Returns a vector of [(take n coll) (drop n coll)]"
@@ -2916,8 +2922,8 @@ defmacro (fn [&form &env
   "Returns a lazy (infinite!, or length n if supplied) sequence of xs."
   {:added "1.0"
    :static true}
-  ([x] (lazy-seq (cons x (repeat x))))
-  ([n x] (take n (repeat x))))
+  ([x] (clojure.lang.Repeat/create x))
+  ([n x] (clojure.lang.Repeat/create n x)))
 
 (defn replicate
   "DEPRECATED: Use 'repeat' instead.
@@ -2930,7 +2936,7 @@ defmacro (fn [&form &env
   "Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects"
   {:added "1.0"
    :static true}
-  [f x] (cons x (lazy-seq (iterate f (f x)))))
+  [f x] (clojure.lang.Iterate/create f x) )
 
 (defn range
   "Returns a lazy seq of nums from start (inclusive) to end
@@ -3057,8 +3063,8 @@ defmacro (fn [&form &env
   {:added "1.0"
    :static true}
   ([coll]
-   (when (seq coll)
-     (recur (next coll))))
+   (when-let [s (seq coll)]
+     (recur (next s))))
   ([n coll]
    (when (and (seq coll) (pos? n))
      (recur (dec n) (next coll)))))
@@ -3095,7 +3101,7 @@ defmacro (fn [&form &env
    :static true}
   [coll n]
     (loop [n n xs coll]
-      (if (and (pos? n) (seq xs))
+      (if-let [xs (and (pos? n) (seq xs))]
         (recur (dec n) (rest xs))
         xs)))
 
@@ -3669,6 +3675,12 @@ defmacro (fn [&form &env
   java.io.PushbackReader or some derivee.  stream defaults to the
   current value of *in*.
 
+  Opts is a persistent map with valid keys:
+    :read-cond - :allow to process reader conditionals, or
+                 :preserve to keep all branches
+    :features - persistent set of feature keywords for reader conditionals
+    :eof - on eof, return value unless :eofthrow, then throw
+
   Note that read can execute code (controlled by *read-eval*),
   and as such should be used only with trusted sources.
 
@@ -3682,7 +3694,9 @@ defmacro (fn [&form &env
   ([stream eof-error? eof-value]
    (read stream eof-error? eof-value false))
   ([stream eof-error? eof-value recursive?]
-   (. clojure.lang.LispReader (read stream (boolean eof-error?) eof-value recursive?))))
+   (. clojure.lang.LispReader (read stream (boolean eof-error?) eof-value recursive?)))
+  ([opts stream]
+   (. clojure.lang.LispReader (read stream opts))))
 
 (defn read-line
   "Reads the next line from stream that is the current value of *in* ."
@@ -3694,7 +3708,8 @@ defmacro (fn [&form &env
     (.readLine ^java.io.BufferedReader *in*)))
 
 (defn read-string
-  "Reads one object from the string s.
+  "Reads one object from the string s. Optionally include reader
+  options, as specified in read.
 
   Note that read-string can execute code (controlled by *read-eval*),
   and as such should be used only with trusted sources.
@@ -3702,7 +3717,8 @@ defmacro (fn [&form &env
   For data structure interop use clojure.edn/read-string"
   {:added "1.0"
    :static true}
-  [s] (clojure.lang.RT/readString s))
+  ([s] (clojure.lang.RT/readString s))
+  ([opts s] (clojure.lang.RT/readString s opts)))
 
 (defn subvec
   "Returns a persistent vector of the items in vector from
@@ -4210,7 +4226,7 @@ defmacro (fn [&form &env
       (let [ss (map seq (conj colls c2 c1))]
         (when (every? identity ss)
           (concat (map first ss) (apply interleave (map rest ss))))))))
-; ä¼˜å…ˆçº¿ç¨‹ç»‘å®šå€¼ï¼Œå†æ ¹å€¼
+; ÓÅÏÈÏß³Ì°ó¶¨Öµ£¬ÔÙ¸ùÖµ
 (defn var-get
   "Gets the value in the var object"
   {:added "1.0"
@@ -4273,7 +4289,7 @@ defmacro (fn [&form &env
      (clojure.lang.PersistentArrayMap/createAsIfByAssoc (to-array keyvals))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;é‡å®šä¹‰letï¼Œfnï¼Œloop
+;ÖØ¶¨Òålet£¬fn£¬loop
 ;redefine let and loop  with destructuring
 (defn destructure [bindings]
   (let [bents (partition 2 bindings)
@@ -4372,7 +4388,7 @@ defmacro (fn [&form &env
           (let ~lets
             ~@body))))))
 
-;é‡å®šä¹‰fnï¼Œå¸¦ä¸Šè§£æ„å’Œå‰ç½®åç½®æ¡ä»¶
+;ÖØ¶¨Òåfn£¬´øÉÏ½â¹¹ºÍÇ°ÖÃºóÖÃÌõ¼ş
 ;redefine fn with destructuring and pre/post conditions
 (defmacro fn
   "params => positional-params* , or positional-params* & next-param
@@ -4386,10 +4402,10 @@ defmacro (fn [&form &env
 
   [& sigs]
     (let [name (if (symbol? (first sigs)) (first sigs) nil)
-          ;; ç¬¬ä¸€ä¸ªå…ƒç´ å¯èƒ½æ˜¯åå­—
+          ;; µÚÒ»¸öÔªËØ¿ÉÄÜÊÇÃû×Ö
           sigs (if name (next sigs) sigs)
-          ;; ç§»é™¤åå­—ï¼Œå¦‚æœæœ‰
-          ;; å¦‚æœæ²¡æœ‰é‡è½½ï¼Œæ”¹æˆé‡è½½å½¢å¼
+          ;; ÒÆ³ıÃû×Ö£¬Èç¹ûÓĞ
+          ;; Èç¹ûÃ»ÓĞÖØÔØ£¬¸Ä³ÉÖØÔØĞÎÊ½
           sigs (if (vector? (first sigs)) 
                  (list sigs) 
                  (if (seq? (first sigs))
@@ -4407,7 +4423,7 @@ defmacro (fn [&form &env
                    (throw (IllegalArgumentException.
                             (str "Invalid signature " sig
                                  " should be a list"))))
-                 ;; ç­¾åè§£æ„æˆå‚æ•°åˆ—è¡¨å’Œå‡½æ•°ä½“
+                 ;; Ç©Ãû½â¹¹³É²ÎÊıÁĞ±íºÍº¯ÊıÌå
                  (let [[params & body] sig
                        _ (when (not (vector? params))
                            (throw (IllegalArgumentException. 
@@ -4416,15 +4432,15 @@ defmacro (fn [&form &env
                                            " should be a vector")
                                       (str "Invalid signature " sig
                                            " should be a list")))))
-                       ;; body çš„ç¬¬ä¸€ä¸ªå…ƒç´ å¦‚æœæ˜¯mapï¼Œè§†ä¸ºå‰ç½®å’Œåç½®æ¡ä»¶
+                       ;; body µÄµÚÒ»¸öÔªËØÈç¹ûÊÇmap£¬ÊÓÎªÇ°ÖÃºÍºóÖÃÌõ¼ş
                        conds (when (and (next body) (map? (first body))) 
                                            (first body))
-                       ;; ç§»é™¤å‰ç½®å’Œåç½®æ¡ä»¶
+                       ;; ÒÆ³ıÇ°ÖÃºÍºóÖÃÌõ¼ş
                        body (if conds (next body) body)
                        conds (or conds (meta params))
                        pre (:pre conds)
                        post (:post conds)                       
-                       ;; æ’å…¥å‰ç½®æ¡ä»¶
+                       ;; ²åÈëÇ°ÖÃÌõ¼ş
                        body (if post
                               `((let [~'% ~(if (< 1 (count body)) 
                                             `(do ~@body) 
@@ -4437,7 +4453,7 @@ defmacro (fn [&form &env
                                       body)
                               body)]
                    (maybe-destructured params body)))
-          ;; å¯¹æ¯ä¸ªé‡è½½å½¢å¼è¿›è¡Œå˜æ¢
+          ;; ¶ÔÃ¿¸öÖØÔØĞÎÊ½½øĞĞ±ä»»
           new-sigs (map psig sigs)]
       (with-meta
         (if name
@@ -4445,7 +4461,7 @@ defmacro (fn [&form &env
           (cons 'fn* new-sigs))
         (meta &form))))
 
-;é‡å®šä¹‰loop
+;ÖØ¶¨Òåloop
 (defmacro loop
   "Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts
@@ -4512,34 +4528,34 @@ defmacro (fn [&form &env
      (even? (count seq-exprs)) "an even number of forms in binding vector")
 
   (let [to-groups (fn [seq-exprs]
-                    ;; seq-exprs : for çš„ç»‘å®šå‘é‡
+                    ;; seq-exprs : for µÄ°ó¶¨ÏòÁ¿
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
-                                ;;  é‡åˆ°å…³é”®å­—ï¼Œ[a av b bv] -> [a av [b bv :k kv]]
+                                ;;  Óöµ½¹Ø¼ü×Ö£¬[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
-                            ;;  ç»‘å®šå‘é‡ä¸­çš„å…ƒç´ ä¸¤ä¸¤æˆä¸€ç»„
-                            ;; è¾“å‡ºï¼š [ [a av ] [b bv :k kv :k2 k2v] [c cv] ] ï¼Œæ¯ä¸ªå…ƒç´ æ˜¯ä¸€å±‚
+                            ;;  °ó¶¨ÏòÁ¿ÖĞµÄÔªËØÁ½Á½³ÉÒ»×é
+                            ;; Êä³ö£º [ [a av ] [b bv :k kv :k2 k2v] [c cv] ] £¬Ã¿¸öÔªËØÊÇÒ»²ã
 
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
 
-        ;; emit-bind ç”Ÿæˆä¸€ä¸ªè¿­ä»£å‡½æ•° iter# 
-        ;; è¿­ä»£å‡½æ•°çš„è¾“å…¥æ˜¯æœ¬å±‚çš„å€¼ï¼ˆåºåˆ—ï¼‰ï¼Œå®ƒå¤„ç†ç¬¬ä¸€ä¸ªå…ƒç´ ï¼Œç„¶åé€’å½’è°ƒç”¨ï¼Œå¤„ç†å‰©ä½™çš„å…ƒç´ 
+        ;; emit-bind Éú³ÉÒ»¸öµü´úº¯Êı iter# 
+        ;; µü´úº¯ÊıµÄÊäÈëÊÇ±¾²ãµÄÖµ£¨ĞòÁĞ£©£¬Ëü´¦ÀíµÚÒ»¸öÔªËØ£¬È»ºóµİ¹éµ÷ÓÃ£¬´¦ÀíÊ£ÓàµÄÔªËØ
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
-                    ;; è¾“å…¥å³ to-groups çš„è¾“å‡º
+                    ;; ÊäÈë¼´ to-groups µÄÊä³ö
                     ;; bind = a , expr = av , mod-pairs = [:k kv :k2 k2v]
                     ;; next-expr = bv , next-groups =[ [b bv] [c cv] ]
 
                     (let [giter (gensym "iter__")
-                          ;; emit-bind ç”Ÿæˆä¸€ä¸ªå‡½æ•°ï¼Œgiter æ˜¯è¿™ä¸ªå‡½æ•°çš„åå­— ï¼ˆgen_iterï¼‰
+                          ;; emit-bind Éú³ÉÒ»¸öº¯Êı£¬giter ÊÇÕâ¸öº¯ÊıµÄÃû×Ö £¨gen_iter£©
                           gxs (gensym "s__")
-                          ;; gxs ï¼š giter çš„å‚æ•°å
+                          ;; gxs £º giter µÄ²ÎÊıÃû
 
                           do-mod (fn do-mod [[[k v :as pair] & etc]]
-                          ;; do-mod é€’å½’çš„ç”Ÿæˆæœ¬å±‚çš„èº«ä½“ï¼ˆéchunked-seqç‰ˆæœ¬ï¼‰
-                          ;; è¾“å…¥ ï¼š [ :k v :k2 k2v ] ï¼Œå³ä¸‹ä¸€å±‚çš„ä¿®é¥°å™¨
+                          ;; do-mod µİ¹éµÄÉú³É±¾²ãµÄÉíÌå£¨·Çchunked-seq°æ±¾£©
+                          ;; ÊäÈë £º [ :k v :k2 k2v ] £¬¼´ÏÂÒ»²ãµÄĞŞÊÎÆ÷
                  (cond
                                      (= k :let) `(let ~v ~(do-mod etc))
                                      (= k :while) `(when ~v ~(do-mod etc))
@@ -4547,17 +4563,17 @@ defmacro (fn [&form &env
                                                     ~(do-mod etc)
                                                     (recur (rest ~gxs)))
                                      (keyword? k) (err "Invalid 'for' keyword " k)
-                   ;; æœ‰ä¸‹ä¸€å±‚æ—¶ï¼ˆé—­åŒ…ï¼Œæ•è·äº† next-groupsï¼‰
+                   ;; ÓĞÏÂÒ»²ãÊ±£¨±Õ°ü£¬²¶»ñÁË next-groups£©
                    next-groups
                                       `(let [iterys# ~(emit-bind next-groups)
                                              fs# (seq (iterys# ~next-expr))]
-                                         ;; iterys# ï¼šä¸‹ä¸€å±‚çš„è¿­ä»£å‡½æ•°
-                                         ;; fs# ï¼šæœ¬å±‚ç¬¬ä¸€ä¸ªå…ƒç´ çš„æ”¶é›†ç»“æœ
-                                         ;; æ”¶é›†æœ¬å±‚ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœï¼Œå¹¶é€’å½’å¤„ç†æœ¬å±‚å‰©ä½™çš„å…ƒç´ 
+                                         ;; iterys# £ºÏÂÒ»²ãµÄµü´úº¯Êı
+                                         ;; fs# £º±¾²ãµÚÒ»¸öÔªËØµÄÊÕ¼¯½á¹û
+                                         ;; ÊÕ¼¯±¾²ãµÚÒ»¸öÔªËØµÄ½á¹û£¬²¢µİ¹é´¦Àí±¾²ãÊ£ÓàµÄÔªËØ
                                          (if fs#
                                            (concat fs# (~giter (rest ~gxs)))
                                            (recur (rest ~gxs))))
-                    ;; æœ€åä¸€å±‚æ—¶ï¼ˆæ’å…¥ for çš„ body-exprï¼‰ï¼Œé€’å½’å¤„ç†æœ¬å±‚å‰©ä½™çš„å…ƒç´ 
+                    ;; ×îºóÒ»²ãÊ±£¨²åÈë for µÄ body-expr£©£¬µİ¹é´¦Àí±¾²ãÊ£ÓàµÄÔªËØ
                    :else `(cons ~body-expr
                                                   (~giter (rest ~gxs)))))]
 
@@ -4565,21 +4581,21 @@ defmacro (fn [&form &env
 
                         #_"not the inner-most loop"
                         `(fn ~giter [~gxs]
-                           ;; è¿­ä»£å‡½æ•°ï¼Œè¾“å…¥æ˜¯æœ¬å±‚çš„å€¼
+                           ;; µü´úº¯Êı£¬ÊäÈëÊÇ±¾²ãµÄÖµ
                            (lazy-seq
                              (loop [~gxs ~gxs]
                                (when-first [~bind ~gxs]
                                  ~(do-mod mod-pairs)))))
 
                         #_"inner-most loop"
-                        ;; å·²ç»æ˜¯æœ€åä¸€å±‚
+                        ;; ÒÑ¾­ÊÇ×îºóÒ»²ã
                         (let [gi (gensym "i__")
-                              ;; gi ï¼šè¿­ä»£æœ¬æ®µçš„å…ƒç´ æ—¶çš„ä½ç½®ç´¢å¼•
+                              ;; gi £ºµü´ú±¾¶ÎµÄÔªËØÊ±µÄÎ»ÖÃË÷Òı
                               gb (gensym "b__")
-                              ;; gb ï¼šæœ¬æ®µçš„ç»“æœç¼“å­˜çš„åå­—
+                              ;; gb £º±¾¶ÎµÄ½á¹û»º´æµÄÃû×Ö
 
                               do-cmod (fn do-cmod [[[k v :as pair] & etc]]
-                              ;; do-cmod é€’å½’çš„ç”Ÿæˆæœ¬å±‚çš„èº«ä½“ï¼ˆchunked-seqç‰ˆæœ¬ï¼‰
+                              ;; do-cmod µİ¹éµÄÉú³É±¾²ãµÄÉíÌå£¨chunked-seq°æ±¾£©
                                         (cond
                                           (= k :let) `(let ~v ~(do-cmod etc))
                                           (= k :while) `(when ~v ~(do-cmod etc))
@@ -4589,7 +4605,7 @@ defmacro (fn [&form &env
                                                            (unchecked-inc ~gi)))
                                           (keyword? k)
                                             (err "Invalid 'for' keyword " k)
-                                          ;; æ”¶é›†å½“å‰å…ƒç´ çš„ç»“æœï¼Œè¿­ä»£æœ¬æ®µä¸‹ä¸€ä¸ªå…ƒç´ 
+                                          ;; ÊÕ¼¯µ±Ç°ÔªËØµÄ½á¹û£¬µü´ú±¾¶ÎÏÂÒ»¸öÔªËØ
                                           :else
                                             `(do (chunk-append ~gb ~body-expr)
                                                  (recur (unchecked-inc ~gi)))))]
@@ -4599,31 +4615,31 @@ defmacro (fn [&form &env
                                (loop [~gxs ~gxs]
                                  (when-let [~gxs (seq ~gxs)]
                                    (if (chunked-seq? ~gxs)
-                                     ;; chunkedç‰ˆæœ¬ï¼Œä¸€æ®µä¸€æ®µæ‰¹é‡å¤„ç†æœ¬å±‚å…ƒç´ 
+                                     ;; chunked°æ±¾£¬Ò»¶ÎÒ»¶ÎÅúÁ¿´¦Àí±¾²ãÔªËØ
                                      (let [c# (chunk-first ~gxs)
-                                           ;; c# ï¼šæœ¬å±‚çš„ç¬¬ä¸€æ®µ
+                                           ;; c# £º±¾²ãµÄµÚÒ»¶Î
                                            size# (int (count c#))
-                                           ;; size# ï¼šç¬¬ä¸€æ®µçš„å¤§å°
+                                           ;; size# £ºµÚÒ»¶ÎµÄ´óĞ¡
                                            ~gb (chunk-buffer size#)]
-                                           ;; gb ï¼šæœ¬æ®µçš„ç»“æœç¼“å­˜ï¼Œæ”¾ç½®ç¬¬ä¸€æ®µçš„ç»“æœ
-                                       ;; è¿­ä»£ç¬¬ä¸€æ®µçš„å…ƒç´ 
+                                           ;; gb £º±¾¶ÎµÄ½á¹û»º´æ£¬·ÅÖÃµÚÒ»¶ÎµÄ½á¹û
+                                       ;; µü´úµÚÒ»¶ÎµÄÔªËØ
                                        (if (loop [~gi (int 0)]
                                              (if (< ~gi size#)
                                                (let [~bind (.nth c# ~gi)]
                                                  ~(do-cmod mod-pairs))
                                                true))
-                                         ;; æ”¶é›†ç¬¬ä¸€æ®µçš„ç»“æœï¼Œå¹¶è¿­ä»£å‰©ä½™çš„æ®µ
+                                         ;; ÊÕ¼¯µÚÒ»¶ÎµÄ½á¹û£¬²¢µü´úÊ£ÓàµÄ¶Î
                                          (chunk-cons
                                            (chunk ~gb)
                                            (~giter (chunk-rest ~gxs)))
                                          (chunk-cons (chunk ~gb) nil)))
-                                     ;; échunkedç‰ˆæœ¬ï¼Œé€ä¸ªå¤„ç†æœ¬å±‚çš„å…ƒç´ 
+                                     ;; ·Çchunked°æ±¾£¬Öğ¸ö´¦Àí±¾²ãµÄÔªËØ
                                      (let [~bind (first ~gxs)]
                                        ~(do-mod mod-pairs)))))))))))]
 
     `(let [iter# ~(emit-bind (to-groups seq-exprs))]
-       ;; seq-exprs : for çš„ç»‘å®šå‘é‡
-       ;; emit-bind ç”Ÿæˆç¬¬ä¸€å±‚çš„è¿­ä»£å‡½æ•° iter# ï¼Œç„¶åè¿™ä¸ªè¿­ä»£å‡½æ•°å¤„ç†ç¬¬ä¸€å±‚çš„å€¼
+       ;; seq-exprs : for µÄ°ó¶¨ÏòÁ¿
+       ;; emit-bind Éú³ÉµÚÒ»²ãµÄµü´úº¯Êı iter# £¬È»ºóÕâ¸öµü´úº¯Êı´¦ÀíµÚÒ»²ãµÄÖµ
         (iter# ~(second seq-exprs)))))
 
 ;; (for [a av] (fff a))
@@ -4633,23 +4649,23 @@ defmacro (fn [&form &env
 		(loop [s__6233 s__6233] 
 			(when-let [s__6233 (seq s__6233)] 
 				(if (chunked-seq? s__6233) 
-					;; åˆ†æ®µæ‰¹é‡å¤„ç†
-					(let [c__1060__auto__ (chunk-first s__6233) ;; a çš„ç¬¬ä¸€æ®µ
-						size__1061__auto__ (int (count c__1060__auto__)) ;; ç¬¬ä¸€æ®µå¤§å° 
-						b__6235 (chunk-buffer size__1061__auto__)] ;; ç¼“å­˜ï¼Œæ”¾ç½®ç»“æœ
+					;; ·Ö¶ÎÅúÁ¿´¦Àí
+					(let [c__1060__auto__ (chunk-first s__6233) ;; a µÄµÚÒ»¶Î
+						size__1061__auto__ (int (count c__1060__auto__)) ;; µÚÒ»¶Î´óĞ¡ 
+						b__6235 (chunk-buffer size__1061__auto__)] ;; »º´æ£¬·ÅÖÃ½á¹û
 						(if 
-							(loop [i__6234 (int 0)] ;; è¿­ä»£æ®µä¸­çš„å…ƒç´ 
+							(loop [i__6234 (int 0)] ;; µü´ú¶ÎÖĞµÄÔªËØ
 								(if (< i__6234 size__1061__auto__) 
-									(let [a (.nth c__1060__auto__ i__6234)] ;; æ®µä¸­çš„å…ƒç´  a
+									(let [a (.nth c__1060__auto__ i__6234)] ;; ¶ÎÖĞµÄÔªËØ a
 										(do 
-											(chunk-append b__6235 ^{:line 1, :column 29} (fff a)) ;; æ”¾ç½®ç»“æœ
-											(recur (unchecked-inc i__6234)))) ;; æ®µä¸­çš„ä¸‹ä¸€ä¸ªå…ƒç´ 
+											(chunk-append b__6235 ^{:line 1, :column 29} (fff a)) ;; ·ÅÖÃ½á¹û
+											(recur (unchecked-inc i__6234)))) ;; ¶ÎÖĞµÄÏÂÒ»¸öÔªËØ
 									true)) ;; end loop
 								(chunk-cons (chunk b__6235) 
-									(iter__6232 (chunk-rest s__6233))) ;; è¿­ä»£å‰©ä½™çš„æ®µï¼ˆé€’å½’ iter__6232ï¼‰
+									(iter__6232 (chunk-rest s__6233))) ;; µü´úÊ£ÓàµÄ¶Î£¨µİ¹é iter__6232£©
 								(chunk-cons (chunk b__6235) nil)
 							)) ;; end if end let
-						;; not chunked-seq ï¼Œé€ä¸ªå…ƒç´ å¤„ç†
+						;; not chunked-seq £¬Öğ¸öÔªËØ´¦Àí
 						(let [a (first s__6233)] 
 							(cons ^{:line 1, :column 29} (fff a) 
 								(iter__6232 (rest s__6233))))
@@ -4660,11 +4676,11 @@ defmacro (fn [&form &env
 #_(let [iter__1062__auto__ 
         (fn iter__6234 [s__6235] 
           (lazy-seq (loop [s__6235 s__6235] 
-                      (when-first [a s__6235] ;; ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ ï¼Œa 
-                        (let [bv ^{:line 1, :column 37} (:k a)] ;; ç¬¬äºŒå±‚å¼€å§‹ï¼Œlet
-                          (when ^{:line 1, :column 52} (> bv 0) ;; ç¬¬äºŒå±‚ï¼Œwhen
+                      (when-first [a s__6235] ;; µÚÒ»²ãµÄµÚÒ»¸öÔªËØ£¬a 
+                        (let [bv ^{:line 1, :column 37} (:k a)] ;; µÚ¶ş²ã¿ªÊ¼£¬let
+                          (when ^{:line 1, :column 52} (> bv 0) ;; µÚ¶ş²ã£¬when
                             (let [iterys__1058__auto__ 
-                                  (fn iter__6236 [s__6237] ;; ç¬¬äºŒå±‚è¿­ä»£
+                                  (fn iter__6236 [s__6237] ;; µÚ¶ş²ãµü´ú
                                     (lazy-seq (loop [s__6237 s__6237] 
                                                 (when-let [s__6237 (seq s__6237)] 
                                                   (if (chunked-seq? s__6237) 
@@ -4675,18 +4691,18 @@ defmacro (fn [&form &env
                                                             (if (< i__6238 size__1061__auto__) 
                                                               (let [b (.nth c__1060__auto__ i__6238)] 
                                                                 (do 
-                                                                  (chunk-append b__6239 ^{:line 1, :column 67} (fff b)) ;; æ”¶é›†ç»“æœ
+                                                                  (chunk-append b__6239 ^{:line 1, :column 67} (fff b)) ;; ÊÕ¼¯½á¹û
                                                                   (recur (unchecked-inc i__6238)))) 
                                                               true)) 
                                                         (chunk-cons (chunk b__6239) 
-                                                                    (iter__6236 (chunk-rest s__6237))) ;; ç¬¬äºŒå±‚ï¼Œè¿­ä»£å‰©ä½™çš„æ®µ
+                                                                    (iter__6236 (chunk-rest s__6237))) ;; µÚ¶ş²ã£¬µü´úÊ£ÓàµÄ¶Î
                                                         (chunk-cons (chunk b__6239) nil))) 
                                                     (let [b (first s__6237)] 
                                                       (cons ^{:line 1, :column 67} (fff b) 
                                                             (iter__6236 (rest s__6237))))))))) 
-                                  ;; è®¡ç®—ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœ
+                                  ;; ¼ÆËãµÚÒ»²ãµÄµÚÒ»¸öÔªËØµÄ½á¹û
                                   fs__1059__auto__ (seq (iterys__1058__auto__ bv))] 
-                              ;; æ”¶é›†ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœï¼Œè¿­ä»£ç¬¬ä¸€å±‚å‰©ä½™çš„å…ƒç´ 
+                              ;; ÊÕ¼¯µÚÒ»²ãµÄµÚÒ»¸öÔªËØµÄ½á¹û£¬µü´úµÚÒ»²ãÊ£ÓàµÄÔªËØ
                               (if fs__1059__auto__ 
                                 (concat fs__1059__auto__ (iter__6234 (rest s__6235))) 
                                 (recur (rest s__6235))))))
@@ -5655,7 +5671,7 @@ defmacro (fn [&form &env
   {:added "1.0"
    :static true}
   [iter]
-  (clojure.lang.IteratorSeq/create iter))
+  (clojure.lang.RT/chunkIteratorSeq iter))
 
 (defn enumeration-seq
   "Returns a seq on a java.util.Enumeration"
@@ -6326,7 +6342,9 @@ defmacro (fn [&form &env
 
 (add-doc-and-meta *unchecked-math*
   "While bound to true, compilations of +, -, *, inc, dec and the
-  coercions will be done without overflow checks. Default: false."
+  coercions will be done without overflow checks. While bound
+  to :warn-on-boxed, same behavior as true, and a warning is emitted
+  when compilation uses boxed math. Default: false."
   {:added "1.3"})
 
 (add-doc-and-meta *compiler-options*
@@ -7499,10 +7517,8 @@ defmacro (fn [&form &env
 
 (deftype Eduction [xform coll]
    Iterable
-   (iterator [_] (.iterator ^java.util.Collection (sequence xform coll)))
-
-   clojure.lang.Seqable
-   (seq [_] (seq (sequence xform coll)))
+   (iterator [_]
+     (clojure.lang.TransformerIterator/create xform (clojure.lang.RT/iter coll)))
 
    clojure.lang.IReduceInit
    (reduce [_ f init]
@@ -7512,12 +7528,14 @@ defmacro (fn [&form &env
    clojure.lang.Sequential)
 
 (defn eduction
-  "Returns a reducible/iterable/seqable application of
-  the transducer to the items in coll. Note that these applications
-  will be performed every time reduce/iterator/seq is called."
-  {:added "1.7"}
-  [xform coll]
-  (Eduction. xform coll))
+  "Returns a reducible/iterable application of the transducers
+  to the items in coll. Transducers are applied in order as if
+  combined with comp. Note that these applications will be
+  performed every time reduce/iterator is called."
+  {:arglists '([xform* coll])
+   :added "1.7"}
+  [& xforms]
+  (Eduction. (apply comp (butlast xforms)) (last xforms)))
 
 (defmethod print-method Eduction [c, ^Writer w]
   (if *print-readably*
@@ -7531,6 +7549,36 @@ defmacro (fn [&form &env
   {:added "1.7"}
   [proc coll]
   (reduce #(proc %2) nil coll))
+
+
+(defn tagged-literal?
+  "Return true if the value is the data representation of a tagged literal"
+  {:added "1.7"}
+  [value]
+  (instance? clojure.lang.TaggedLiteral value))
+
+(defn tagged-literal
+  "Construct a data representation of a tagged literal from a
+  tag symbol and a form."
+  {:added "1.7"}
+  [^clojure.lang.Symbol tag form]
+  (clojure.lang.TaggedLiteral/create tag form))
+
+(defn reader-conditional?
+  "Return true if the value is the data representation of a reader conditional"
+  {:added "1.7"}
+  [value]
+  (instance? clojure.lang.ReaderConditional value))
+
+(defn reader-conditional
+  "Construct a data representation of a reader conditional.
+  If true, splicing? indicates read-cond-splicing."
+  {:added "1.7"}
+  [form ^Boolean splicing?]
+  (clojure.lang.ReaderConditional/create form splicing?))
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; data readers ;;;;;;;;;;;;;;;;;;
 

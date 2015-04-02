@@ -31,6 +31,7 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -38,11 +39,11 @@ import java.util.regex.Pattern;
 
 public class LispReader{
 
-static final Symbol QUOTE = Symbol.intern("quote");//å¼•è¿°
+static final Symbol QUOTE = Symbol.intern("quote");//ÒıÊö
 static final Symbol THE_VAR = Symbol.intern("var");
-//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");//è¯­æ³•å¼•è¿°
-static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");//å–æ¶ˆè¯­æ³•å¼•è¿°
-static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
+//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");//Óï·¨ÒıÊö
+static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");//È¡ÏûÓï·¨ÒıÊö
+static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
 static Symbol CONCAT = Symbol.intern("clojure.core", "concat");
 static Symbol SEQ = Symbol.intern("clojure.core", "seq");
 static Symbol LIST = Symbol.intern("clojure.core", "list");
@@ -53,6 +54,8 @@ static Symbol VECTOR = Symbol.intern("clojure.core", "vector");
 static Symbol WITH_META = Symbol.intern("clojure.core", "with-meta");
 static Symbol META = Symbol.intern("clojure.core", "meta");
 static Symbol DEREF = Symbol.intern("clojure.core", "deref");
+static Symbol READ_COND = Symbol.intern("clojure.core", "read-cond");
+static Symbol READ_COND_SPLICING = Symbol.intern("clojure.core", "read-cond-splicing");
 static Keyword UNKNOWN = Keyword.intern(null, "unknown");
 //static Symbol DEREF_BANG = Symbol.intern("clojure.core", "deref!");
 
@@ -76,18 +79,28 @@ static Pattern floatPat = Pattern.compile("([-+]?[0-9]+(\\.[0-9]*)?([eE][-+]?[0-
 static Var GENSYM_ENV = Var.create(null).setDynamic();
 //sorted-map num->gensymbol
 static Var ARG_ENV = Var.create(null).setDynamic();
-static IFn ctorReader = new CtorReader();//è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tag
-//è¯»å–å™¨å®
+static IFn ctorReader = new CtorReader();
+//¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag
+//¶ÁÈ¡Æ÷ºê
+// Dynamic var set to true in a read-cond context
+static Var READ_COND_ENV = Var.create(null).setDynamic();
+
 static
 	{
 	macros['"'] = new StringReader();
 	macros[';'] = new CommentReader();
-	macros['\''] = new WrappingReader(QUOTE);//å°†ä¸‹ä¸€ä¸ªå½¢å¼ï¼ŒåŒ…è£¹åˆ°quoteä¸­
-	macros['@'] = new WrappingReader(DEREF);//new DerefReader();
-	macros['^'] = new MetaReader();//å…ƒæ•°æ®è¯»å–å™¨
-	macros['`'] = new SyntaxQuoteReader();//è¯­æ³•å¼•è¿°
-	macros['~'] = new UnquoteReader();//å–æ¶ˆè¯­æ³•å¼•è¿°ï¼ˆåŒ…æ‹¬å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥ï¼‰
-	macros['('] = new ListReader();//åˆ—è¡¨è¯»å–å™¨
+	macros['\''] = new WrappingReader(QUOTE);
+//½«ÏÂÒ»¸öĞÎÊ½£¬°ü¹üµ½quoteÖĞ
+	macros['@'] = new WrappingReader(DEREF);
+//new DerefReader();
+	macros['^'] = new MetaReader();
+//ÔªÊı¾İ¶ÁÈ¡Æ÷
+	macros['`'] = new SyntaxQuoteReader();
+//Óï·¨ÒıÊö
+	macros['~'] = new UnquoteReader();
+//È¡ÏûÓï·¨ÒıÊö£¨°üÀ¨È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó£©
+	macros['('] = new ListReader();
+//ÁĞ±í¶ÁÈ¡Æ÷
 	macros[')'] = new UnmatchedDelimiterReader();
 	macros['['] = new VectorReader();
 	macros[']'] = new UnmatchedDelimiterReader();
@@ -95,25 +108,36 @@ static
 	macros['}'] = new UnmatchedDelimiterReader();
 //	macros['|'] = new ArgVectorReader();
 	macros['\\'] = new CharacterReader();
-	macros['%'] = new ArgReader();//å‡½æ•°å­—é¢é‡ä¸­çš„å‚æ•°
+	macros['%'] = new ArgReader();
+//º¯Êı×ÖÃæÁ¿ÖĞµÄ²ÎÊı
 	macros['#'] = new DispatchReader();
 
-	//è·Ÿåœ¨äº•å·ä¹‹åçš„è¯»å–å™¨å®
-	dispatchMacros['^'] = new MetaReader();//å¸¦å…ƒæ•°æ®çš„å½¢å¼
-	dispatchMacros['\''] = new VarReader();//#'aï¼Œå³(var a)
-	dispatchMacros['"'] = new RegexReader();//æ­£åˆ™è¡¨è¾¾å¼
-	dispatchMacros['('] = new FnReader();//å‡½æ•°å­—é¢é‡
-	dispatchMacros['{'] = new SetReader();//é›†å­—æ¯é‡
-	dispatchMacros['='] = new EvalReader();//#= è¯»å–æœŸæ±‚å€¼
-	dispatchMacros['!'] = new CommentReader();//æ³¨é‡Š #! ï¼Œå’Œ åˆ†å·ç›¸åŒï¼Œä¸€ç›´åˆ°è¡Œå°¾
-	dispatchMacros['<'] = new UnreadableReader();//ä¸å¯è¾¾ï¼Ÿ #< ï¼Œç›´æ¥æŠ›å‡ºå¼‚å¸¸
-	dispatchMacros['_'] = new DiscardReader();//ä¸¢å¼ƒä¸‹ä¸€ä¸ªå½¢å¼ #_
+	//¸úÔÚ¾®ºÅÖ®ºóµÄ¶ÁÈ¡Æ÷ºê
+	dispatchMacros['^'] = new MetaReader();
+//´øÔªÊı¾İµÄĞÎÊ½
+	dispatchMacros['\''] = new VarReader();
+//#'a£¬¼´(var a)
+	dispatchMacros['"'] = new RegexReader();
+//ÕıÔò±í´ïÊ½
+	dispatchMacros['('] = new FnReader();
+//º¯Êı×ÖÃæÁ¿
+	dispatchMacros['{'] = new SetReader();
+//¼¯×ÖÄ¸Á¿
+	dispatchMacros['='] = new EvalReader();
+//#= ¶ÁÈ¡ÆÚÇóÖµ
+	dispatchMacros['!'] = new CommentReader();
+//×¢ÊÍ #! £¬ºÍ ·ÖºÅÏàÍ¬£¬Ò»Ö±µ½ĞĞÎ²
+	dispatchMacros['<'] = new UnreadableReader();
+//²»¿É´ï£¿ #< £¬Ö±½ÓÅ×³öÒì³£
+	dispatchMacros['_'] = new DiscardReader();
+//¶ªÆúÏÂÒ»¸öĞÎÊ½ #_
+	dispatchMacros['?'] = new ConditionalReader();
 	}
 
 static boolean isWhitespace(int ch){
 	return Character.isWhitespace(ch) || ch == ',';
 }
-//å›åä¸€ä¸ªå­—ç¬¦
+//»ØÍÂÒ»¸ö×Ö·û
 static void unread(PushbackReader r, int ch) {
 	if(ch != -1)
 		try
@@ -136,7 +160,7 @@ public static class ReaderException extends RuntimeException{
 		this.column = column;
 	}
 }
-//è¯»å–ä¸€ä¸ªå­—ç¬¦
+//¶ÁÈ¡Ò»¸ö×Ö·û
 static public int read1(Reader r){
 	try
 		{
@@ -147,43 +171,111 @@ static public int read1(Reader r){
 		throw Util.sneakyThrow(e);
 		}
 }
-//hxzoné‡è¦ï¼šreadå‡½æ•°æ˜¯LispReaderçš„å…¥å£
-//@param eofIsError åˆ°è¾¾æ–‡ä»¶æœ«æ˜¯å¦æ˜¯ä¸€ä¸ªé”™è¯¯
-//@param eofValue å¦‚æœåˆ°è¾¾æ–‡ä»¶æœ«ä¸æ˜¯ä¸€ä¸ªé”™è¯¯ï¼Œè¿”å›eofValue
-//@param isRecursive ï¼Ÿ
+//hxzonÖØÒª£ºreadº¯ÊıÊÇLispReaderµÄÈë¿Ú
+//@param eofIsError µ½´ïÎÄ¼şÄ©ÊÇ·ñÊÇÒ»¸ö´íÎó
+//@param eofValue Èç¹ûµ½´ïÎÄ¼şÄ©²»ÊÇÒ»¸ö´íÎó£¬·µ»ØeofValue
+//@param isRecursive £¿
+// Reader opts
+static public final Keyword OPT_EOF = Keyword.intern(null,"eof");
+static public final Keyword OPT_FEATURES = Keyword.intern(null,"features");
+static public final Keyword OPT_READ_COND = Keyword.intern(null, "read-cond");
+
+// EOF special value to throw on eof
+static public final Keyword EOFTHROW = Keyword.intern(null,"eofthrow");
+
+// Platform features - always installed
+static private final Keyword PLATFORM_KEY = Keyword.intern(null, "clj");
+static private final Object PLATFORM_FEATURES = PersistentHashSet.create(PLATFORM_KEY);
+
+// Reader conditional options - use with :read-cond
+static public final Keyword COND_ALLOW = Keyword.intern(null, "allow");
+    static public final Keyword COND_PRESERVE = Keyword.intern(null, "preserve");
+
+static public Object read(PushbackReader r, Object opts){
+    boolean eofIsError = false;
+    Object eofValue = null;
+    if(opts != null && opts instanceof IPersistentMap)
+    {
+        Object eof = ((IPersistentMap)opts).containsKey(OPT_EOF);
+        if(EOFTHROW.equals(eof))
+            eofIsError = true;
+        else {
+            eofValue = eof;
+        }
+    }
+    return read(r,eofIsError,eofValue,false,opts);
+}
+
 static public Object read(PushbackReader r, boolean eofIsError, Object eofValue, boolean isRecursive)
+{
+    return read(r, eofIsError, eofValue, isRecursive, PersistentHashMap.EMPTY);
+}
+
+static public Object read(PushbackReader r, boolean eofIsError, Object eofValue, boolean isRecursive, Object opts)
+{
+	return read(r, eofIsError, eofValue, null, null, isRecursive, opts, new LinkedList());
+}
+
+static private Object read(PushbackReader r, boolean eofIsError, Object eofValue, boolean isRecursive, Object opts, Object pendingForms) {
+	return read(r, eofIsError, eofValue, null, null, isRecursive, opts, pendingForms);
+}
+
+static private Object installPlatformFeature(Object opts) {
+    if(opts == null)
+        return RT.mapUniqueKeys(LispReader.OPT_FEATURES, PLATFORM_FEATURES);
+    else {
+        IPersistentMap mopts = (IPersistentMap) opts;
+        Object features = mopts.valAt(OPT_FEATURES);
+        if (features == null)
+            return mopts.assoc(LispReader.OPT_FEATURES, PLATFORM_FEATURES);
+        else
+            return mopts.assoc(LispReader.OPT_FEATURES, RT.conj((IPersistentSet) features, PLATFORM_KEY));
+    }
+}
+
+static private Object read(PushbackReader r, boolean eofIsError, Object eofValue, Character returnOn, Object returnOnValue, boolean isRecursive, Object opts, Object pendingForms)
 {
 	if(RT.READEVAL.deref() == UNKNOWN)
 		throw Util.runtimeException("Reading disallowed - *read-eval* bound to :unknown");
+
+    opts = installPlatformFeature(opts);
 
 	try
 		{
 		for(; ;)
 			{
+
+			if(pendingForms instanceof List && !((List)pendingForms).isEmpty())
+				return ((List)pendingForms).remove(0);
+
 			int ch = read1(r);
 
-			while(isWhitespace(ch))//å¿½ç•¥ç©ºç™½ç¬¦ï¼ŒåŒ…æ‹¬é€—å·
+			while(isWhitespace(ch))
+//ºöÂÔ¿Õ°×·û£¬°üÀ¨¶ººÅ
 				ch = read1(r);
 
-			if(ch == -1)//æ–‡ä»¶æœ«å°¾
+			if(ch == -1)//ÎÄ¼şÄ©Î²
 				{
 				if(eofIsError)
 					throw Util.runtimeException("EOF while reading");
 				return eofValue;
 				}
 
-			if(Character.isDigit(ch))//ä¸å¸¦æ­£è´Ÿå·çš„æ•°å€¼
+			if(returnOn != null && (returnOn.charValue() == ch)) {
+				return returnOnValue;
+			}
+
+			if(Character.isDigit(ch))
 				{
 				Object n = readNumber(r, (char) ch);
-				if(RT.suppressRead())
-					return null;
 				return n;
 				}
 
 			IFn macroFn = getMacro(ch);
-			if(macroFn != null)//è¯»å–å®å­—ç¬¦
+			if(macroFn != null)
+//¶ÁÈ¡ºê×Ö·û
 				{
-				Object ret = macroFn.invoke(r, (char) ch);
+				Object ret = macroFn.invoke(r, (char) ch, opts, pendingForms);
 				if(RT.suppressRead())
 					return null;
 				//no op macros return the reader
@@ -195,21 +287,20 @@ static public Object read(PushbackReader r, boolean eofIsError, Object eofValue,
 			if(ch == '+' || ch == '-')
 				{
 				int ch2 = read1(r);
-				if(Character.isDigit(ch2))//å¸¦æ­£è´Ÿå·çš„æ•°å€¼
+				if(Character.isDigit(ch2))
+//´øÕı¸ººÅµÄÊıÖµ
 					{
 					unread(r, ch2);
 					Object n = readNumber(r, (char) ch);
-					if(RT.suppressRead())
-						return null;
 					return n;
 					}
-				unread(r, ch2);//å¦‚æœä¸æ˜¯ä½œä¸ºæ•°å€¼å‰é¢çš„æ­£è´Ÿå·ï¼Œå›å
+				unread(r, ch2);//Èç¹û²»ÊÇ×÷ÎªÊıÖµÇ°ÃæµÄÕı¸ººÅ£¬»ØÍÂ
 				}
 
-			String token = readToken(r, (char) ch);//å…¶å®ƒtokonï¼ŒåŒ…æ‹¬nilï¼Œtrueï¼Œfalseï¼Œå…³é”®å­—ï¼ŒSymbol
-			if(RT.suppressRead())
-				return null;
-			return interpretToken(token);//è¯†åˆ«token
+			String token = readToken(r, (char) ch);
+//ÆäËütokon£¬°üÀ¨nil£¬true£¬false£¬¹Ø¼ü×Ö£¬Symbol
+			return interpretToken(token);
+//Ê¶±ğtoken
 			}
 		}
 	catch(Exception e)
@@ -237,7 +328,7 @@ static private String readToken(PushbackReader r, char initch) {
 		sb.append((char) ch);
 		}
 }
-//ä¸ä»…ä»…æ˜¯ç©ºç™½ç¬¦ï¼Œé‡åˆ°è¯»å–å®å­—ç¬¦ä¹Ÿä¼šåœæ­¢
+//²»½ö½öÊÇ¿Õ°×·û£¬Óöµ½¶ÁÈ¡ºê×Ö·ûÒ²»áÍ£Ö¹
 static private Object readNumber(PushbackReader r, char initch) {
 	StringBuilder sb = new StringBuilder();
 	sb.append(initch);
@@ -296,7 +387,7 @@ static private int readUnicodeChar(PushbackReader r, int initch, int base, int l
 		throw new IllegalArgumentException("Invalid character length: " + i + ", should be: " + length);
 	return uc;
 }
-//è¯†åˆ«token
+//Ê¶±ğtoken
 static private Object interpretToken(String s) {
 	if(s.equals("nil"))
 		{
@@ -319,7 +410,7 @@ static private Object interpretToken(String s) {
 	throw Util.runtimeException("Invalid token: " + s);
 }
 
-//è¿”å›nullï¼Œå…³é”®å­—ï¼Œæˆ–ç¬¦å·
+//·µ»Ønull£¬¹Ø¼ü×Ö£¬»ò·ûºÅ
 private static Object matchSymbol(String s){
 	Matcher m = symbolPat.matcher(s);
 	if(m.matches())
@@ -327,31 +418,40 @@ private static Object matchSymbol(String s){
 		int gc = m.groupCount();
 		String ns = m.group(1);
 		String name = m.group(2);
-		if(ns != null && ns.endsWith(":/")//å‘½åç©ºé—´ä»¥:/ç»“å°¾ï¼Œè¿æ³•
-		   || name.endsWith(":")//åå­—ä»¥å†’å·ç»“å°¾ï¼Œè¿æ³•
-		   || s.indexOf("::", 1) != -1)//ä¸‰å†’å·å¼€å¤´ï¼Œæˆ–å¼€å¤´ä¹‹å¤–è¿˜æœ‰åŒå†’å·ï¼Œè¿æ³•
+		if(ns != null && ns.endsWith(":/")
+//ÃüÃû¿Õ¼äÒÔ:/½áÎ²£¬Î¥·¨
+		   || name.endsWith(":")
+//Ãû×ÖÒÔÃ°ºÅ½áÎ²£¬Î¥·¨
+		   || s.indexOf("::", 1) != -1)
+//ÈıÃ°ºÅ¿ªÍ·£¬»ò¿ªÍ·Ö®Íâ»¹ÓĞË«Ã°ºÅ£¬Î¥·¨
 			return null;
-		//hxzonï¼š(= :x ::x) falseï¼Œä¸€ä¸ªæ— å‘½åç©ºé—´ï¼Œä¸€ä¸ªå½“å‰å‘½åç©ºé—´
+		//hxzon£º(= :x ::x) false£¬Ò»¸öÎŞÃüÃû¿Õ¼ä£¬Ò»¸öµ±Ç°ÃüÃû¿Õ¼ä
 		// (= :clojure.core/y ::clojure.core/y) true
 		if(s.startsWith("::"))
-			{//ä»¥ä¸¤ä¸ªå†’å·å¼€å¤´ï¼Œä¸å«æ–œæ ï¼Œè¡¨ç¤ºæ˜¯å½“å‰å‘½åç©ºé—´çš„å…³é”®å­—ï¼Œå«æ–œæ ï¼Œè¡¨ç¤ºç‰¹å®šå‘½åç©ºé—´çš„å…³é”®å­—
+			{
+//ÒÔÁ½¸öÃ°ºÅ¿ªÍ·£¬²»º¬Ğ±¸Ü£¬±íÊ¾ÊÇµ±Ç°ÃüÃû¿Õ¼äµÄ¹Ø¼ü×Ö£¬º¬Ğ±¸Ü£¬±íÊ¾ÌØ¶¨ÃüÃû¿Õ¼äµÄ¹Ø¼ü×Ö
 			Symbol ks = Symbol.intern(s.substring(2));
 			Namespace kns;
-			if(ks.ns != null)//::x/yæ—¶ï¼Œks.ns=x
+			if(ks.ns != null)//::x/yÊ±£¬ks.ns=x
 				kns = Compiler.namespaceFor(ks);
 			else
 				kns = Compiler.currentNS();
 			//auto-resolving keyword
 			if (kns != null)
-				return Keyword.intern(kns.name.name,ks.name);//å½“å‘½åç©ºé—´å­˜åœ¨æ—¶ï¼Œä¾‹å¦‚::clojure.core/y
+				return Keyword.intern(kns.name.name,ks.name);
+//µ±ÃüÃû¿Õ¼ä´æÔÚÊ±£¬ÀıÈç::clojure.core/y
 			else
-				return null;//å½“å‘½åç©ºé—´xä¸å­˜åœ¨æ—¶ï¼Œè¿”å›nullï¼ˆåŒå†’å·ä¸”å¸¦æœ‰å‘½åç©ºé—´é™å®šæ—¶ï¼Œè¦æ±‚å‘½åç©ºé—´å·²å­˜åœ¨ï¼‰
+				return null;
+//µ±ÃüÃû¿Õ¼äx²»´æÔÚÊ±£¬·µ»Ønull£¨Ë«Ã°ºÅÇÒ´øÓĞÃüÃû¿Õ¼äÏŞ¶¨Ê±£¬ÒªÇóÃüÃû¿Õ¼äÒÑ´æÔÚ£©
 			}
-		boolean isKeyword = s.charAt(0) == ':';//ä»¥å•ä¸ªå†’å·å¼€å¤´çš„ä¸ºå…³é”®å­—
-		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));//ä¸€ä¸ªæ–°çš„Symbolå¯¹è±¡,new Symbol(xxx)
+		boolean isKeyword = s.charAt(0) == ':';
+//ÒÔµ¥¸öÃ°ºÅ¿ªÍ·µÄÎª¹Ø¼ü×Ö
+		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));
+//Ò»¸öĞÂµÄSymbol¶ÔÏó,new Symbol(xxx)
 		if(isKeyword)
-			return Keyword.intern(sym);//æŸ¥æ‰¾æˆ–åˆ›å»ºå…³é”®å­—
-		return sym;//è¿”å›ç¬¦å·
+			return Keyword.intern(sym);
+//²éÕÒ»ò´´½¨¹Ø¼ü×Ö
+		return sym;//·µ»Ø·ûºÅ
 		}
 	return null;
 }
@@ -417,16 +517,16 @@ static private IFn getMacro(int ch){
 static private boolean isMacro(int ch){
 	return (ch < macros.length && macros[ch] != null);
 }
-//è§†ä¸ºtokenç»ˆæ­¢çš„å­—ç¬¦ï¼ˆé™¤äº†äº•å·ï¼Œå•å¼•å·ï¼Œç™¾åˆ†å·ä¹‹å¤–çš„è¯»å–å™¨å®å­—ç¬¦ï¼‰
+//ÊÓÎªtokenÖÕÖ¹µÄ×Ö·û£¨³ıÁË¾®ºÅ£¬µ¥ÒıºÅ£¬°Ù·ÖºÅÖ®ÍâµÄ¶ÁÈ¡Æ÷ºê×Ö·û£©
 static private boolean isTerminatingMacro(int ch){
 	return (ch != '#' && ch != '\'' && ch != '%' && isMacro(ch));
 }
 //=====================================
-//æ­£åˆ™è¡¨è¾¾å¼
+//ÕıÔò±í´ïÊ½
 public static class RegexReader extends AFn{
 	static StringReader stringrdr = new StringReader();
 
-	public Object invoke(Object reader, Object doublequote) {
+	public Object invoke(Object reader, Object doublequote, Object opts, Object pendingForms) {
 		StringBuilder sb = new StringBuilder();
 		Reader r = (Reader) reader;
 		for(int ch = read1(r); ch != '"'; ch = read1(r))
@@ -447,7 +547,7 @@ public static class RegexReader extends AFn{
 }
 
 public static class StringReader extends AFn{
-	public Object invoke(Object reader, Object doublequote) {
+	public Object invoke(Object reader, Object doublequote, Object opts, Object pendingForms) {
 		StringBuilder sb = new StringBuilder();
 		Reader r = (Reader) reader;
 
@@ -507,9 +607,9 @@ public static class StringReader extends AFn{
 		return sb.toString();
 	}
 }
-//æ³¨é‡Šï¼Œåˆ†å·ï¼Œæˆ–è€… #! ï¼Œä¸€ç›´è¯»åˆ°è¡Œå°¾
+//×¢ÊÍ£¬·ÖºÅ£¬»òÕß #! £¬Ò»Ö±¶Áµ½ĞĞÎ²
 public static class CommentReader extends AFn{
-	public Object invoke(Object reader, Object semicolon) {
+	public Object invoke(Object reader, Object semicolon, Object opts, Object pendingForms) {
 		Reader r = (Reader) reader;
 		int ch;
 		do
@@ -520,15 +620,15 @@ public static class CommentReader extends AFn{
 	}
 
 }
-//ä¸¢å¼ƒï¼š #_
+//¶ªÆú£º #_
 public static class DiscardReader extends AFn{
-	public Object invoke(Object reader, Object underscore) {
+	public Object invoke(Object reader, Object underscore, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		read(r, true, null, true);
+		read(r, true, null, true, opts, pendingForms);
 		return r;
 	}
 }
-//åŒ…è£¹ï¼Œä¾‹å¦‚ @ å’Œ ' ç­‰
+//°ü¹ü£¬ÀıÈç @ ºÍ ' µÈ
 public static class WrappingReader extends AFn{
 	final Symbol sym;
 
@@ -536,14 +636,14 @@ public static class WrappingReader extends AFn{
 		this.sym = sym;
 	}
 
-	public Object invoke(Object reader, Object quote) {
+	public Object invoke(Object reader, Object quote, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		Object o = read(r, true, null, true);
+		Object o = read(r, true, null, true, opts, pendingForms);
 		return RT.list(sym, o);
 	}
 
 }
-//å·²ä¸å†ä½¿ç”¨çš„è¿‡æ—¶çš„åŒ…è£¹ï¼ˆç›®å‰æœªä½¿ç”¨ï¼‰
+//ÒÑ²»ÔÙÊ¹ÓÃµÄ¹ıÊ±µÄ°ü¹ü£¨Ä¿Ç°Î´Ê¹ÓÃ£©
 public static class DeprecatedWrappingReader extends AFn{
 	final Symbol sym;
 	final String macro;
@@ -553,21 +653,21 @@ public static class DeprecatedWrappingReader extends AFn{
 		this.macro = macro;
 	}
 
-	public Object invoke(Object reader, Object quote) {
+	public Object invoke(Object reader, Object quote, Object opts, Object pendingForms) {
 		System.out.println("WARNING: reader macro " + macro +
 		                   " is deprecated; use " + sym.getName() +
 		                   " instead");
 		PushbackReader r = (PushbackReader) reader;
-		Object o = read(r, true, null, true);
+		Object o = read(r, true, null, true, opts, pendingForms);
 		return RT.list(sym, o);
 	}
 
 }
-// #'a è½¬æˆ (var a)
+// #'a ×ª³É (var a)
 public static class VarReader extends AFn{
-	public Object invoke(Object reader, Object quote) {
+	public Object invoke(Object reader, Object quote, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		Object o = read(r, true, null, true);
+		Object o = read(r, true, null, true, opts, pendingForms);
 //		if(o instanceof Symbol)
 //			{
 //			Object v = Compiler.maybeResolveIn(Compiler.currentNS(), (Symbol) o);
@@ -601,9 +701,9 @@ static class DerefReader extends AFn{
 
 }
 */
-//äº•å·åˆ†æ´¾ï¼Œå¦‚æœä¸æ˜¯â€œèƒ½è·Ÿåœ¨äº•å·åâ€çš„è¯»å–å®å­—ç¬¦ï¼Œåˆ™å°è¯•è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tag
+//¾®ºÅ·ÖÅÉ£¬Èç¹û²»ÊÇ¡°ÄÜ¸úÔÚ¾®ºÅºó¡±µÄ¶ÁÈ¡ºê×Ö·û£¬Ôò³¢ÊÔ¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag
 public static class DispatchReader extends AFn{
-	public Object invoke(Object reader, Object hash) {
+	public Object invoke(Object reader, Object hash, Object opts, Object pendingForms) {
 		int ch = read1((Reader) reader);
 		if(ch == -1)
 			throw Util.runtimeException("EOF while reading character");
@@ -612,23 +712,23 @@ public static class DispatchReader extends AFn{
 		// Try the ctor reader first
 		if(fn == null) {
 		unread((PushbackReader) reader, ch);
-		Object result = ctorReader.invoke(reader, ch);//å°è¯•è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tag
+		Object result = ctorReader.invoke(reader, ch, opts, pendingForms);
 
 		if(result != null)
 			return result;
 		else
 			throw Util.runtimeException(String.format("No dispatch macro for: %c", (char) ch));
 		}
-		return fn.invoke(reader, ch);
+		return fn.invoke(reader, ch, opts, pendingForms);
 	}
 }
 
 static Symbol garg(int n){
 	return Symbol.intern(null, (n == -1 ? "rest" : ("p" + n)) + "__" + RT.nextID() + "#");
 }
-//å‡½æ•°å­—é¢é‡è¯»å–å™¨ï¼Œä¾‹å¦‚ #(assoc % %2 (* %2 %2))
+//º¯Êı×ÖÃæÁ¿¶ÁÈ¡Æ÷£¬ÀıÈç #(assoc % %2 (* %2 %2))
 public static class FnReader extends AFn{
-	public Object invoke(Object reader, Object lparen) {
+	public Object invoke(Object reader, Object lparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		if(ARG_ENV.deref() != null)
 			throw new IllegalStateException("Nested #()s are not allowed");
@@ -637,7 +737,7 @@ public static class FnReader extends AFn{
 			Var.pushThreadBindings(
 					RT.map(ARG_ENV, PersistentTreeMap.EMPTY));
 			unread(r, '(');
-			Object form = read(r, true, null, true);
+			Object form = read(r, true, null, true, opts, pendingForms);
 
 			PersistentVector args = PersistentVector.EMPTY;
 			PersistentTreeMap argsyms = (PersistentTreeMap) ARG_ENV.deref();
@@ -687,7 +787,7 @@ static Symbol registerArg(int n){
 }
 
 static class ArgReader extends AFn{
-	public Object invoke(Object reader, Object pct) {
+	public Object invoke(Object reader, Object pct, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		if(ARG_ENV.deref() == null)
 			{
@@ -700,7 +800,7 @@ static class ArgReader extends AFn{
 			{
 			return registerArg(1);
 			}
-		Object n = read(r, true, null, true);
+		Object n = read(r, true, null, true, opts, pendingForms);
 		if(n.equals(Compiler._AMP_))
 			return registerArg(-1);
 		if(!(n instanceof Number))
@@ -708,9 +808,9 @@ static class ArgReader extends AFn{
 		return registerArg(((Number) n).intValue());
 	}
 }
-//è¯»å–å¸¦æœ‰å…ƒæ•°æ®çš„å½¢å¼ï¼Œä¾‹å¦‚ ^{:x 1 :y 2} zz
+//¶ÁÈ¡´øÓĞÔªÊı¾İµÄĞÎÊ½£¬ÀıÈç ^{:x 1 :y 2} zz
 public static class MetaReader extends AFn{
-	public Object invoke(Object reader, Object caret) {
+	public Object invoke(Object reader, Object caret, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		int line = -1;
 		int column = -1;
@@ -719,28 +819,30 @@ public static class MetaReader extends AFn{
 			line = ((LineNumberingPushbackReader) r).getLineNumber();
 			column = ((LineNumberingPushbackReader) r).getColumnNumber()-1;
 			}
-		Object meta = read(r, true, null, true);//è¯»å–å…ƒæ•°æ®
-		if(meta instanceof Symbol || meta instanceof String)//å¦‚æœæ˜¯ç¬¦å·æˆ–å­—ç¬¦ä¸²ï¼Œè§†ä¸ºç±»å‹æç¤º
+		Object meta = read(r, true, null, true, opts, pendingForms);
+		if(meta instanceof Symbol || meta instanceof String)
 			meta = RT.map(RT.TAG_KEY, meta);
-		else if (meta instanceof Keyword)//å¦‚æœæ˜¯å…³é”®å­—ï¼Œè§†ä¸º{:k true}
+		else if (meta instanceof Keyword)//Èç¹ûÊÇ¹Ø¼ü×Ö£¬ÊÓÎª{:k true}
 			meta = RT.map(meta, RT.T);
 		else if(!(meta instanceof IPersistentMap))
 			throw new IllegalArgumentException("Metadata must be Symbol,Keyword,String or Map");
 
-		Object o = read(r, true, null, true);//è¯»å–å¯¹è±¡ï¼Œè¯¥å¯¹è±¡å¿…é¡»èƒ½æºå¸¦å…ƒæ•°æ®ï¼Œå³å®ç°äº†IMetaæ¥å£
+		Object o = read(r, true, null, true, opts, pendingForms);
 		if(o instanceof IMeta)
 			{
-			if(line != -1 && o instanceof ISeq)//å¯¹è±¡æ˜¯åºåˆ—ç±»å‹
+			if(line != -1 && o instanceof ISeq)//¶ÔÏóÊÇĞòÁĞÀàĞÍ
 				{
 				meta = ((IPersistentMap) meta).assoc(RT.LINE_KEY, line).assoc(RT.COLUMN_KEY, column);
 				}
-			if(o instanceof IReference)//å¯¹è±¡æ˜¯å¼•ç”¨ç±»å‹
+			if(o instanceof IReference)//¶ÔÏóÊÇÒıÓÃÀàĞÍ
 				{
 				((IReference)o).resetMeta((IPersistentMap) meta);
-				return o;//hxzonæ³¨æ„ï¼šå¼•ç”¨ç±»å‹ç›´æ¥æ›¿æ¢æ‰åŸæœ‰çš„å…ƒæ•°æ®ï¼Œè€Œåºåˆ—ç±»å‹åˆ™åˆå¹¶è‡ªèº«å·²æœ‰çš„å…ƒæ•°æ®ï¼š^:x ^:y o
+				return o;
+//hxzon×¢Òâ£ºÒıÓÃÀàĞÍÖ±½ÓÌæ»»µôÔ­ÓĞµÄÔªÊı¾İ£¬¶øĞòÁĞÀàĞÍÔòºÏ²¢×ÔÉíÒÑÓĞµÄÔªÊı¾İ£º^:x ^:y o
 				}
-			Object ometa = RT.meta(o);//å¯¹è±¡å·²æºå¸¦çš„å…ƒæ•°æ®ï¼Œä¾‹å¦‚^:x ^:y o ï¼Œé¦–å…ˆå¾—åˆ°å¸¦æœ‰^:y çš„ o ï¼Œç°åœ¨åˆå¹¶^:x
-			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//åˆå¹¶metaåˆ°ometa
+			Object ometa = RT.meta(o);
+//¶ÔÏóÒÑĞ¯´øµÄÔªÊı¾İ£¬ÀıÈç^:x ^:y o £¬Ê×ÏÈµÃµ½´øÓĞ^:y µÄ o £¬ÏÖÔÚºÏ²¢^:x
+			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//ºÏ²¢metaµ½ometa
 			IMapEntry kv = (IMapEntry) s.first();
 			ometa = RT.assoc(ometa, kv.getKey(), kv.getValue());
 			}
@@ -751,16 +853,16 @@ public static class MetaReader extends AFn{
 	}
 
 }
-//è¯­æ³•å¼•è¿°ï¼Œåå¼•å·
+//Óï·¨ÒıÊö£¬·´ÒıºÅ
 public static class SyntaxQuoteReader extends AFn{
-	public Object invoke(Object reader, Object backquote) {
+	public Object invoke(Object reader, Object backquote, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		try
 			{
 			Var.pushThreadBindings(
 					RT.map(GENSYM_ENV, PersistentHashMap.EMPTY));
 
-			Object form = read(r, true, null, true);
+			Object form = read(r, true, null, true, opts, pendingForms);
 			return syntaxQuote(form);
 			}
 		finally
@@ -768,7 +870,7 @@ public static class SyntaxQuoteReader extends AFn{
 			Var.popThreadBindings();
 			}
 	}
-	//è¯­æ³•å¼•è¿°
+	//Óï·¨ÒıÊö
 	static Object syntaxQuote(Object form) {
 		Object ret;
 		if(Compiler.isSpecial(form))
@@ -776,25 +878,29 @@ public static class SyntaxQuoteReader extends AFn{
 		else if(form instanceof Symbol)
 			{
 			Symbol sym = (Symbol) form;
-			if(sym.ns == null && sym.name.endsWith("#"))//è‡ªåŠ¨è½¬æˆå…¨å±€å”¯ä¸€ç¬¦å·
+			if(sym.ns == null && sym.name.endsWith("#"))
+//×Ô¶¯×ª³ÉÈ«¾ÖÎ¨Ò»·ûºÅ
 				{
 				IPersistentMap gmap = (IPersistentMap) GENSYM_ENV.deref();
 				if(gmap == null)
 					throw new IllegalStateException("Gensym literal not in syntax-quote");
 				Symbol gs = (Symbol) gmap.valAt(sym);
-				if(gs == null)//è¯¥ç¬¦å·å¦‚æœè¿˜æœªè½¬æˆå…¨å±€å”¯ä¸€ç¬¦å·
+				if(gs == null)
+//¸Ã·ûºÅÈç¹û»¹Î´×ª³ÉÈ«¾ÖÎ¨Ò»·ûºÅ
 					GENSYM_ENV.set(gmap.assoc(sym, gs = Symbol.intern(null,
 					                                                  sym.name.substring(0, sym.name.length() - 1)
 					                                                  + "__" + RT.nextID() + "__auto__")));
 				sym = gs;
 				}
-			else if(sym.ns == null && sym.name.endsWith("."))//javaæ„é€ å‡½æ•°
+			else if(sym.ns == null && sym.name.endsWith("."))
+//java¹¹Ôìº¯Êı
 				{
 				Symbol csym = Symbol.intern(null, sym.name.substring(0, sym.name.length() - 1));
 				csym = Compiler.resolveSymbol(csym);
 				sym = Symbol.intern(null, csym.name.concat("."));
 				}
-			else if(sym.ns == null && sym.name.startsWith("."))//javaæ–¹æ³•
+			else if(sym.ns == null && sym.name.startsWith("."))
+//java·½·¨
 				{
 				// Simply quote method names.
 				}
@@ -803,19 +909,22 @@ public static class SyntaxQuoteReader extends AFn{
 				Object maybeClass = null;
 				if(sym.ns != null)
 					maybeClass = Compiler.currentNS().getMapping(
-							Symbol.intern(null, sym.ns));//æ˜¯å¦æ˜¯å¯¼å…¥åˆ°å½“å‰å‘½åç©ºé—´çš„ç±»çš„â€œçŸ­åâ€
+							Symbol.intern(null, sym.ns));
+//ÊÇ·ñÊÇµ¼Èëµ½µ±Ç°ÃüÃû¿Õ¼äµÄÀàµÄ¡°¶ÌÃû¡±
 				if(maybeClass instanceof Class)
 					{
 					// Classname/foo -> package.qualified.Classname/foo
 					sym = Symbol.intern(
-							((Class)maybeClass).getName(), sym.name);//æ¢å¤æˆç±»çš„å®Œæ•´åï¼ˆhxzonï¼šæ³¨æ„ï¼‰
+							((Class)maybeClass).getName(), sym.name);
+//»Ö¸´³ÉÀàµÄÍêÕûÃû£¨hxzon£º×¢Òâ£©
 					}
 				else
 					sym = Compiler.resolveSymbol(sym);
 				}
 			ret = RT.list(Compiler.QUOTE, sym);
 			}
-		else if(isUnquote(form))//å¦‚æœæ˜¯å–æ¶ˆå¼•è¿°
+		else if(isUnquote(form))
+//Èç¹ûÊÇÈ¡ÏûÒıÊö
 			return RT.second(form);
 		else if(isUnquoteSplicing(form))
 			throw new IllegalStateException("splice not in list");
@@ -824,7 +933,8 @@ public static class SyntaxQuoteReader extends AFn{
 			if(form instanceof IRecord)
 				ret = form;
 			else if(form instanceof IPersistentMap)
-				{//ç”Ÿæˆ (apply hashmap (seq (concat k1 v1 k2 v2)))
+				{
+//Éú³É (apply hashmap (seq (concat k1 v1 k2 v2)))
 				IPersistentVector keyvals = flattenMap(form);
 				ret = RT.list(APPLY, HASHMAP, RT.list(SEQ, RT.cons(CONCAT, sqExpandList(keyvals.seq()))));
 				}
@@ -855,12 +965,14 @@ public static class SyntaxQuoteReader extends AFn{
 		else
 			ret = RT.list(Compiler.QUOTE, form);
 
-		if(form instanceof IObj && RT.meta(form) != null)//å¦‚æœå«æœ‰å…ƒæ•°æ®ï¼ˆé™¤æ‰è¡Œåˆ—å·ï¼‰
+		if(form instanceof IObj && RT.meta(form) != null)
+//Èç¹ûº¬ÓĞÔªÊı¾İ£¨³ıµôĞĞÁĞºÅ£©
 			{
 			//filter line and column numbers
 			IPersistentMap newMeta = ((IObj) form).meta().without(RT.LINE_KEY).without(RT.COLUMN_KEY);
 			if(newMeta.count() > 0)
-				return RT.list(WITH_META, ret, syntaxQuote(((IObj) form).meta()));//hxzonæ³¨æ„ï¼šå¯¹å…ƒæ•°æ®è¿›è¡Œè¯­æ³•å¼•è¿°
+				return RT.list(WITH_META, ret, syntaxQuote(((IObj) form).meta()));
+//hxzon×¢Òâ£º¶ÔÔªÊı¾İ½øĞĞÓï·¨ÒıÊö
 			}
 		return ret;
 	}
@@ -870,11 +982,14 @@ public static class SyntaxQuoteReader extends AFn{
 		for(; seq != null; seq = seq.next())
 			{
 			Object item = seq.first();
-			if(isUnquote(item))//å–æ¶ˆè¯­æ³•å¼•è¿°
+			if(isUnquote(item))
+//È¡ÏûÓï·¨ÒıÊö
 				ret = ret.cons(RT.list(LIST, RT.second(item)));
-			else if(isUnquoteSplicing(item))//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
+			else if(isUnquoteSplicing(item))
+//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
 				ret = ret.cons(RT.second(item));
-			else//è¯­æ³•å¼•è¿°
+			else
+//Óï·¨ÒıÊö
 				ret = ret.cons(RT.list(LIST, syntaxQuote(item)));
 			}
 		return ret.seq();
@@ -900,30 +1015,32 @@ static boolean isUnquoteSplicing(Object form){
 static boolean isUnquote(Object form){
 	return form instanceof ISeq && Util.equals(RT.first(form),UNQUOTE);
 }
-//å–æ¶ˆè¯­æ³•å¼•è¿°ï¼Œæ³¢æµªå·
+//È¡ÏûÓï·¨ÒıÊö£¬²¨ÀËºÅ
 static class UnquoteReader extends AFn{
-	public Object invoke(Object reader, Object comma) {
+	public Object invoke(Object reader, Object comma, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		int ch = read1(r);
 		if(ch == -1)
 			throw Util.runtimeException("EOF while reading character");
 		if(ch == '@')
 			{
-			Object o = read(r, true, null, true);
-			return RT.list(UNQUOTE_SPLICING, o);//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
+			Object o = read(r, true, null, true, opts, pendingForms);
+			return RT.list(UNQUOTE_SPLICING, o);
+//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
 			}
 		else
 			{
 			unread(r, ch);
-			Object o = read(r, true, null, true);
-			return RT.list(UNQUOTE, o);//å–æ¶ˆè¯­æ³•å¼•è¿°
+			Object o = read(r, true, null, true, opts, pendingForms);
+			return RT.list(UNQUOTE, o);
+//È¡ÏûÓï·¨ÒıÊö
 			}
 	}
 
 }
 
 public static class CharacterReader extends AFn{
-	public Object invoke(Object reader, Object backslash) {
+	public Object invoke(Object reader, Object backslash, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		int ch = read1(r);
 		if(ch == -1)
@@ -964,9 +1081,9 @@ public static class CharacterReader extends AFn{
 	}
 
 }
-//åˆ—è¡¨è¯»å–å™¨
+//ÁĞ±í¶ÁÈ¡Æ÷
 public static class ListReader extends AFn{
-	public Object invoke(Object reader, Object leftparen) {
+	public Object invoke(Object reader, Object leftparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
 		int line = -1;
 		int column = -1;
@@ -975,7 +1092,7 @@ public static class ListReader extends AFn{
 			line = ((LineNumberingPushbackReader) r).getLineNumber();
 			column = ((LineNumberingPushbackReader) r).getColumnNumber()-1;
 			}
-		List list = readDelimitedList(')', r, true);//å‘å‰è¯»å–ï¼Œç›´åˆ°é‡åˆ°å³æ‹¬å·
+		List list = readDelimitedList(')', r, true, opts, pendingForms);
 		if(list.isEmpty())
 			return PersistentList.EMPTY;
 		IObj s = (IObj) PersistentList.create(list);
@@ -1021,34 +1138,39 @@ static class CtorReader extends AFn{
 	}
 }
 */
-// #= è¯»å–æœŸæ±‚å€¼
+// #= ¶ÁÈ¡ÆÚÇóÖµ
 public static class EvalReader extends AFn{
-	public Object invoke(Object reader, Object eq) {
+	public Object invoke(Object reader, Object eq, Object opts, Object pendingForms) {
 		if (!RT.booleanCast(RT.READEVAL.deref()))
 			{
 			throw Util.runtimeException("EvalReader not allowed when *read-eval* is false.");
 			}
 
 		PushbackReader r = (PushbackReader) reader;
-		Object o = read(r, true, null, true);
+		Object o = read(r, true, null, true, opts, pendingForms);
 		if(o instanceof Symbol)
 			{
-			return RT.classForName(o.toString());//å¦‚æœæ˜¯ç¬¦å·ï¼Œè§†ä¸ºç±»å
+			return RT.classForName(o.toString());
+//Èç¹ûÊÇ·ûºÅ£¬ÊÓÎªÀàÃû
 			}
 		else if(o instanceof IPersistentList)
 			{
 			Symbol fs = (Symbol) RT.first(o);
-			if(fs.equals(THE_VAR))//(var a) å–å¾—Varæœ¬èº«
+			if(fs.equals(THE_VAR))
+//(var a) È¡µÃVar±¾Éí
 				{
-				Symbol vs = (Symbol) RT.second(o);//æ³¨æ„ï¼Œå¿…é¡»å¸¦å‘½åç©ºé—´é™å®š
+				Symbol vs = (Symbol) RT.second(o);
+//×¢Òâ£¬±ØĞë´øÃüÃû¿Õ¼äÏŞ¶¨
 				return RT.var(vs.ns, vs.name);  //Compiler.resolve((Symbol) RT.second(o),true);
 				}
-			if(fs.name.endsWith("."))//javaæ„é€ å‡½æ•°
+			if(fs.name.endsWith("."))
+//java¹¹Ôìº¯Êı
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeConstructor(RT.classForName(fs.name.substring(0, fs.name.length() - 1)), args);
 				}
-			if(Compiler.namesStaticMember(fs))//javaé™æ€æ–¹æ³•
+			if(Compiler.namesStaticMember(fs))
+//java¾²Ì¬·½·¨
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeStaticMethod(fs.ns, fs.name, args);
@@ -1074,17 +1196,17 @@ public static class EvalReader extends AFn{
 //}
 
 public static class VectorReader extends AFn{
-	public Object invoke(Object reader, Object leftparen) {
+	public Object invoke(Object reader, Object leftparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		return LazilyPersistentVector.create(readDelimitedList(']', r, true));
+		return LazilyPersistentVector.create(readDelimitedList(']', r, true, opts, pendingForms));
 	}
 
 }
 
 public static class MapReader extends AFn{
-	public Object invoke(Object reader, Object leftparen) {
+	public Object invoke(Object reader, Object leftparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		Object[] a = readDelimitedList('}', r, true).toArray();
+		Object[] a = readDelimitedList('}', r, true, opts, pendingForms).toArray();
 		if((a.length & 1) == 1)
 			throw Util.runtimeException("Map literal must contain an even number of forms");
 		return RT.map(a);
@@ -1093,85 +1215,76 @@ public static class MapReader extends AFn{
 }
 
 public static class SetReader extends AFn{
-	public Object invoke(Object reader, Object leftbracket) {
+	public Object invoke(Object reader, Object leftbracket, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
-		return PersistentHashSet.createWithCheck(readDelimitedList('}', r, true));
+		return PersistentHashSet.createWithCheck(readDelimitedList('}', r, true, opts, pendingForms));
 	}
 
 }
 
 public static class UnmatchedDelimiterReader extends AFn{
-	public Object invoke(Object reader, Object rightdelim) {
+	public Object invoke(Object reader, Object rightdelim, Object opts, Object pendingForms) {
 		throw Util.runtimeException("Unmatched delimiter: " + rightdelim);
 	}
 
 }
 
 public static class UnreadableReader extends AFn{
-	public Object invoke(Object reader, Object leftangle) {
+	public Object invoke(Object reader, Object leftangle, Object opts, Object pendingForms) {
 		throw Util.runtimeException("Unreadable form");
 	}
 }
-//å‘å‰è¯»å–ï¼Œç›´åˆ°é‡åˆ°æŒ‡å®šçš„delimå­—ç¬¦
-public static List readDelimitedList(char delim, PushbackReader r, boolean isRecursive) {
+//ÏòÇ°¶ÁÈ¡£¬Ö±µ½Óöµ½Ö¸¶¨µÄdelim×Ö·û
+// Sentinel values for reading lists
+private static final Object READ_EOF = new Object();
+private static final Object READ_FINISHED = new Object();
+
+public static List readDelimitedList(char delim, PushbackReader r, boolean isRecursive, Object opts, Object pendingForms) {
 	final int firstline =
 			(r instanceof LineNumberingPushbackReader) ?
 			((LineNumberingPushbackReader) r).getLineNumber() : -1;
 
 	ArrayList a = new ArrayList();
 
-	for(; ;)
-		{
-		int ch = read1(r);
+	for(; ;) {
 
-		while(isWhitespace(ch))//å¿½ç•¥ç©ºç™½ç¬¦
-			ch = read1(r);
+		Object form = read(r, false, READ_EOF, delim, READ_FINISHED, isRecursive, opts, pendingForms);
 
-		if(ch == -1)
-			{
+		if (form == READ_EOF) {
 			if(firstline < 0)
 				throw Util.runtimeException("EOF while reading");
 			else
 				throw Util.runtimeException("EOF while reading, starting at line " + firstline);
+		} else if (form == READ_FINISHED) {
+			return a;
 			}
 
-		if(ch == delim)//é‡åˆ°æŒ‡å®šçš„ç»“æŸç¬¦ï¼Œåœæ­¢
-			break;
-
-		IFn macroFn = getMacro(ch);
-		if(macroFn != null)//è¯»å–å™¨å®
-			{
-			Object mret = macroFn.invoke(r, (char) ch);
-			//no op macros return the reader
-			if(mret != r)
-				a.add(mret);
+		a.add(form);			}
 			}
-		else
-			{
-			unread(r, ch);
 
-			Object o = read(r, true, null, isRecursive);
-			if(o != r)
-				a.add(o);
-			}
-		}
-
-
-	return a;
-}
-//è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tagï¼š#p.classname æˆ– #xyz
+//¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag£º#p.classname »ò #xyz
 public static class CtorReader extends AFn{
-	public Object invoke(Object reader, Object firstChar){
+	public Object invoke(Object reader, Object firstChar, Object opts, Object pendingForms){
 		PushbackReader r = (PushbackReader) reader;
-		Object name = read(r, true, null, false);
+		Object name = read(r, true, null, false, opts, pendingForms);
 		if (!(name instanceof Symbol))
 			throw new RuntimeException("Reader tag must be a symbol");
 		Symbol sym = (Symbol)name;
-		return sym.getName().contains(".") ? readRecord(r, sym) : readTagged(r, sym);
+		if (RT.suppressRead()) {
+			read(r, true, null, true, opts, pendingForms);
+			return r;
+	}
+		Object form = read(r, true, null, true, opts, pendingForms);
+
+		if(isPreserveReadCond(opts)) {
+			return TaggedLiteral.create(sym, form);
+		} else {
+			return sym.getName().contains(".") ? readRecord(form, sym, opts, pendingForms) : readTagged(form, sym, opts, pendingForms);
+		}
+
 	}
 
-	private Object readTagged(PushbackReader reader, Symbol tag){
-		Object o = read(reader, true, null, true);
+	private Object readTagged(Object o, Symbol tag, Object opts, Object pendingForms){
 
 		ILookup data_readers = (ILookup)RT.DATA_READERS.deref();
 		IFn data_reader = (IFn)RT.get(data_readers, tag);
@@ -1190,7 +1303,7 @@ public static class CtorReader extends AFn{
 		return data_reader.invoke(o);
 	}
 
-	private Object readRecord(PushbackReader r, Symbol recordName){
+	private Object readRecord(Object form, Symbol recordName, Object opts, Object pendingForms){
         boolean readeval = RT.booleanCast(RT.READEVAL.deref());
 
 	    if(!readeval)
@@ -1200,45 +1313,37 @@ public static class CtorReader extends AFn{
 
 		Class recordClass = RT.classForNameNonLoading(recordName.toString());
 
-		char endch;
+
 		boolean shortForm = true;
-		int ch = read1(r);
 
-		// flush whitespace
-		while(isWhitespace(ch))
-			ch = read1(r);
-
-		// A defrecord ctor can take two forms. Check for map->R version first.
-		if(ch == '{')
-			{
-			endch = '}';
+		if(form instanceof IPersistentMap) {
 			shortForm = false;
+		} else if (form instanceof IPersistentVector) {
+			shortForm = true;
+		} else {
+			throw Util.runtimeException("Unreadable constructor form starting with \"#" + recordName + "\"");
 			}
-		else if (ch == '[')
-			endch = ']';
-		else
-			throw Util.runtimeException("Unreadable constructor form starting with \"#" + recordName + (char) ch + "\"");
 
-		Object[] recordEntries = readDelimitedList(endch, r, true).toArray();
 		Object ret = null;
 		Constructor[] allctors = ((Class)recordClass).getConstructors();
 
 		if(shortForm)
 			{
+	        IPersistentVector recordEntries = (IPersistentVector)form;
 			boolean ctorFound = false;
 			for (Constructor ctor : allctors)
-				if(ctor.getParameterTypes().length == recordEntries.length)
+				if(ctor.getParameterTypes().length == recordEntries.count())
 					ctorFound = true;
 
 			if(!ctorFound)
-				throw Util.runtimeException("Unexpected number of constructor arguments to " + recordClass.toString() + ": got " + recordEntries.length);
+				throw Util.runtimeException("Unexpected number of constructor arguments to " + recordClass.toString() + ": got " + recordEntries.count());
 
-			ret = Reflector.invokeConstructor(recordClass, recordEntries);
+			ret = Reflector.invokeConstructor(recordClass, RT.toArray(recordEntries));
 			}
 		else
 			{
 
-			IPersistentMap vals = RT.map(recordEntries);
+			IPersistentMap vals = (IPersistentMap)form;
 			for(ISeq s = RT.keys(vals); s != null; s = s.next())
 				{
 				if(!(s.first() instanceof Keyword))
@@ -1248,6 +1353,163 @@ public static class CtorReader extends AFn{
 			}
 
 		return ret;
+	}
+}
+
+static boolean isPreserveReadCond(Object opts) {
+	if(RT.booleanCast(READ_COND_ENV.deref()) && opts instanceof IPersistentMap)
+    {
+        Object readCond = ((IPersistentMap) opts).valAt(OPT_READ_COND);
+        return COND_PRESERVE.equals(readCond);
+    }
+    else
+        return false;
+}
+
+public static class ConditionalReader extends AFn {
+
+	final static public Keyword DEFAULT_FEATURE = Keyword.intern(null, "default");
+	final static public IPersistentSet RESERVED_FEATURES =
+		RT.set(Keyword.intern(null, "else"), Keyword.intern(null, "none"));
+
+	public static boolean hasFeature(Object feature, Object opts) {
+		if (! (feature instanceof Keyword))
+			throw Util.runtimeException("Feature should be a keyword: " + feature);
+
+		if(DEFAULT_FEATURE.equals(feature))
+			return true;
+
+		IPersistentSet custom = (IPersistentSet) ((IPersistentMap)opts).valAt(OPT_FEATURES);
+		return custom != null && custom.contains(feature);
+	}
+
+	public static Object readCondDelimited(PushbackReader r, boolean splicing, Object opts, Object pendingForms) {
+		Object result = null;
+		Object form; // The most recently ready form
+
+		final int firstline =
+				(r instanceof LineNumberingPushbackReader) ?
+						((LineNumberingPushbackReader) r).getLineNumber() : -1;
+
+		for(; ;) {
+			if(result == null) {
+				// Read the next feature
+				form = read(r, false, READ_EOF, ')', READ_FINISHED, true, opts, pendingForms);
+
+				if (form == READ_EOF) {
+					if (firstline < 0)
+						throw Util.runtimeException("EOF while reading");
+					else
+						throw Util.runtimeException("EOF while reading, starting at line " + firstline);
+				} else if (form == READ_FINISHED) {
+					break; // read-cond form is done
+				}
+
+				if(RESERVED_FEATURES.contains(form))
+					throw Util.runtimeException("Feature name " + form + " is reserved.");
+
+				if (hasFeature(form, opts)) {
+
+					//Read the form corresponding to the feature, and assign it to result if everything is kosher
+
+					form = read(r, false, READ_EOF, ')', READ_FINISHED, true, opts, pendingForms);
+
+					if (form == READ_EOF) {
+						if (firstline < 0)
+							throw Util.runtimeException("EOF while reading");
+						else
+							throw Util.runtimeException("EOF while reading, starting at line " + firstline);
+					} else if (form == READ_FINISHED) {
+						if (firstline < 0)
+							throw Util.runtimeException("read-cond requires an even number of forms.");
+						else
+							throw Util.runtimeException("read-cond starting on line " + firstline + " requires an even number of forms");
+					} else {
+						result = form;
+					}
+				}
+			}
+
+			// When we already have a result, or when the feature didn't match, discard the next form in the reader
+			try {
+				Var.pushThreadBindings(RT.map(RT.SUPPRESS_READ, RT.T));
+				form = read(r, false, READ_EOF, ')', READ_FINISHED, true, opts, pendingForms);
+
+				if (form == READ_EOF) {
+					if (firstline < 0)
+						throw Util.runtimeException("EOF while reading");
+					else
+						throw Util.runtimeException("EOF while reading, starting at line " + firstline);
+				} else if (form == READ_FINISHED) {
+					break;
+				}
+			}
+			finally {
+				Var.popThreadBindings();
+			}
+
+		}
+
+		if (result == null)  // no features matched
+            return r;
+
+		if (splicing) {
+			if(! (result instanceof List))
+				throw Util.runtimeException("Spliced form list in read-cond-splicing must implement java.util.List");
+
+			((List)pendingForms).addAll(0, (List)result);
+
+			return r;
+		} else {
+			return result;
+		}
+	};
+
+    private static void checkConditionalAllowed(Object opts) {
+        IPersistentMap mopts = (IPersistentMap)opts;
+        if(! (opts != null && (COND_ALLOW.equals(mopts.valAt(OPT_READ_COND)) ||
+                               COND_PRESERVE.equals(mopts.valAt(OPT_READ_COND)))))
+            throw Util.runtimeException("Conditional read not allowed");
+    }
+
+	public Object invoke(Object reader, Object mode, Object opts, Object pendingForms) {
+		checkConditionalAllowed(opts);
+
+		PushbackReader r = (PushbackReader) reader;
+		int ch = read1(r);
+		if (ch == -1)
+			throw Util.runtimeException("EOF while reading character");
+
+		boolean splicing = false;
+
+		if (ch == '@') {
+			splicing = true;
+			ch = read1(r);
+		}
+
+		while(isWhitespace(ch))
+			ch = read1(r);
+
+		if (ch == -1)
+			throw Util.runtimeException("EOF while reading character");
+
+		if(ch != '(')
+			throw Util.runtimeException("read-cond body must be a list");
+
+		try {
+			Var.pushThreadBindings(RT.map(READ_COND_ENV, RT.T));
+
+			if (isPreserveReadCond(opts)) {
+				IFn listReader = getMacro(ch); // should always be a list
+				Object form = listReader.invoke(r, ch, opts, pendingForms);
+
+				return ReaderConditional.create(form, splicing);
+			} else {
+				return readCondDelimited(r, splicing, opts, pendingForms);
+			}
+		} finally {
+			Var.popThreadBindings();
+		}
 	}
 }
 
@@ -1284,4 +1546,3 @@ public static void main(String[] args){
  */
 
 }
-
