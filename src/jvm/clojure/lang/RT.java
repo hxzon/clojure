@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  *   Copyright (c) Rich Hickey. All rights reserved.
  *   The use and distribution terms for this software are covered by the
  *   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -178,7 +178,7 @@ static Object readTrueFalseUnknown(String s){
 
 static public final Namespace CLOJURE_NS = Namespace.findOrCreate(Symbol.intern("clojure.core"));
 //static final Namespace USER_NS = Namespace.findOrCreate(Symbol.intern("user"));
-//Ô¤¶¨ÒåµÄ¶¯Ì¬Var
+//é¢„å®šä¹‰çš„åŠ¨æ€Var
 final static public Var OUT =
 		Var.intern(CLOJURE_NS, Symbol.intern("*out*"), new OutputStreamWriter(System.out)).setDynamic();
 final static public Var IN =
@@ -392,7 +392,7 @@ static public long lastModified(URL url, String libfile) throws IOException{
 		return url.openConnection().getLastModified();
 	}
 }
-//±àÒëcljÔ´ÎÄ¼ş
+//ç¼–è¯‘cljæºæ–‡ä»¶
 static void compile(String cljfile) throws IOException{
         InputStream ins = resourceAsStream(baseLoader(), cljfile);
 	if(ins != null) {
@@ -592,7 +592,7 @@ static public ISeq vals(Object coll){
 	else
 	return APersistentMap.ValSeq.create(seq(coll));
 }
-//»ñÈ¡ÔªÊı¾İ
+//è·å–å…ƒæ•°æ®
 static public IPersistentMap meta(Object x){
 	if(x instanceof IMeta)
 		return ((IMeta) x).meta();
@@ -957,7 +957,7 @@ static boolean hasTag(Object o, Object tag){
 /**
  * ********************* Boxing/casts ******************************
  */
-//×°ÏäºÍÀàĞÍ×ª»»
+//è£…ç®±å’Œç±»å‹è½¬æ¢
 static public Object box(Object x){
 	return x;
 }
@@ -1741,8 +1741,8 @@ static public int boundedLength(ISeq list, int limit) {
 }
 
 ///////////////////////////////// reader support ////////////////////////////////
-//¶ÁÈ¡Æ÷²Ù×÷
-//½«int×ªÎª×Ö·û
+//è¯»å–å™¨æ“ä½œ
+//å°†intè½¬ä¸ºå­—ç¬¦
 static Character readRet(int ret){
 	if(ret == -1)
 		return null;
@@ -1753,7 +1753,7 @@ static public Character readChar(Reader r) throws IOException{
 	int ret = r.read();
 	return readRet(ret);
 }
-//¶ÁÈ¡ÏÂÒ»¸ö×Ö·û£¬µ«ÊÇ²»Ç°½ø
+//è¯»å–ä¸‹ä¸€ä¸ªå­—ç¬¦ï¼Œä½†æ˜¯ä¸å‰è¿›
 static public Character peekChar(Reader r) throws IOException{
 	int ret;
 	if(r instanceof PushbackReader) {
@@ -2184,7 +2184,7 @@ static public Class loadClassForName(String name) {
 		}
 	return classForName(name);
 }
-//Êı×é²Ù×÷
+//æ•°ç»„æ“ä½œ
 static public float aget(float[] xs, int i){
 	return xs[i];
 }

@@ -13,14 +13,14 @@
 (def unquote)
 (def unquote-splicing)
 
-;list items ´´½¨Ò»¸öÁĞ±í£¬°üº¬Ö¸¶¨ÔªËØ
+;list items åˆ›å»ºä¸€ä¸ªåˆ—è¡¨ï¼ŒåŒ…å«æŒ‡å®šå…ƒç´ 
 (def
  ^{:arglists '([& items])
    :doc "Creates a new list containing the items."
    :added "1.0"}
   list (. clojure.lang.PersistentList creator))
 
-;fn* µÈÌØÊâĞÎÊ½µÄ¶¨Òå¼û clojure.lang.Compiler 
+;fn* ç­‰ç‰¹æ®Šå½¢å¼çš„å®šä¹‰è§ clojure.lang.Compiler 
 (def
  ^{:arglists '([x seq])
     :doc "Returns a new seq where x is the first element and seq is
@@ -30,8 +30,8 @@
 
  cons (fn* ^:static cons [x seq] (. clojure.lang.RT (cons x seq))))
 
-;let£¬loop£¬fn£¬Æô¶¯Ö®³õ£¬»¹²»Ö§³Ö½â¹¹£¬ÉÔºó»áÖØ¶¨ÒåËüÃÇ
-; let* £¬loop*£¬fn* ¼û clojure.lang.Compiler 
+;letï¼Œloopï¼Œfnï¼Œå¯åŠ¨ä¹‹åˆï¼Œè¿˜ä¸æ”¯æŒè§£æ„ï¼Œç¨åä¼šé‡å®šä¹‰å®ƒä»¬
+; let* ï¼Œloop*ï¼Œfn* è§ clojure.lang.Compiler 
 ;during bootstrap we don't have destructuring let, loop or fn, will redefine later
 (def
   ^{:macro true
@@ -49,8 +49,8 @@
  fn (fn* fn [&form &env & decl] 
          (.withMeta ^clojure.lang.IObj (cons 'fn* decl) 
                     (.meta ^clojure.lang.IMeta &form))))
-;½« &form ÉÏµÄÔªÊı¾İ¼Óµ½ (fn* decl) ÉÏ¡£
-;×¢Òâ£¬Õâ¸ö°æ±¾µÄ fn ´øÓĞ &form ºÍ &env ¡£
+;å°† &form ä¸Šçš„å…ƒæ•°æ®åŠ åˆ° (fn* decl) ä¸Šã€‚
+;æ³¨æ„ï¼Œè¿™ä¸ªç‰ˆæœ¬çš„ fn å¸¦æœ‰ &form å’Œ &env ã€‚
 
 (def
  ^{:arglists '([coll])
@@ -271,7 +271,7 @@
                (recur (conj ret (first s)) (next s))
                (seq ret)))))
 
-; defn µÄ¶¨Òå
+; defn çš„å®šä¹‰
 (def 
 
  ^{:doc "Same as (def name (fn [params* ] exprs*)) or (def
@@ -283,72 +283,72 @@
    :added "1.0"}
 
 defn (fn defn [&form &env name & fdecl]
-       ;; name£¬º¯ÊıÃû£¬±ØĞëÊÇÒ»¸ö·ûºÅ
+       ;; nameï¼Œå‡½æ•°åï¼Œå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
         ;; Note: Cannot delegate this check to def because of the call to (with-meta name ..)
        (if (instance? clojure.lang.Symbol name)
-         ;º¯ÊıÃûname±ØĞëÊÇÒ»¸ö·ûºÅ
+         ;å‡½æ•°ånameå¿…é¡»æ˜¯ä¸€ä¸ªç¬¦å·
          nil
           (throw (IllegalArgumentException. "First argument to defn must be a symbol")))
         (let [m (if (string? (first fdecl))
-                  ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎªÎÄµµ²ÎÊı£¬·ÅÈëm£¨ÔªÊı¾İ£©£¬²¢ÉèÎª:docÔªÊı¾İ¡£
+                  ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºæ–‡æ¡£å‚æ•°ï¼Œæ”¾å…¥mï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¹¶è®¾ä¸º:docå…ƒæ•°æ®ã€‚
                  {:doc (first fdecl)}
                   {})
               fdecl (if (string? (first fdecl))
-                      ;³ıµôfdecl¿ªÍ·µÄÎÄµµ²ÎÊı£¬Èç¹ûÓĞ¡£
+                      ;é™¤æ‰fdeclå¼€å¤´çš„æ–‡æ¡£å‚æ•°ï¼Œå¦‚æœæœ‰ã€‚
                      (next fdecl)
                       fdecl)
               m (if (map? (first fdecl))
-                  ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
+                  ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
                  (conj m (first fdecl))
                   m)
               fdecl (if (map? (first fdecl))
-                      ;³ıµôfdecl¿ªÍ·µÄmap£¨ÔªÊı¾İ£©£¬Èç¹ûÓĞ¡£
+                      ;é™¤æ‰fdeclå¼€å¤´çš„mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼Œå¦‚æœæœ‰ã€‚
                      (next fdecl)
                       fdecl)
               fdecl (if (vector? (first fdecl))
-                      ;Èç¹ûfdeclµÚÒ»¸öÔªËØÊÇÏòÁ¿£¨²ÎÊıÁĞ±í£©£¬½«fdecl×ª³ÉÁĞ±í£¨¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½£©¡£
+                      ;å¦‚æœfdeclç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å‘é‡ï¼ˆå‚æ•°åˆ—è¡¨ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼ˆå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼ï¼‰ã€‚
                      (list fdecl)
                       fdecl)
               m (if (map? (last fdecl))
-                  ;Èç¹ûfdecl×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½m¡£
+                  ;å¦‚æœfdeclæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°mã€‚
                  (conj m (last fdecl))
                   m)
               fdecl (if (map? (last fdecl))
-                      ;³ıµôfdecl×îºóÒ»¸öÔªËØ£¬Èç¹û×îºóÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©¡£
+                      ;é™¤æ‰fdeclæœ€åä¸€ä¸ªå…ƒç´ ï¼Œå¦‚æœæœ€åä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ã€‚
                      (butlast fdecl)
                       fdecl)
               m (conj {:arglists (list 'quote (sigs fdecl))} m)
-              ;Ìí¼Óarglistsµ½mÖĞ¡£
+              ;æ·»åŠ arglistsåˆ°mä¸­ã€‚
 
               m (let [inline (:inline m)
-                      ;¸üĞÂmµÄinlineĞÅÏ¢¡£inlineÊ¾Àı¼ûÏÂ¡£
+                      ;æ›´æ–°mçš„inlineä¿¡æ¯ã€‚inlineç¤ºä¾‹è§ä¸‹ã€‚
                       ifn (first inline)
-                      ;¼´¡°fn¡±Õâ¸ö¹Ø¼ü×Ö¡£
+                      ;å³â€œfnâ€è¿™ä¸ªå…³é”®å­—ã€‚
                       iname (second inline)]
-                  ;µÚ¶ş²¿·Ö£¬¿ÉÄÜÊÇÄÚÁªº¯ÊıÃû£¬»òÕß²ÎÊıÁĞ±í¡£
+                  ;ç¬¬äºŒéƒ¨åˆ†ï¼Œå¯èƒ½æ˜¯å†…è”å‡½æ•°åï¼Œæˆ–è€…å‚æ•°åˆ—è¡¨ã€‚
                   ;; same as: (if (and (= 'fn ifn) (not (symbol? iname))) ...)
                   (if (if (clojure.lang.Util/equiv 'fn ifn)
-                        ;; Èç¹ûÃ»ÓĞÖ¸¶¨ÄÚÁªº¯ÊıÃû£¬×Ô¶¯¸ù¾İº¯ÊıÃûÉú³ÉÒ»¸ö¡£
+                        ;; å¦‚æœæ²¡æœ‰æŒ‡å®šå†…è”å‡½æ•°åï¼Œè‡ªåŠ¨æ ¹æ®å‡½æ•°åç”Ÿæˆä¸€ä¸ªã€‚
                          (if (instance? clojure.lang.Symbol iname) false true))
                     ;; inserts the same fn name to the inline fn if it does not have one
                     (assoc m :inline (cons ifn (cons (clojure.lang.Symbol/intern (.concat (.getName ^clojure.lang.Symbol name) "__inliner"))
                                                      (next inline))))
                     m))
 
-              ;½«m¼ÓÈëµ½name£¨º¯ÊıÃû£©µÄÔªÊı¾İÖĞ¡£
+              ;å°†måŠ å…¥åˆ°nameï¼ˆå‡½æ•°åï¼‰çš„å…ƒæ•°æ®ä¸­ã€‚
               m (conj (if (meta name) (meta name) {}) m)]
-;hxzonÉîÈëÀí½â£ºÕâ¸öºêµÄ·µ»ØÖµ£º
+;hxzonæ·±å…¥ç†è§£ï¼šè¿™ä¸ªå®çš„è¿”å›å€¼ï¼š
           (list 'def (with-meta name m)
-                ;¶¨ÒåVar£¨Ö¸Ïòº¯Êı£©£¬´øÓĞÔªÊı¾İ¡£
+                ;å®šä¹‰Varï¼ˆæŒ‡å‘å‡½æ•°ï¼‰ï¼Œå¸¦æœ‰å…ƒæ•°æ®ã€‚
                 ;;todo - restore propagation of fn name
                 ;;must figure out how to convey primitive hints to self calls first
                 (cons `fn fdecl) ))))
-;; µ½ÕâÀï£¬¸÷ÀàÔªÊı¾İ£¬´Ó fdecl ×ªÒÆµ½ name ÉÏÁË
+;; åˆ°è¿™é‡Œï¼Œå„ç±»å…ƒæ•°æ®ï¼Œä» fdecl è½¬ç§»åˆ° name ä¸Šäº†
 
 (. (var defn) (setMacro))
-;½«defn±ê¼ÇÎªºê¡££¨ºêµÄµ×²ãÊµÏÖÆäÊµÒ²ÊÇº¯Êı¡££©
+;å°†defnæ ‡è®°ä¸ºå®ã€‚ï¼ˆå®çš„åº•å±‚å®ç°å…¶å®ä¹Ÿæ˜¯å‡½æ•°ã€‚ï¼‰
 
-;inlineĞÅÏ¢Ê¾Àı£º
+;inlineä¿¡æ¯ç¤ºä¾‹ï¼š
 ;{  :inline (fn [x] `(. clojure.lang.Numbers (incP ~x)))
 ;   :added "1.0"}
 
@@ -458,7 +458,7 @@ defn (fn defn [&form &env name & fdecl]
   [x] (clojure.lang.Util/identical x nil))
 
 ;;;;;;;;;;;;;;;;;;;;;
-;¶¨Òåºê£¨defmacro£©
+;å®šä¹‰å®ï¼ˆdefmacroï¼‰
 
 (def
 
@@ -474,33 +474,33 @@ defmacro (fn [&form &env
              (let [prefix (loop [p (list name) args args]
                             (let [f (first args)]
                               (if (string? f)
-                                ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇ×Ö·û´®£¬ÊÓÎª¡°ÎÄµµ×Ö·û´®¡±
+                                ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯å­—ç¬¦ä¸²ï¼Œè§†ä¸ºâ€œæ–‡æ¡£å­—ç¬¦ä¸²â€
                                 (recur (cons f p) (next args))
-                                ;½«ÎÄµµ×Ö·û´®¼ÓÈëµ½p£¬²¢´ÓargsÖĞÒÆ³ı
+                                ;å°†æ–‡æ¡£å­—ç¬¦ä¸²åŠ å…¥åˆ°pï¼Œå¹¶ä»argsä¸­ç§»é™¤
                                 (if (map? f)
-                                  ;Èç¹ûargsµÚÒ»¸öÔªËØÊÇmap£¨ÔªÊı¾İ£©£¬¼ÓÈëµ½p
+                                  ;å¦‚æœargsç¬¬ä¸€ä¸ªå…ƒç´ æ˜¯mapï¼ˆå…ƒæ•°æ®ï¼‰ï¼ŒåŠ å…¥åˆ°p
                                   (recur (cons f p) (next args))
                                   p))))
                    fdecl (loop [fd args]
-                           ;´ÓargsÒÆ³ı¿ªÍ·µÄ¡°ÎÄµµ×Ö·û´®¡±ºÍmap£¨ÔªÊı¾İ£©
+                           ;ä»argsç§»é™¤å¼€å¤´çš„â€œæ–‡æ¡£å­—ç¬¦ä¸²â€å’Œmapï¼ˆå…ƒæ•°æ®ï¼‰
                            (if (string? (first fd))
                              (recur (next fd))
                              (if (map? (first fd))
                                (recur (next fd))
                                fd)))
                    fdecl (if (vector? (first fdecl))
-                           ;Èç¹û¿ªÍ·ÊÇÏòÁ¿£¨²ÎÊıÏòÁ¿£©£¬½«fdecl×ª³ÉÁĞ±í£¬¼´Í³Ò»³ÉÓĞÖØÔØµÄĞÎÊ½
+                           ;å¦‚æœå¼€å¤´æ˜¯å‘é‡ï¼ˆå‚æ•°å‘é‡ï¼‰ï¼Œå°†fdeclè½¬æˆåˆ—è¡¨ï¼Œå³ç»Ÿä¸€æˆæœ‰é‡è½½çš„å½¢å¼
                            (list fdecl)
                            fdecl)
-                   ;Èç¹û¿ªÍ·²»ÊÇÏòÁ¿£¬¼´ÓĞÖØÔØ
+                   ;å¦‚æœå¼€å¤´ä¸æ˜¯å‘é‡ï¼Œå³æœ‰é‡è½½
 
                    add-implicit-args (fn [fd]
-                                       ;; ÔÚÃ¿¸ö²ÎÊıÏòÁ¿µÄ¿ªÍ·£¬¼ÓÈë &form ºÍ &evn ÕâÁ½¸öÒşÊ½²ÎÊı
+                                       ;; åœ¨æ¯ä¸ªå‚æ•°å‘é‡çš„å¼€å¤´ï¼ŒåŠ å…¥ &form å’Œ &evn è¿™ä¸¤ä¸ªéšå¼å‚æ•°
                              (let [args (first fd)]
                                (cons (vec (cons '&form (cons '&env args))) (next fd))))
 
                    add-args (fn [acc ds]
-                              ;; ds = ( {¿ÉÑ¡µÄÔªÊı¾İ} ([] body) ([] body))
+                              ;; ds = ( {å¯é€‰çš„å…ƒæ•°æ®} ([] body) ([] body))
                               (if (nil? ds)
                                 acc
                                 (let [d (first ds)]
@@ -509,15 +509,15 @@ defmacro (fn [&form &env
                                     (recur (conj acc (add-implicit-args d)) (next ds))))))
 
                    fdecl (seq (add-args [] fdecl))
-                   ;; ¸øÃ¿¸öÖØÔØĞÎÊ½µÄ²ÎÊıÏòÁ¿£¬Ìí¼ÓÁ½¸öÒşÊ½²ÎÊı
+                   ;; ç»™æ¯ä¸ªé‡è½½å½¢å¼çš„å‚æ•°å‘é‡ï¼Œæ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°
                    decl (loop [p prefix d fdecl]
-                          ;; °Ñ¿ªÍ·µÄÎÄµµ×Ö·û´®£¬ºÍÔªÊı¾İ£¬ÖØĞÂ¼Ó»ØÈ¥
+                          ;; æŠŠå¼€å¤´çš„æ–‡æ¡£å­—ç¬¦ä¸²ï¼Œå’Œå…ƒæ•°æ®ï¼Œé‡æ–°åŠ å›å»
                           (if p
                             (recur (next p) (cons (first p) d))
                             d))]
-;hxzonÉîÈëÀí½â£º
-;·µ»Ø´úÂë£º (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
-;µÈÍ¬ÓÚ¶¨ÒåÒ»¸öº¯Êı£¬µ«ÊÇ½«º¯Êı±ê¼ÇÎªºê£¬ÇÒÌí¼ÓÁ½¸öÒşÊ½²ÎÊı¡£
+;hxzonæ·±å…¥ç†è§£ï¼š
+;è¿”å›ä»£ç ï¼š (do  (defn decl_)    (. (var name_) (setMacro))    (var name_)  )
+;ç­‰åŒäºå®šä¹‰ä¸€ä¸ªå‡½æ•°ï¼Œä½†æ˜¯å°†å‡½æ•°æ ‡è®°ä¸ºå®ï¼Œä¸”æ·»åŠ ä¸¤ä¸ªéšå¼å‚æ•°ã€‚
                (list 'do
                      (cons `defn decl)
                      (list '. (list 'var name) '(setMacro))
@@ -1626,7 +1626,7 @@ defmacro (fn [&form &env
       (let [form (first forms)
             threaded (if (seq? form)
                        (with-meta `(~(first form) ~x ~@(next form)) (meta form))
-                       ;;×¢Òâ£¬±£³ÖformµÄÔªÊı¾İ
+                       ;;æ³¨æ„ï¼Œä¿æŒformçš„å…ƒæ•°æ®
                        (list form x))]
         (recur threaded (next forms)))
       x)))
@@ -4226,7 +4226,7 @@ defmacro (fn [&form &env
       (let [ss (map seq (conj colls c2 c1))]
         (when (every? identity ss)
           (concat (map first ss) (apply interleave (map rest ss))))))))
-; ÓÅÏÈÏß³Ì°ó¶¨Öµ£¬ÔÙ¸ùÖµ
+; ä¼˜å…ˆçº¿ç¨‹ç»‘å®šå€¼ï¼Œå†æ ¹å€¼
 (defn var-get
   "Gets the value in the var object"
   {:added "1.0"
@@ -4289,7 +4289,7 @@ defmacro (fn [&form &env
      (clojure.lang.PersistentArrayMap/createAsIfByAssoc (to-array keyvals))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
-;ÖØ¶¨Òålet£¬fn£¬loop
+;é‡å®šä¹‰letï¼Œfnï¼Œloop
 ;redefine let and loop  with destructuring
 (defn destructure [bindings]
   (let [bents (partition 2 bindings)
@@ -4388,7 +4388,7 @@ defmacro (fn [&form &env
           (let ~lets
             ~@body))))))
 
-;ÖØ¶¨Òåfn£¬´øÉÏ½â¹¹ºÍÇ°ÖÃºóÖÃÌõ¼ş
+;é‡å®šä¹‰fnï¼Œå¸¦ä¸Šè§£æ„å’Œå‰ç½®åç½®æ¡ä»¶
 ;redefine fn with destructuring and pre/post conditions
 (defmacro fn
   "params => positional-params* , or positional-params* & next-param
@@ -4402,10 +4402,10 @@ defmacro (fn [&form &env
 
   [& sigs]
     (let [name (if (symbol? (first sigs)) (first sigs) nil)
-          ;; µÚÒ»¸öÔªËØ¿ÉÄÜÊÇÃû×Ö
+          ;; ç¬¬ä¸€ä¸ªå…ƒç´ å¯èƒ½æ˜¯åå­—
           sigs (if name (next sigs) sigs)
-          ;; ÒÆ³ıÃû×Ö£¬Èç¹ûÓĞ
-          ;; Èç¹ûÃ»ÓĞÖØÔØ£¬¸Ä³ÉÖØÔØĞÎÊ½
+          ;; ç§»é™¤åå­—ï¼Œå¦‚æœæœ‰
+          ;; å¦‚æœæ²¡æœ‰é‡è½½ï¼Œæ”¹æˆé‡è½½å½¢å¼
           sigs (if (vector? (first sigs)) 
                  (list sigs) 
                  (if (seq? (first sigs))
@@ -4423,7 +4423,7 @@ defmacro (fn [&form &env
                    (throw (IllegalArgumentException.
                             (str "Invalid signature " sig
                                  " should be a list"))))
-                 ;; Ç©Ãû½â¹¹³É²ÎÊıÁĞ±íºÍº¯ÊıÌå
+                 ;; ç­¾åè§£æ„æˆå‚æ•°åˆ—è¡¨å’Œå‡½æ•°ä½“
                  (let [[params & body] sig
                        _ (when (not (vector? params))
                            (throw (IllegalArgumentException. 
@@ -4432,15 +4432,15 @@ defmacro (fn [&form &env
                                            " should be a vector")
                                       (str "Invalid signature " sig
                                            " should be a list")))))
-                       ;; body µÄµÚÒ»¸öÔªËØÈç¹ûÊÇmap£¬ÊÓÎªÇ°ÖÃºÍºóÖÃÌõ¼ş
+                       ;; body çš„ç¬¬ä¸€ä¸ªå…ƒç´ å¦‚æœæ˜¯mapï¼Œè§†ä¸ºå‰ç½®å’Œåç½®æ¡ä»¶
                        conds (when (and (next body) (map? (first body))) 
                                            (first body))
-                       ;; ÒÆ³ıÇ°ÖÃºÍºóÖÃÌõ¼ş
+                       ;; ç§»é™¤å‰ç½®å’Œåç½®æ¡ä»¶
                        body (if conds (next body) body)
                        conds (or conds (meta params))
                        pre (:pre conds)
                        post (:post conds)                       
-                       ;; ²åÈëÇ°ÖÃÌõ¼ş
+                       ;; æ’å…¥å‰ç½®æ¡ä»¶
                        body (if post
                               `((let [~'% ~(if (< 1 (count body)) 
                                             `(do ~@body) 
@@ -4453,7 +4453,7 @@ defmacro (fn [&form &env
                                       body)
                               body)]
                    (maybe-destructured params body)))
-          ;; ¶ÔÃ¿¸öÖØÔØĞÎÊ½½øĞĞ±ä»»
+          ;; å¯¹æ¯ä¸ªé‡è½½å½¢å¼è¿›è¡Œå˜æ¢
           new-sigs (map psig sigs)]
       (with-meta
         (if name
@@ -4461,7 +4461,7 @@ defmacro (fn [&form &env
           (cons 'fn* new-sigs))
         (meta &form))))
 
-;ÖØ¶¨Òåloop
+;é‡å®šä¹‰loop
 (defmacro loop
   "Evaluates the exprs in a lexical context in which the symbols in
   the binding-forms are bound to their respective init-exprs or parts
@@ -4528,34 +4528,34 @@ defmacro (fn [&form &env
      (even? (count seq-exprs)) "an even number of forms in binding vector")
 
   (let [to-groups (fn [seq-exprs]
-                    ;; seq-exprs : for µÄ°ó¶¨ÏòÁ¿
+                    ;; seq-exprs : for çš„ç»‘å®šå‘é‡
                     (reduce1 (fn [groups [k v]]
                               (if (keyword? k)
                                 (conj (pop groups) (conj (peek groups) [k v]))
-                                ;;  Óöµ½¹Ø¼ü×Ö£¬[a av b bv] -> [a av [b bv :k kv]]
+                                ;;  é‡åˆ°å…³é”®å­—ï¼Œ[a av b bv] -> [a av [b bv :k kv]]
                                 (conj groups [k v])))
                             [] (partition 2 seq-exprs)))
-                            ;;  °ó¶¨ÏòÁ¿ÖĞµÄÔªËØÁ½Á½³ÉÒ»×é
-                            ;; Êä³ö£º [ [a av ] [b bv :k kv :k2 k2v] [c cv] ] £¬Ã¿¸öÔªËØÊÇÒ»²ã
+                            ;;  ç»‘å®šå‘é‡ä¸­çš„å…ƒç´ ä¸¤ä¸¤æˆä¸€ç»„
+                            ;; è¾“å‡ºï¼š [ [a av ] [b bv :k kv :k2 k2v] [c cv] ] ï¼Œæ¯ä¸ªå…ƒç´ æ˜¯ä¸€å±‚
 
         err (fn [& msg] (throw (IllegalArgumentException. ^String (apply str msg))))
 
-        ;; emit-bind Éú³ÉÒ»¸öµü´úº¯Êı iter# 
-        ;; µü´úº¯ÊıµÄÊäÈëÊÇ±¾²ãµÄÖµ£¨ĞòÁĞ£©£¬Ëü´¦ÀíµÚÒ»¸öÔªËØ£¬È»ºóµİ¹éµ÷ÓÃ£¬´¦ÀíÊ£ÓàµÄÔªËØ
+        ;; emit-bind ç”Ÿæˆä¸€ä¸ªè¿­ä»£å‡½æ•° iter# 
+        ;; è¿­ä»£å‡½æ•°çš„è¾“å…¥æ˜¯æœ¬å±‚çš„å€¼ï¼ˆåºåˆ—ï¼‰ï¼Œå®ƒå¤„ç†ç¬¬ä¸€ä¸ªå…ƒç´ ï¼Œç„¶åé€’å½’è°ƒç”¨ï¼Œå¤„ç†å‰©ä½™çš„å…ƒç´ 
         emit-bind (fn emit-bind [[[bind expr & mod-pairs]
                                   & [[_ next-expr] :as next-groups]]]
-                    ;; ÊäÈë¼´ to-groups µÄÊä³ö
+                    ;; è¾“å…¥å³ to-groups çš„è¾“å‡º
                     ;; bind = a , expr = av , mod-pairs = [:k kv :k2 k2v]
                     ;; next-expr = bv , next-groups =[ [b bv] [c cv] ]
 
                     (let [giter (gensym "iter__")
-                          ;; emit-bind Éú³ÉÒ»¸öº¯Êı£¬giter ÊÇÕâ¸öº¯ÊıµÄÃû×Ö £¨gen_iter£©
+                          ;; emit-bind ç”Ÿæˆä¸€ä¸ªå‡½æ•°ï¼Œgiter æ˜¯è¿™ä¸ªå‡½æ•°çš„åå­— ï¼ˆgen_iterï¼‰
                           gxs (gensym "s__")
-                          ;; gxs £º giter µÄ²ÎÊıÃû
+                          ;; gxs ï¼š giter çš„å‚æ•°å
 
                           do-mod (fn do-mod [[[k v :as pair] & etc]]
-                          ;; do-mod µİ¹éµÄÉú³É±¾²ãµÄÉíÌå£¨·Çchunked-seq°æ±¾£©
-                          ;; ÊäÈë £º [ :k v :k2 k2v ] £¬¼´ÏÂÒ»²ãµÄĞŞÊÎÆ÷
+                          ;; do-mod é€’å½’çš„ç”Ÿæˆæœ¬å±‚çš„èº«ä½“ï¼ˆéchunked-seqç‰ˆæœ¬ï¼‰
+                          ;; è¾“å…¥ ï¼š [ :k v :k2 k2v ] ï¼Œå³ä¸‹ä¸€å±‚çš„ä¿®é¥°å™¨
                  (cond
                                      (= k :let) `(let ~v ~(do-mod etc))
                                      (= k :while) `(when ~v ~(do-mod etc))
@@ -4563,17 +4563,17 @@ defmacro (fn [&form &env
                                                     ~(do-mod etc)
                                                     (recur (rest ~gxs)))
                                      (keyword? k) (err "Invalid 'for' keyword " k)
-                   ;; ÓĞÏÂÒ»²ãÊ±£¨±Õ°ü£¬²¶»ñÁË next-groups£©
+                   ;; æœ‰ä¸‹ä¸€å±‚æ—¶ï¼ˆé—­åŒ…ï¼Œæ•è·äº† next-groupsï¼‰
                    next-groups
                                       `(let [iterys# ~(emit-bind next-groups)
                                              fs# (seq (iterys# ~next-expr))]
-                                         ;; iterys# £ºÏÂÒ»²ãµÄµü´úº¯Êı
-                                         ;; fs# £º±¾²ãµÚÒ»¸öÔªËØµÄÊÕ¼¯½á¹û
-                                         ;; ÊÕ¼¯±¾²ãµÚÒ»¸öÔªËØµÄ½á¹û£¬²¢µİ¹é´¦Àí±¾²ãÊ£ÓàµÄÔªËØ
+                                         ;; iterys# ï¼šä¸‹ä¸€å±‚çš„è¿­ä»£å‡½æ•°
+                                         ;; fs# ï¼šæœ¬å±‚ç¬¬ä¸€ä¸ªå…ƒç´ çš„æ”¶é›†ç»“æœ
+                                         ;; æ”¶é›†æœ¬å±‚ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœï¼Œå¹¶é€’å½’å¤„ç†æœ¬å±‚å‰©ä½™çš„å…ƒç´ 
                                          (if fs#
                                            (concat fs# (~giter (rest ~gxs)))
                                            (recur (rest ~gxs))))
-                    ;; ×îºóÒ»²ãÊ±£¨²åÈë for µÄ body-expr£©£¬µİ¹é´¦Àí±¾²ãÊ£ÓàµÄÔªËØ
+                    ;; æœ€åä¸€å±‚æ—¶ï¼ˆæ’å…¥ for çš„ body-exprï¼‰ï¼Œé€’å½’å¤„ç†æœ¬å±‚å‰©ä½™çš„å…ƒç´ 
                    :else `(cons ~body-expr
                                                   (~giter (rest ~gxs)))))]
 
@@ -4581,21 +4581,21 @@ defmacro (fn [&form &env
 
                         #_"not the inner-most loop"
                         `(fn ~giter [~gxs]
-                           ;; µü´úº¯Êı£¬ÊäÈëÊÇ±¾²ãµÄÖµ
+                           ;; è¿­ä»£å‡½æ•°ï¼Œè¾“å…¥æ˜¯æœ¬å±‚çš„å€¼
                            (lazy-seq
                              (loop [~gxs ~gxs]
                                (when-first [~bind ~gxs]
                                  ~(do-mod mod-pairs)))))
 
                         #_"inner-most loop"
-                        ;; ÒÑ¾­ÊÇ×îºóÒ»²ã
+                        ;; å·²ç»æ˜¯æœ€åä¸€å±‚
                         (let [gi (gensym "i__")
-                              ;; gi £ºµü´ú±¾¶ÎµÄÔªËØÊ±µÄÎ»ÖÃË÷Òı
+                              ;; gi ï¼šè¿­ä»£æœ¬æ®µçš„å…ƒç´ æ—¶çš„ä½ç½®ç´¢å¼•
                               gb (gensym "b__")
-                              ;; gb £º±¾¶ÎµÄ½á¹û»º´æµÄÃû×Ö
+                              ;; gb ï¼šæœ¬æ®µçš„ç»“æœç¼“å­˜çš„åå­—
 
                               do-cmod (fn do-cmod [[[k v :as pair] & etc]]
-                              ;; do-cmod µİ¹éµÄÉú³É±¾²ãµÄÉíÌå£¨chunked-seq°æ±¾£©
+                              ;; do-cmod é€’å½’çš„ç”Ÿæˆæœ¬å±‚çš„èº«ä½“ï¼ˆchunked-seqç‰ˆæœ¬ï¼‰
                                         (cond
                                           (= k :let) `(let ~v ~(do-cmod etc))
                                           (= k :while) `(when ~v ~(do-cmod etc))
@@ -4605,7 +4605,7 @@ defmacro (fn [&form &env
                                                            (unchecked-inc ~gi)))
                                           (keyword? k)
                                             (err "Invalid 'for' keyword " k)
-                                          ;; ÊÕ¼¯µ±Ç°ÔªËØµÄ½á¹û£¬µü´ú±¾¶ÎÏÂÒ»¸öÔªËØ
+                                          ;; æ”¶é›†å½“å‰å…ƒç´ çš„ç»“æœï¼Œè¿­ä»£æœ¬æ®µä¸‹ä¸€ä¸ªå…ƒç´ 
                                           :else
                                             `(do (chunk-append ~gb ~body-expr)
                                                  (recur (unchecked-inc ~gi)))))]
@@ -4615,31 +4615,31 @@ defmacro (fn [&form &env
                                (loop [~gxs ~gxs]
                                  (when-let [~gxs (seq ~gxs)]
                                    (if (chunked-seq? ~gxs)
-                                     ;; chunked°æ±¾£¬Ò»¶ÎÒ»¶ÎÅúÁ¿´¦Àí±¾²ãÔªËØ
+                                     ;; chunkedç‰ˆæœ¬ï¼Œä¸€æ®µä¸€æ®µæ‰¹é‡å¤„ç†æœ¬å±‚å…ƒç´ 
                                      (let [c# (chunk-first ~gxs)
-                                           ;; c# £º±¾²ãµÄµÚÒ»¶Î
+                                           ;; c# ï¼šæœ¬å±‚çš„ç¬¬ä¸€æ®µ
                                            size# (int (count c#))
-                                           ;; size# £ºµÚÒ»¶ÎµÄ´óĞ¡
+                                           ;; size# ï¼šç¬¬ä¸€æ®µçš„å¤§å°
                                            ~gb (chunk-buffer size#)]
-                                           ;; gb £º±¾¶ÎµÄ½á¹û»º´æ£¬·ÅÖÃµÚÒ»¶ÎµÄ½á¹û
-                                       ;; µü´úµÚÒ»¶ÎµÄÔªËØ
+                                           ;; gb ï¼šæœ¬æ®µçš„ç»“æœç¼“å­˜ï¼Œæ”¾ç½®ç¬¬ä¸€æ®µçš„ç»“æœ
+                                       ;; è¿­ä»£ç¬¬ä¸€æ®µçš„å…ƒç´ 
                                        (if (loop [~gi (int 0)]
                                              (if (< ~gi size#)
                                                (let [~bind (.nth c# ~gi)]
                                                  ~(do-cmod mod-pairs))
                                                true))
-                                         ;; ÊÕ¼¯µÚÒ»¶ÎµÄ½á¹û£¬²¢µü´úÊ£ÓàµÄ¶Î
+                                         ;; æ”¶é›†ç¬¬ä¸€æ®µçš„ç»“æœï¼Œå¹¶è¿­ä»£å‰©ä½™çš„æ®µ
                                          (chunk-cons
                                            (chunk ~gb)
                                            (~giter (chunk-rest ~gxs)))
                                          (chunk-cons (chunk ~gb) nil)))
-                                     ;; ·Çchunked°æ±¾£¬Öğ¸ö´¦Àí±¾²ãµÄÔªËØ
+                                     ;; échunkedç‰ˆæœ¬ï¼Œé€ä¸ªå¤„ç†æœ¬å±‚çš„å…ƒç´ 
                                      (let [~bind (first ~gxs)]
                                        ~(do-mod mod-pairs)))))))))))]
 
     `(let [iter# ~(emit-bind (to-groups seq-exprs))]
-       ;; seq-exprs : for µÄ°ó¶¨ÏòÁ¿
-       ;; emit-bind Éú³ÉµÚÒ»²ãµÄµü´úº¯Êı iter# £¬È»ºóÕâ¸öµü´úº¯Êı´¦ÀíµÚÒ»²ãµÄÖµ
+       ;; seq-exprs : for çš„ç»‘å®šå‘é‡
+       ;; emit-bind ç”Ÿæˆç¬¬ä¸€å±‚çš„è¿­ä»£å‡½æ•° iter# ï¼Œç„¶åè¿™ä¸ªè¿­ä»£å‡½æ•°å¤„ç†ç¬¬ä¸€å±‚çš„å€¼
         (iter# ~(second seq-exprs)))))
 
 ;; (for [a av] (fff a))
@@ -4649,23 +4649,23 @@ defmacro (fn [&form &env
 		(loop [s__6233 s__6233] 
 			(when-let [s__6233 (seq s__6233)] 
 				(if (chunked-seq? s__6233) 
-					;; ·Ö¶ÎÅúÁ¿´¦Àí
-					(let [c__1060__auto__ (chunk-first s__6233) ;; a µÄµÚÒ»¶Î
-						size__1061__auto__ (int (count c__1060__auto__)) ;; µÚÒ»¶Î´óĞ¡ 
-						b__6235 (chunk-buffer size__1061__auto__)] ;; »º´æ£¬·ÅÖÃ½á¹û
+					;; åˆ†æ®µæ‰¹é‡å¤„ç†
+					(let [c__1060__auto__ (chunk-first s__6233) ;; a çš„ç¬¬ä¸€æ®µ
+						size__1061__auto__ (int (count c__1060__auto__)) ;; ç¬¬ä¸€æ®µå¤§å° 
+						b__6235 (chunk-buffer size__1061__auto__)] ;; ç¼“å­˜ï¼Œæ”¾ç½®ç»“æœ
 						(if 
-							(loop [i__6234 (int 0)] ;; µü´ú¶ÎÖĞµÄÔªËØ
+							(loop [i__6234 (int 0)] ;; è¿­ä»£æ®µä¸­çš„å…ƒç´ 
 								(if (< i__6234 size__1061__auto__) 
-									(let [a (.nth c__1060__auto__ i__6234)] ;; ¶ÎÖĞµÄÔªËØ a
+									(let [a (.nth c__1060__auto__ i__6234)] ;; æ®µä¸­çš„å…ƒç´  a
 										(do 
-											(chunk-append b__6235 ^{:line 1, :column 29} (fff a)) ;; ·ÅÖÃ½á¹û
-											(recur (unchecked-inc i__6234)))) ;; ¶ÎÖĞµÄÏÂÒ»¸öÔªËØ
+											(chunk-append b__6235 ^{:line 1, :column 29} (fff a)) ;; æ”¾ç½®ç»“æœ
+											(recur (unchecked-inc i__6234)))) ;; æ®µä¸­çš„ä¸‹ä¸€ä¸ªå…ƒç´ 
 									true)) ;; end loop
 								(chunk-cons (chunk b__6235) 
-									(iter__6232 (chunk-rest s__6233))) ;; µü´úÊ£ÓàµÄ¶Î£¨µİ¹é iter__6232£©
+									(iter__6232 (chunk-rest s__6233))) ;; è¿­ä»£å‰©ä½™çš„æ®µï¼ˆé€’å½’ iter__6232ï¼‰
 								(chunk-cons (chunk b__6235) nil)
 							)) ;; end if end let
-						;; not chunked-seq £¬Öğ¸öÔªËØ´¦Àí
+						;; not chunked-seq ï¼Œé€ä¸ªå…ƒç´ å¤„ç†
 						(let [a (first s__6233)] 
 							(cons ^{:line 1, :column 29} (fff a) 
 								(iter__6232 (rest s__6233))))
@@ -4676,11 +4676,11 @@ defmacro (fn [&form &env
 #_(let [iter__1062__auto__ 
         (fn iter__6234 [s__6235] 
           (lazy-seq (loop [s__6235 s__6235] 
-                      (when-first [a s__6235] ;; µÚÒ»²ãµÄµÚÒ»¸öÔªËØ£¬a 
-                        (let [bv ^{:line 1, :column 37} (:k a)] ;; µÚ¶ş²ã¿ªÊ¼£¬let
-                          (when ^{:line 1, :column 52} (> bv 0) ;; µÚ¶ş²ã£¬when
+                      (when-first [a s__6235] ;; ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ ï¼Œa 
+                        (let [bv ^{:line 1, :column 37} (:k a)] ;; ç¬¬äºŒå±‚å¼€å§‹ï¼Œlet
+                          (when ^{:line 1, :column 52} (> bv 0) ;; ç¬¬äºŒå±‚ï¼Œwhen
                             (let [iterys__1058__auto__ 
-                                  (fn iter__6236 [s__6237] ;; µÚ¶ş²ãµü´ú
+                                  (fn iter__6236 [s__6237] ;; ç¬¬äºŒå±‚è¿­ä»£
                                     (lazy-seq (loop [s__6237 s__6237] 
                                                 (when-let [s__6237 (seq s__6237)] 
                                                   (if (chunked-seq? s__6237) 
@@ -4691,18 +4691,18 @@ defmacro (fn [&form &env
                                                             (if (< i__6238 size__1061__auto__) 
                                                               (let [b (.nth c__1060__auto__ i__6238)] 
                                                                 (do 
-                                                                  (chunk-append b__6239 ^{:line 1, :column 67} (fff b)) ;; ÊÕ¼¯½á¹û
+                                                                  (chunk-append b__6239 ^{:line 1, :column 67} (fff b)) ;; æ”¶é›†ç»“æœ
                                                                   (recur (unchecked-inc i__6238)))) 
                                                               true)) 
                                                         (chunk-cons (chunk b__6239) 
-                                                                    (iter__6236 (chunk-rest s__6237))) ;; µÚ¶ş²ã£¬µü´úÊ£ÓàµÄ¶Î
+                                                                    (iter__6236 (chunk-rest s__6237))) ;; ç¬¬äºŒå±‚ï¼Œè¿­ä»£å‰©ä½™çš„æ®µ
                                                         (chunk-cons (chunk b__6239) nil))) 
                                                     (let [b (first s__6237)] 
                                                       (cons ^{:line 1, :column 67} (fff b) 
                                                             (iter__6236 (rest s__6237))))))))) 
-                                  ;; ¼ÆËãµÚÒ»²ãµÄµÚÒ»¸öÔªËØµÄ½á¹û
+                                  ;; è®¡ç®—ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœ
                                   fs__1059__auto__ (seq (iterys__1058__auto__ bv))] 
-                              ;; ÊÕ¼¯µÚÒ»²ãµÄµÚÒ»¸öÔªËØµÄ½á¹û£¬µü´úµÚÒ»²ãÊ£ÓàµÄÔªËØ
+                              ;; æ”¶é›†ç¬¬ä¸€å±‚çš„ç¬¬ä¸€ä¸ªå…ƒç´ çš„ç»“æœï¼Œè¿­ä»£ç¬¬ä¸€å±‚å‰©ä½™çš„å…ƒç´ 
                               (if fs__1059__auto__ 
                                 (concat fs__1059__auto__ (iter__6234 (rest s__6235))) 
                                 (recur (rest s__6235))))))

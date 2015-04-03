@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  *   Copyright (c) Rich Hickey. All rights reserved.
  *   The use and distribution terms for this software are covered by the
  *   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -39,11 +39,11 @@ import java.util.regex.Pattern;
 
 public class LispReader{
 
-static final Symbol QUOTE = Symbol.intern("quote");//ÒıÊö
+static final Symbol QUOTE = Symbol.intern("quote");//å¼•è¿°
 static final Symbol THE_VAR = Symbol.intern("var");
-//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");//Óï·¨ÒıÊö
-static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");//È¡ÏûÓï·¨ÒıÊö
-static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
+//static Symbol SYNTAX_QUOTE = Symbol.intern(null, "syntax-quote");//è¯­æ³•å¼•è¿°
+static Symbol UNQUOTE = Symbol.intern("clojure.core", "unquote");//å–æ¶ˆè¯­æ³•å¼•è¿°
+static Symbol UNQUOTE_SPLICING = Symbol.intern("clojure.core", "unquote-splicing");//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
 static Symbol CONCAT = Symbol.intern("clojure.core", "concat");
 static Symbol SEQ = Symbol.intern("clojure.core", "seq");
 static Symbol LIST = Symbol.intern("clojure.core", "list");
@@ -80,8 +80,8 @@ static Var GENSYM_ENV = Var.create(null).setDynamic();
 //sorted-map num->gensymbol
 static Var ARG_ENV = Var.create(null).setDynamic();
 static IFn ctorReader = new CtorReader();
-//¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag
-//¶ÁÈ¡Æ÷ºê
+//è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tag
+//è¯»å–å™¨å®
 // Dynamic var set to true in a read-cond context
 static Var READ_COND_ENV = Var.create(null).setDynamic();
 
@@ -90,17 +90,17 @@ static
 	macros['"'] = new StringReader();
 	macros[';'] = new CommentReader();
 	macros['\''] = new WrappingReader(QUOTE);
-//½«ÏÂÒ»¸öĞÎÊ½£¬°ü¹üµ½quoteÖĞ
+//å°†ä¸‹ä¸€ä¸ªå½¢å¼ï¼ŒåŒ…è£¹åˆ°quoteä¸­
 	macros['@'] = new WrappingReader(DEREF);
 //new DerefReader();
 	macros['^'] = new MetaReader();
-//ÔªÊı¾İ¶ÁÈ¡Æ÷
+//å…ƒæ•°æ®è¯»å–å™¨
 	macros['`'] = new SyntaxQuoteReader();
-//Óï·¨ÒıÊö
+//è¯­æ³•å¼•è¿°
 	macros['~'] = new UnquoteReader();
-//È¡ÏûÓï·¨ÒıÊö£¨°üÀ¨È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó£©
+//å–æ¶ˆè¯­æ³•å¼•è¿°ï¼ˆåŒ…æ‹¬å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥ï¼‰
 	macros['('] = new ListReader();
-//ÁĞ±í¶ÁÈ¡Æ÷
+//åˆ—è¡¨è¯»å–å™¨
 	macros[')'] = new UnmatchedDelimiterReader();
 	macros['['] = new VectorReader();
 	macros[']'] = new UnmatchedDelimiterReader();
@@ -109,35 +109,35 @@ static
 //	macros['|'] = new ArgVectorReader();
 	macros['\\'] = new CharacterReader();
 	macros['%'] = new ArgReader();
-//º¯Êı×ÖÃæÁ¿ÖĞµÄ²ÎÊı
+//å‡½æ•°å­—é¢é‡ä¸­çš„å‚æ•°
 	macros['#'] = new DispatchReader();
 
-	//¸úÔÚ¾®ºÅÖ®ºóµÄ¶ÁÈ¡Æ÷ºê
+	//è·Ÿåœ¨äº•å·ä¹‹åçš„è¯»å–å™¨å®
 	dispatchMacros['^'] = new MetaReader();
-//´øÔªÊı¾İµÄĞÎÊ½
+//å¸¦å…ƒæ•°æ®çš„å½¢å¼
 	dispatchMacros['\''] = new VarReader();
-//#'a£¬¼´(var a)
+//#'aï¼Œå³(var a)
 	dispatchMacros['"'] = new RegexReader();
-//ÕıÔò±í´ïÊ½
+//æ­£åˆ™è¡¨è¾¾å¼
 	dispatchMacros['('] = new FnReader();
-//º¯Êı×ÖÃæÁ¿
+//å‡½æ•°å­—é¢é‡
 	dispatchMacros['{'] = new SetReader();
-//¼¯×ÖÄ¸Á¿
+//é›†å­—æ¯é‡
 	dispatchMacros['='] = new EvalReader();
-//#= ¶ÁÈ¡ÆÚÇóÖµ
+//#= è¯»å–æœŸæ±‚å€¼
 	dispatchMacros['!'] = new CommentReader();
-//×¢ÊÍ #! £¬ºÍ ·ÖºÅÏàÍ¬£¬Ò»Ö±µ½ĞĞÎ²
+//æ³¨é‡Š #! ï¼Œå’Œ åˆ†å·ç›¸åŒï¼Œä¸€ç›´åˆ°è¡Œå°¾
 	dispatchMacros['<'] = new UnreadableReader();
-//²»¿É´ï£¿ #< £¬Ö±½ÓÅ×³öÒì³£
+//ä¸å¯è¾¾ï¼Ÿ #< ï¼Œç›´æ¥æŠ›å‡ºå¼‚å¸¸
 	dispatchMacros['_'] = new DiscardReader();
-//¶ªÆúÏÂÒ»¸öĞÎÊ½ #_
+//ä¸¢å¼ƒä¸‹ä¸€ä¸ªå½¢å¼ #_
 	dispatchMacros['?'] = new ConditionalReader();
 	}
 
 static boolean isWhitespace(int ch){
 	return Character.isWhitespace(ch) || ch == ',';
 }
-//»ØÍÂÒ»¸ö×Ö·û
+//å›åä¸€ä¸ªå­—ç¬¦
 static void unread(PushbackReader r, int ch) {
 	if(ch != -1)
 		try
@@ -160,7 +160,7 @@ public static class ReaderException extends RuntimeException{
 		this.column = column;
 	}
 }
-//¶ÁÈ¡Ò»¸ö×Ö·û
+//è¯»å–ä¸€ä¸ªå­—ç¬¦
 static public int read1(Reader r){
 	try
 		{
@@ -171,10 +171,10 @@ static public int read1(Reader r){
 		throw Util.sneakyThrow(e);
 		}
 }
-//hxzonÖØÒª£ºreadº¯ÊıÊÇLispReaderµÄÈë¿Ú
-//@param eofIsError µ½´ïÎÄ¼şÄ©ÊÇ·ñÊÇÒ»¸ö´íÎó
-//@param eofValue Èç¹ûµ½´ïÎÄ¼şÄ©²»ÊÇÒ»¸ö´íÎó£¬·µ»ØeofValue
-//@param isRecursive £¿
+//hxzoné‡è¦ï¼šreadå‡½æ•°æ˜¯LispReaderçš„å…¥å£
+//@param eofIsError åˆ°è¾¾æ–‡ä»¶æœ«æ˜¯å¦æ˜¯ä¸€ä¸ªé”™è¯¯
+//@param eofValue å¦‚æœåˆ°è¾¾æ–‡ä»¶æœ«ä¸æ˜¯ä¸€ä¸ªé”™è¯¯ï¼Œè¿”å›eofValue
+//@param isRecursive ï¼Ÿ
 // Reader opts
 static public final Keyword OPT_EOF = Keyword.intern(null,"eof");
 static public final Keyword OPT_FEATURES = Keyword.intern(null,"features");
@@ -251,10 +251,10 @@ static private Object read(PushbackReader r, boolean eofIsError, Object eofValue
 			int ch = read1(r);
 
 			while(isWhitespace(ch))
-//ºöÂÔ¿Õ°×·û£¬°üÀ¨¶ººÅ
+//å¿½ç•¥ç©ºç™½ç¬¦ï¼ŒåŒ…æ‹¬é€—å·
 				ch = read1(r);
 
-			if(ch == -1)//ÎÄ¼şÄ©Î²
+			if(ch == -1)//æ–‡ä»¶æœ«å°¾
 				{
 				if(eofIsError)
 					throw Util.runtimeException("EOF while reading");
@@ -273,7 +273,7 @@ static private Object read(PushbackReader r, boolean eofIsError, Object eofValue
 
 			IFn macroFn = getMacro(ch);
 			if(macroFn != null)
-//¶ÁÈ¡ºê×Ö·û
+//è¯»å–å®å­—ç¬¦
 				{
 				Object ret = macroFn.invoke(r, (char) ch, opts, pendingForms);
 				if(RT.suppressRead())
@@ -288,19 +288,19 @@ static private Object read(PushbackReader r, boolean eofIsError, Object eofValue
 				{
 				int ch2 = read1(r);
 				if(Character.isDigit(ch2))
-//´øÕı¸ººÅµÄÊıÖµ
+//å¸¦æ­£è´Ÿå·çš„æ•°å€¼
 					{
 					unread(r, ch2);
 					Object n = readNumber(r, (char) ch);
 					return n;
 					}
-				unread(r, ch2);//Èç¹û²»ÊÇ×÷ÎªÊıÖµÇ°ÃæµÄÕı¸ººÅ£¬»ØÍÂ
+				unread(r, ch2);//å¦‚æœä¸æ˜¯ä½œä¸ºæ•°å€¼å‰é¢çš„æ­£è´Ÿå·ï¼Œå›å
 				}
 
 			String token = readToken(r, (char) ch);
-//ÆäËütokon£¬°üÀ¨nil£¬true£¬false£¬¹Ø¼ü×Ö£¬Symbol
+//å…¶å®ƒtokonï¼ŒåŒ…æ‹¬nilï¼Œtrueï¼Œfalseï¼Œå…³é”®å­—ï¼ŒSymbol
 			return interpretToken(token);
-//Ê¶±ğtoken
+//è¯†åˆ«token
 			}
 		}
 	catch(Exception e)
@@ -328,7 +328,7 @@ static private String readToken(PushbackReader r, char initch) {
 		sb.append((char) ch);
 		}
 }
-//²»½ö½öÊÇ¿Õ°×·û£¬Óöµ½¶ÁÈ¡ºê×Ö·ûÒ²»áÍ£Ö¹
+//ä¸ä»…ä»…æ˜¯ç©ºç™½ç¬¦ï¼Œé‡åˆ°è¯»å–å®å­—ç¬¦ä¹Ÿä¼šåœæ­¢
 static private Object readNumber(PushbackReader r, char initch) {
 	StringBuilder sb = new StringBuilder();
 	sb.append(initch);
@@ -387,7 +387,7 @@ static private int readUnicodeChar(PushbackReader r, int initch, int base, int l
 		throw new IllegalArgumentException("Invalid character length: " + i + ", should be: " + length);
 	return uc;
 }
-//Ê¶±ğtoken
+//è¯†åˆ«token
 static private Object interpretToken(String s) {
 	if(s.equals("nil"))
 		{
@@ -410,7 +410,7 @@ static private Object interpretToken(String s) {
 	throw Util.runtimeException("Invalid token: " + s);
 }
 
-//·µ»Ønull£¬¹Ø¼ü×Ö£¬»ò·ûºÅ
+//è¿”å›nullï¼Œå…³é”®å­—ï¼Œæˆ–ç¬¦å·
 private static Object matchSymbol(String s){
 	Matcher m = symbolPat.matcher(s);
 	if(m.matches())
@@ -419,39 +419,39 @@ private static Object matchSymbol(String s){
 		String ns = m.group(1);
 		String name = m.group(2);
 		if(ns != null && ns.endsWith(":/")
-//ÃüÃû¿Õ¼äÒÔ:/½áÎ²£¬Î¥·¨
+//å‘½åç©ºé—´ä»¥:/ç»“å°¾ï¼Œè¿æ³•
 		   || name.endsWith(":")
-//Ãû×ÖÒÔÃ°ºÅ½áÎ²£¬Î¥·¨
+//åå­—ä»¥å†’å·ç»“å°¾ï¼Œè¿æ³•
 		   || s.indexOf("::", 1) != -1)
-//ÈıÃ°ºÅ¿ªÍ·£¬»ò¿ªÍ·Ö®Íâ»¹ÓĞË«Ã°ºÅ£¬Î¥·¨
+//ä¸‰å†’å·å¼€å¤´ï¼Œæˆ–å¼€å¤´ä¹‹å¤–è¿˜æœ‰åŒå†’å·ï¼Œè¿æ³•
 			return null;
-		//hxzon£º(= :x ::x) false£¬Ò»¸öÎŞÃüÃû¿Õ¼ä£¬Ò»¸öµ±Ç°ÃüÃû¿Õ¼ä
+		//hxzonï¼š(= :x ::x) falseï¼Œä¸€ä¸ªæ— å‘½åç©ºé—´ï¼Œä¸€ä¸ªå½“å‰å‘½åç©ºé—´
 		// (= :clojure.core/y ::clojure.core/y) true
 		if(s.startsWith("::"))
 			{
-//ÒÔÁ½¸öÃ°ºÅ¿ªÍ·£¬²»º¬Ğ±¸Ü£¬±íÊ¾ÊÇµ±Ç°ÃüÃû¿Õ¼äµÄ¹Ø¼ü×Ö£¬º¬Ğ±¸Ü£¬±íÊ¾ÌØ¶¨ÃüÃû¿Õ¼äµÄ¹Ø¼ü×Ö
+//ä»¥ä¸¤ä¸ªå†’å·å¼€å¤´ï¼Œä¸å«æ–œæ ï¼Œè¡¨ç¤ºæ˜¯å½“å‰å‘½åç©ºé—´çš„å…³é”®å­—ï¼Œå«æ–œæ ï¼Œè¡¨ç¤ºç‰¹å®šå‘½åç©ºé—´çš„å…³é”®å­—
 			Symbol ks = Symbol.intern(s.substring(2));
 			Namespace kns;
-			if(ks.ns != null)//::x/yÊ±£¬ks.ns=x
+			if(ks.ns != null)//::x/yæ—¶ï¼Œks.ns=x
 				kns = Compiler.namespaceFor(ks);
 			else
 				kns = Compiler.currentNS();
 			//auto-resolving keyword
 			if (kns != null)
 				return Keyword.intern(kns.name.name,ks.name);
-//µ±ÃüÃû¿Õ¼ä´æÔÚÊ±£¬ÀıÈç::clojure.core/y
+//å½“å‘½åç©ºé—´å­˜åœ¨æ—¶ï¼Œä¾‹å¦‚::clojure.core/y
 			else
 				return null;
-//µ±ÃüÃû¿Õ¼äx²»´æÔÚÊ±£¬·µ»Ønull£¨Ë«Ã°ºÅÇÒ´øÓĞÃüÃû¿Õ¼äÏŞ¶¨Ê±£¬ÒªÇóÃüÃû¿Õ¼äÒÑ´æÔÚ£©
+//å½“å‘½åç©ºé—´xä¸å­˜åœ¨æ—¶ï¼Œè¿”å›nullï¼ˆåŒå†’å·ä¸”å¸¦æœ‰å‘½åç©ºé—´é™å®šæ—¶ï¼Œè¦æ±‚å‘½åç©ºé—´å·²å­˜åœ¨ï¼‰
 			}
 		boolean isKeyword = s.charAt(0) == ':';
-//ÒÔµ¥¸öÃ°ºÅ¿ªÍ·µÄÎª¹Ø¼ü×Ö
+//ä»¥å•ä¸ªå†’å·å¼€å¤´çš„ä¸ºå…³é”®å­—
 		Symbol sym = Symbol.intern(s.substring(isKeyword ? 1 : 0));
-//Ò»¸öĞÂµÄSymbol¶ÔÏó,new Symbol(xxx)
+//ä¸€ä¸ªæ–°çš„Symbolå¯¹è±¡,new Symbol(xxx)
 		if(isKeyword)
 			return Keyword.intern(sym);
-//²éÕÒ»ò´´½¨¹Ø¼ü×Ö
-		return sym;//·µ»Ø·ûºÅ
+//æŸ¥æ‰¾æˆ–åˆ›å»ºå…³é”®å­—
+		return sym;//è¿”å›ç¬¦å·
 		}
 	return null;
 }
@@ -517,12 +517,12 @@ static private IFn getMacro(int ch){
 static private boolean isMacro(int ch){
 	return (ch < macros.length && macros[ch] != null);
 }
-//ÊÓÎªtokenÖÕÖ¹µÄ×Ö·û£¨³ıÁË¾®ºÅ£¬µ¥ÒıºÅ£¬°Ù·ÖºÅÖ®ÍâµÄ¶ÁÈ¡Æ÷ºê×Ö·û£©
+//è§†ä¸ºtokenç»ˆæ­¢çš„å­—ç¬¦ï¼ˆé™¤äº†äº•å·ï¼Œå•å¼•å·ï¼Œç™¾åˆ†å·ä¹‹å¤–çš„è¯»å–å™¨å®å­—ç¬¦ï¼‰
 static private boolean isTerminatingMacro(int ch){
 	return (ch != '#' && ch != '\'' && ch != '%' && isMacro(ch));
 }
 //=====================================
-//ÕıÔò±í´ïÊ½
+//æ­£åˆ™è¡¨è¾¾å¼
 public static class RegexReader extends AFn{
 	static StringReader stringrdr = new StringReader();
 
@@ -607,7 +607,7 @@ public static class StringReader extends AFn{
 		return sb.toString();
 	}
 }
-//×¢ÊÍ£¬·ÖºÅ£¬»òÕß #! £¬Ò»Ö±¶Áµ½ĞĞÎ²
+//æ³¨é‡Šï¼Œåˆ†å·ï¼Œæˆ–è€… #! ï¼Œä¸€ç›´è¯»åˆ°è¡Œå°¾
 public static class CommentReader extends AFn{
 	public Object invoke(Object reader, Object semicolon, Object opts, Object pendingForms) {
 		Reader r = (Reader) reader;
@@ -620,7 +620,7 @@ public static class CommentReader extends AFn{
 	}
 
 }
-//¶ªÆú£º #_
+//ä¸¢å¼ƒï¼š #_
 public static class DiscardReader extends AFn{
 	public Object invoke(Object reader, Object underscore, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -628,7 +628,7 @@ public static class DiscardReader extends AFn{
 		return r;
 	}
 }
-//°ü¹ü£¬ÀıÈç @ ºÍ ' µÈ
+//åŒ…è£¹ï¼Œä¾‹å¦‚ @ å’Œ ' ç­‰
 public static class WrappingReader extends AFn{
 	final Symbol sym;
 
@@ -643,7 +643,7 @@ public static class WrappingReader extends AFn{
 	}
 
 }
-//ÒÑ²»ÔÙÊ¹ÓÃµÄ¹ıÊ±µÄ°ü¹ü£¨Ä¿Ç°Î´Ê¹ÓÃ£©
+//å·²ä¸å†ä½¿ç”¨çš„è¿‡æ—¶çš„åŒ…è£¹ï¼ˆç›®å‰æœªä½¿ç”¨ï¼‰
 public static class DeprecatedWrappingReader extends AFn{
 	final Symbol sym;
 	final String macro;
@@ -663,7 +663,7 @@ public static class DeprecatedWrappingReader extends AFn{
 	}
 
 }
-// #'a ×ª³É (var a)
+// #'a è½¬æˆ (var a)
 public static class VarReader extends AFn{
 	public Object invoke(Object reader, Object quote, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -701,7 +701,7 @@ static class DerefReader extends AFn{
 
 }
 */
-//¾®ºÅ·ÖÅÉ£¬Èç¹û²»ÊÇ¡°ÄÜ¸úÔÚ¾®ºÅºó¡±µÄ¶ÁÈ¡ºê×Ö·û£¬Ôò³¢ÊÔ¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag
+//äº•å·åˆ†æ´¾ï¼Œå¦‚æœä¸æ˜¯â€œèƒ½è·Ÿåœ¨äº•å·åâ€çš„è¯»å–å®å­—ç¬¦ï¼Œåˆ™å°è¯•è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tag
 public static class DispatchReader extends AFn{
 	public Object invoke(Object reader, Object hash, Object opts, Object pendingForms) {
 		int ch = read1((Reader) reader);
@@ -726,7 +726,7 @@ public static class DispatchReader extends AFn{
 static Symbol garg(int n){
 	return Symbol.intern(null, (n == -1 ? "rest" : ("p" + n)) + "__" + RT.nextID() + "#");
 }
-//º¯Êı×ÖÃæÁ¿¶ÁÈ¡Æ÷£¬ÀıÈç #(assoc % %2 (* %2 %2))
+//å‡½æ•°å­—é¢é‡è¯»å–å™¨ï¼Œä¾‹å¦‚ #(assoc % %2 (* %2 %2))
 public static class FnReader extends AFn{
 	public Object invoke(Object reader, Object lparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -808,7 +808,7 @@ static class ArgReader extends AFn{
 		return registerArg(((Number) n).intValue());
 	}
 }
-//¶ÁÈ¡´øÓĞÔªÊı¾İµÄĞÎÊ½£¬ÀıÈç ^{:x 1 :y 2} zz
+//è¯»å–å¸¦æœ‰å…ƒæ•°æ®çš„å½¢å¼ï¼Œä¾‹å¦‚ ^{:x 1 :y 2} zz
 public static class MetaReader extends AFn{
 	public Object invoke(Object reader, Object caret, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -822,7 +822,7 @@ public static class MetaReader extends AFn{
 		Object meta = read(r, true, null, true, opts, pendingForms);
 		if(meta instanceof Symbol || meta instanceof String)
 			meta = RT.map(RT.TAG_KEY, meta);
-		else if (meta instanceof Keyword)//Èç¹ûÊÇ¹Ø¼ü×Ö£¬ÊÓÎª{:k true}
+		else if (meta instanceof Keyword)//å¦‚æœæ˜¯å…³é”®å­—ï¼Œè§†ä¸º{:k true}
 			meta = RT.map(meta, RT.T);
 		else if(!(meta instanceof IPersistentMap))
 			throw new IllegalArgumentException("Metadata must be Symbol,Keyword,String or Map");
@@ -830,19 +830,19 @@ public static class MetaReader extends AFn{
 		Object o = read(r, true, null, true, opts, pendingForms);
 		if(o instanceof IMeta)
 			{
-			if(line != -1 && o instanceof ISeq)//¶ÔÏóÊÇĞòÁĞÀàĞÍ
+			if(line != -1 && o instanceof ISeq)//å¯¹è±¡æ˜¯åºåˆ—ç±»å‹
 				{
 				meta = ((IPersistentMap) meta).assoc(RT.LINE_KEY, line).assoc(RT.COLUMN_KEY, column);
 				}
-			if(o instanceof IReference)//¶ÔÏóÊÇÒıÓÃÀàĞÍ
+			if(o instanceof IReference)//å¯¹è±¡æ˜¯å¼•ç”¨ç±»å‹
 				{
 				((IReference)o).resetMeta((IPersistentMap) meta);
 				return o;
-//hxzon×¢Òâ£ºÒıÓÃÀàĞÍÖ±½ÓÌæ»»µôÔ­ÓĞµÄÔªÊı¾İ£¬¶øĞòÁĞÀàĞÍÔòºÏ²¢×ÔÉíÒÑÓĞµÄÔªÊı¾İ£º^:x ^:y o
+//hxzonæ³¨æ„ï¼šå¼•ç”¨ç±»å‹ç›´æ¥æ›¿æ¢æ‰åŸæœ‰çš„å…ƒæ•°æ®ï¼Œè€Œåºåˆ—ç±»å‹åˆ™åˆå¹¶è‡ªèº«å·²æœ‰çš„å…ƒæ•°æ®ï¼š^:x ^:y o
 				}
 			Object ometa = RT.meta(o);
-//¶ÔÏóÒÑĞ¯´øµÄÔªÊı¾İ£¬ÀıÈç^:x ^:y o £¬Ê×ÏÈµÃµ½´øÓĞ^:y µÄ o £¬ÏÖÔÚºÏ²¢^:x
-			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//ºÏ²¢metaµ½ometa
+//å¯¹è±¡å·²æºå¸¦çš„å…ƒæ•°æ®ï¼Œä¾‹å¦‚^:x ^:y o ï¼Œé¦–å…ˆå¾—åˆ°å¸¦æœ‰^:y çš„ o ï¼Œç°åœ¨åˆå¹¶^:x
+			for(ISeq s = RT.seq(meta); s != null; s = s.next()) {//åˆå¹¶metaåˆ°ometa
 			IMapEntry kv = (IMapEntry) s.first();
 			ometa = RT.assoc(ometa, kv.getKey(), kv.getValue());
 			}
@@ -853,7 +853,7 @@ public static class MetaReader extends AFn{
 	}
 
 }
-//Óï·¨ÒıÊö£¬·´ÒıºÅ
+//è¯­æ³•å¼•è¿°ï¼Œåå¼•å·
 public static class SyntaxQuoteReader extends AFn{
 	public Object invoke(Object reader, Object backquote, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -870,7 +870,7 @@ public static class SyntaxQuoteReader extends AFn{
 			Var.popThreadBindings();
 			}
 	}
-	//Óï·¨ÒıÊö
+	//è¯­æ³•å¼•è¿°
 	static Object syntaxQuote(Object form) {
 		Object ret;
 		if(Compiler.isSpecial(form))
@@ -879,28 +879,28 @@ public static class SyntaxQuoteReader extends AFn{
 			{
 			Symbol sym = (Symbol) form;
 			if(sym.ns == null && sym.name.endsWith("#"))
-//×Ô¶¯×ª³ÉÈ«¾ÖÎ¨Ò»·ûºÅ
+//è‡ªåŠ¨è½¬æˆå…¨å±€å”¯ä¸€ç¬¦å·
 				{
 				IPersistentMap gmap = (IPersistentMap) GENSYM_ENV.deref();
 				if(gmap == null)
 					throw new IllegalStateException("Gensym literal not in syntax-quote");
 				Symbol gs = (Symbol) gmap.valAt(sym);
 				if(gs == null)
-//¸Ã·ûºÅÈç¹û»¹Î´×ª³ÉÈ«¾ÖÎ¨Ò»·ûºÅ
+//è¯¥ç¬¦å·å¦‚æœè¿˜æœªè½¬æˆå…¨å±€å”¯ä¸€ç¬¦å·
 					GENSYM_ENV.set(gmap.assoc(sym, gs = Symbol.intern(null,
 					                                                  sym.name.substring(0, sym.name.length() - 1)
 					                                                  + "__" + RT.nextID() + "__auto__")));
 				sym = gs;
 				}
 			else if(sym.ns == null && sym.name.endsWith("."))
-//java¹¹Ôìº¯Êı
+//javaæ„é€ å‡½æ•°
 				{
 				Symbol csym = Symbol.intern(null, sym.name.substring(0, sym.name.length() - 1));
 				csym = Compiler.resolveSymbol(csym);
 				sym = Symbol.intern(null, csym.name.concat("."));
 				}
 			else if(sym.ns == null && sym.name.startsWith("."))
-//java·½·¨
+//javaæ–¹æ³•
 				{
 				// Simply quote method names.
 				}
@@ -910,13 +910,13 @@ public static class SyntaxQuoteReader extends AFn{
 				if(sym.ns != null)
 					maybeClass = Compiler.currentNS().getMapping(
 							Symbol.intern(null, sym.ns));
-//ÊÇ·ñÊÇµ¼Èëµ½µ±Ç°ÃüÃû¿Õ¼äµÄÀàµÄ¡°¶ÌÃû¡±
+//æ˜¯å¦æ˜¯å¯¼å…¥åˆ°å½“å‰å‘½åç©ºé—´çš„ç±»çš„â€œçŸ­åâ€
 				if(maybeClass instanceof Class)
 					{
 					// Classname/foo -> package.qualified.Classname/foo
 					sym = Symbol.intern(
 							((Class)maybeClass).getName(), sym.name);
-//»Ö¸´³ÉÀàµÄÍêÕûÃû£¨hxzon£º×¢Òâ£©
+//æ¢å¤æˆç±»çš„å®Œæ•´åï¼ˆhxzonï¼šæ³¨æ„ï¼‰
 					}
 				else
 					sym = Compiler.resolveSymbol(sym);
@@ -924,7 +924,7 @@ public static class SyntaxQuoteReader extends AFn{
 			ret = RT.list(Compiler.QUOTE, sym);
 			}
 		else if(isUnquote(form))
-//Èç¹ûÊÇÈ¡ÏûÒıÊö
+//å¦‚æœæ˜¯å–æ¶ˆå¼•è¿°
 			return RT.second(form);
 		else if(isUnquoteSplicing(form))
 			throw new IllegalStateException("splice not in list");
@@ -934,7 +934,7 @@ public static class SyntaxQuoteReader extends AFn{
 				ret = form;
 			else if(form instanceof IPersistentMap)
 				{
-//Éú³É (apply hashmap (seq (concat k1 v1 k2 v2)))
+//ç”Ÿæˆ (apply hashmap (seq (concat k1 v1 k2 v2)))
 				IPersistentVector keyvals = flattenMap(form);
 				ret = RT.list(APPLY, HASHMAP, RT.list(SEQ, RT.cons(CONCAT, sqExpandList(keyvals.seq()))));
 				}
@@ -966,13 +966,13 @@ public static class SyntaxQuoteReader extends AFn{
 			ret = RT.list(Compiler.QUOTE, form);
 
 		if(form instanceof IObj && RT.meta(form) != null)
-//Èç¹ûº¬ÓĞÔªÊı¾İ£¨³ıµôĞĞÁĞºÅ£©
+//å¦‚æœå«æœ‰å…ƒæ•°æ®ï¼ˆé™¤æ‰è¡Œåˆ—å·ï¼‰
 			{
 			//filter line and column numbers
 			IPersistentMap newMeta = ((IObj) form).meta().without(RT.LINE_KEY).without(RT.COLUMN_KEY);
 			if(newMeta.count() > 0)
 				return RT.list(WITH_META, ret, syntaxQuote(((IObj) form).meta()));
-//hxzon×¢Òâ£º¶ÔÔªÊı¾İ½øĞĞÓï·¨ÒıÊö
+//hxzonæ³¨æ„ï¼šå¯¹å…ƒæ•°æ®è¿›è¡Œè¯­æ³•å¼•è¿°
 			}
 		return ret;
 	}
@@ -983,13 +983,13 @@ public static class SyntaxQuoteReader extends AFn{
 			{
 			Object item = seq.first();
 			if(isUnquote(item))
-//È¡ÏûÓï·¨ÒıÊö
+//å–æ¶ˆè¯­æ³•å¼•è¿°
 				ret = ret.cons(RT.list(LIST, RT.second(item)));
 			else if(isUnquoteSplicing(item))
-//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
+//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
 				ret = ret.cons(RT.second(item));
 			else
-//Óï·¨ÒıÊö
+//è¯­æ³•å¼•è¿°
 				ret = ret.cons(RT.list(LIST, syntaxQuote(item)));
 			}
 		return ret.seq();
@@ -1015,7 +1015,7 @@ static boolean isUnquoteSplicing(Object form){
 static boolean isUnquote(Object form){
 	return form instanceof ISeq && Util.equals(RT.first(form),UNQUOTE);
 }
-//È¡ÏûÓï·¨ÒıÊö£¬²¨ÀËºÅ
+//å–æ¶ˆè¯­æ³•å¼•è¿°ï¼Œæ³¢æµªå·
 static class UnquoteReader extends AFn{
 	public Object invoke(Object reader, Object comma, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -1026,14 +1026,14 @@ static class UnquoteReader extends AFn{
 			{
 			Object o = read(r, true, null, true, opts, pendingForms);
 			return RT.list(UNQUOTE_SPLICING, o);
-//È¡ÏûÓï·¨ÒıÊö²¢Æ´½Ó
+//å–æ¶ˆè¯­æ³•å¼•è¿°å¹¶æ‹¼æ¥
 			}
 		else
 			{
 			unread(r, ch);
 			Object o = read(r, true, null, true, opts, pendingForms);
 			return RT.list(UNQUOTE, o);
-//È¡ÏûÓï·¨ÒıÊö
+//å–æ¶ˆè¯­æ³•å¼•è¿°
 			}
 	}
 
@@ -1081,7 +1081,7 @@ public static class CharacterReader extends AFn{
 	}
 
 }
-//ÁĞ±í¶ÁÈ¡Æ÷
+//åˆ—è¡¨è¯»å–å™¨
 public static class ListReader extends AFn{
 	public Object invoke(Object reader, Object leftparen, Object opts, Object pendingForms) {
 		PushbackReader r = (PushbackReader) reader;
@@ -1138,7 +1138,7 @@ static class CtorReader extends AFn{
 	}
 }
 */
-// #= ¶ÁÈ¡ÆÚÇóÖµ
+// #= è¯»å–æœŸæ±‚å€¼
 public static class EvalReader extends AFn{
 	public Object invoke(Object reader, Object eq, Object opts, Object pendingForms) {
 		if (!RT.booleanCast(RT.READEVAL.deref()))
@@ -1151,26 +1151,26 @@ public static class EvalReader extends AFn{
 		if(o instanceof Symbol)
 			{
 			return RT.classForName(o.toString());
-//Èç¹ûÊÇ·ûºÅ£¬ÊÓÎªÀàÃû
+//å¦‚æœæ˜¯ç¬¦å·ï¼Œè§†ä¸ºç±»å
 			}
 		else if(o instanceof IPersistentList)
 			{
 			Symbol fs = (Symbol) RT.first(o);
 			if(fs.equals(THE_VAR))
-//(var a) È¡µÃVar±¾Éí
+//(var a) å–å¾—Varæœ¬èº«
 				{
 				Symbol vs = (Symbol) RT.second(o);
-//×¢Òâ£¬±ØĞë´øÃüÃû¿Õ¼äÏŞ¶¨
+//æ³¨æ„ï¼Œå¿…é¡»å¸¦å‘½åç©ºé—´é™å®š
 				return RT.var(vs.ns, vs.name);  //Compiler.resolve((Symbol) RT.second(o),true);
 				}
 			if(fs.name.endsWith("."))
-//java¹¹Ôìº¯Êı
+//javaæ„é€ å‡½æ•°
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeConstructor(RT.classForName(fs.name.substring(0, fs.name.length() - 1)), args);
 				}
 			if(Compiler.namesStaticMember(fs))
-//java¾²Ì¬·½·¨
+//javaé™æ€æ–¹æ³•
 				{
 				Object[] args = RT.toArray(RT.next(o));
 				return Reflector.invokeStaticMethod(fs.ns, fs.name, args);
@@ -1234,7 +1234,7 @@ public static class UnreadableReader extends AFn{
 		throw Util.runtimeException("Unreadable form");
 	}
 }
-//ÏòÇ°¶ÁÈ¡£¬Ö±µ½Óöµ½Ö¸¶¨µÄdelim×Ö·û
+//å‘å‰è¯»å–ï¼Œç›´åˆ°é‡åˆ°æŒ‡å®šçš„delimå­—ç¬¦
 // Sentinel values for reading lists
 private static final Object READ_EOF = new Object();
 private static final Object READ_FINISHED = new Object();
@@ -1262,7 +1262,7 @@ public static List readDelimitedList(char delim, PushbackReader r, boolean isRec
 		a.add(form);			}
 			}
 
-//¼ÇÂ¼×ÖÃæÁ¿£¬»òÕßreader tag£º#p.classname »ò #xyz
+//è®°å½•å­—é¢é‡ï¼Œæˆ–è€…reader tagï¼š#p.classname æˆ– #xyz
 public static class CtorReader extends AFn{
 	public Object invoke(Object reader, Object firstChar, Object opts, Object pendingForms){
 		PushbackReader r = (PushbackReader) reader;
